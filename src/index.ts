@@ -19,7 +19,7 @@ import { sync } from 'temp-write';
 import { readFileSync } from 'fs';
 import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
 
-function defaultCompileOptions(outputOptions: OutputOptions): CompileOptions {
+export function defaultCompileOptions(outputOptions: OutputOptions): CompileOptions {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
@@ -77,10 +77,7 @@ export default function closureCompiler(compileOptions: CompileOptions = {}): Pl
           return { code: stdOut, map: sourceMap };
         },
         (error: Error) => {
-          // The TypeScript definition for Rollup is not correct.
-          // `this` has context exposing helper methods like 'error'.
-          // See: https://github.com/rollup/rollup/wiki/Plugins#plugin-context
-          this.error(error);
+          throw error;
         },
       );
     },

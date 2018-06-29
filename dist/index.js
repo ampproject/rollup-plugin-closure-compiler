@@ -36,6 +36,7 @@ function defaultCompileOptions(outputOptions) {
     }
     return options;
 }
+exports.defaultCompileOptions = defaultCompileOptions;
 function closureCompiler(compileOptions = {}) {
     return {
         name: 'closure-compiler',
@@ -62,10 +63,7 @@ function closureCompiler(compileOptions = {}) {
                 const sourceMap = JSON.parse(fs_1.readFileSync(temp.map, 'utf8'));
                 return { code: stdOut, map: sourceMap };
             }, (error) => {
-                // The TypeScript definition for Rollup is not correct.
-                // `this` has context exposing helper methods like 'error'.
-                // See: https://github.com/rollup/rollup/wiki/Plugins#plugin-context
-                this.error(error);
+                throw error;
             });
         },
     };

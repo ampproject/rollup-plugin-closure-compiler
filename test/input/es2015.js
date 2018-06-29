@@ -26,3 +26,17 @@ class Foo {
 
 const x = new Foo('bar');
 console.log(x.baz);
+
+class Bar extends Foo {
+  constructor(happy) {
+    super('bar');
+    this.happy = happy;
+  }
+
+  get happyness() {
+    return this.happy ? 'quite happy' : 'sad';
+  }
+}
+
+const barInstance = new Bar(true);
+console.log(barInstance.baz, barInstance.happyness);
