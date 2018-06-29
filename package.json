@@ -1,0 +1,50 @@
+{
+  "name": "@ampproject/rollup-plugin-closure-compiler",
+  "version": "0.3.0",
+  "description": "Rollup + Google Closure Compiler",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ampproject/rollup-plugin-closure-compiler.git"
+  },
+  "author": "The AMP HTML Authors",
+  "engines": {
+    "yarn": ">=1",
+    "node": ">=8"
+  },
+  "keywords": [
+    "rollup-plugin"
+  ],
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "ava test/*.js",
+    "build": "rimraf dist && tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "google-closure-compiler": "^20180610.0.2",
+    "temp-write": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/google-closure-compiler": "^0.0.18",
+    "@types/temp-write": "^3.3.0",
+    "ava": "^0.25.0",
+    "husky": "1.0.0-rc.9",
+    "lint-staged": "^7.2.0",
+    "prettier": "^1.13.5",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.61.1",
+    "sourcemap-validator": "^1.1.0",
+    "typescript": "^2.9.2"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --config .prettierrc --write",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  }
+}
