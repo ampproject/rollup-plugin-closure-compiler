@@ -42,9 +42,6 @@
   "lint-staged": {
     "*.ts": [
       "yarn lint --fix",
-      "git add"
-    ],
-    "*.ts": [
       "prettier --config .prettierrc --write",
       "git add"
     ]

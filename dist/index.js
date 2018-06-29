@@ -18,7 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const google_closure_compiler_1 = require("google-closure-compiler");
 const temp_write_1 = require("temp-write");
 const fs_1 = require("fs");
-function defaultCompileOptions(outputOptions) {
+exports.defaultCompileOptions = (outputOptions) => {
     // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
     // - Users of Rollup tend to transpile their code before handing it to a minifier,
     // so no transpile is default.
@@ -26,7 +26,7 @@ function defaultCompileOptions(outputOptions) {
     // so safely be more aggressive in minification.
     // - When Rollup is configured to output an iife, ensure Closure Compiler does not
     // mangle the name of the iife wrapper.
-    let options = {
+    const options = {
         language_out: 'NO_TRANSPILE',
         assume_function_wrapper: outputOptions.format === 'es' ? true : false,
         warning_level: 'QUIET',
@@ -35,22 +35,21 @@ function defaultCompileOptions(outputOptions) {
         options['externs'] = temp_write_1.sync(`function ${outputOptions.name}(){}`);
     }
     return options;
-}
-exports.defaultCompileOptions = defaultCompileOptions;
+};
 function closureCompiler(compileOptions = {}) {
     return {
         name: 'closure-compiler',
-        transformBundle: function (code, outputOptions) {
+        transformBundle: (code, outputOptions) => {
             const temp = {
                 js: temp_write_1.sync(code),
                 map: temp_write_1.sync(''),
             };
-            compileOptions = Object.assign(defaultCompileOptions(outputOptions), compileOptions, {
+            compileOptions = Object.assign(exports.defaultCompileOptions(outputOptions), compileOptions, {
                 js: temp.js,
                 create_source_map: temp.map,
             });
-            const compile = new Promise(function (resolve, reject) {
-                new google_closure_compiler_1.compiler(compileOptions).run(function (exitCode, stdOut, stdErr) {
+            const compile = new Promise((resolve, reject) => {
+                new google_closure_compiler_1.compiler(compileOptions).run((exitCode, stdOut, stdErr) => {
                     if (exitCode !== 0) {
                         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
                     }
