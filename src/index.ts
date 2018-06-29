@@ -19,7 +19,7 @@ import { sync } from 'temp-write';
 import { readFileSync } from 'fs';
 import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
 
-export function defaultCompileOptions(outputOptions: OutputOptions): CompileOptions {
+export const defaultCompileOptions = (outputOptions: OutputOptions): CompileOptions => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
@@ -28,7 +28,7 @@ export function defaultCompileOptions(outputOptions: OutputOptions): CompileOpti
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
-  let options: CompileOptions = {
+  const options: CompileOptions = {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: outputOptions.format === 'es' ? true : false,
     warning_level: 'QUIET',
@@ -43,10 +43,10 @@ export function defaultCompileOptions(outputOptions: OutputOptions): CompileOpti
 export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
   return {
     name: 'closure-compiler',
-    transformBundle: function(
+    transformBundle: (
       code: string,
       outputOptions: OutputOptions,
-    ): Promise<{ code: string; map: RawSourceMap } | void> {
+    ): Promise<{ code: string; map: RawSourceMap } | void> => {
       const temp = {
         js: sync(code),
         map: sync(''),
@@ -57,12 +57,12 @@ export default function closureCompiler(compileOptions: CompileOptions = {}): Pl
         create_source_map: temp.map,
       });
 
-      const compile: Promise<string> = new Promise(function(resolve, reject) {
-        new compiler(compileOptions).run(function(
+      const compile: Promise<string> = new Promise((resolve, reject) => {
+        new compiler(compileOptions).run((
           exitCode: number,
           stdOut: string,
           stdErr: string,
-        ) {
+        ) => {
           if (exitCode !== 0) {
             reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
           } else {
