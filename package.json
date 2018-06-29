@@ -41,14 +41,18 @@
   },
   "lint-staged": {
     "*.ts": [
+      "yarn lint --fix",
+      "git add"
+    ],
+    "*.ts": [
       "prettier --config .prettierrc --write",
       "git add"
     ]
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "yarn test"
+      "pre-push": "yarn test",
+      "pre-commit": "lint-staged"
     }
   }
 }
