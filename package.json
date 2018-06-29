@@ -19,7 +19,8 @@
   "scripts": {
     "pretest": "yarn build",
     "test": "ava test/*.js",
-    "build": "rimraf dist && tsc -p tsconfig.json"
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
     "google-closure-compiler": "^20180610.0.2",
@@ -35,18 +36,20 @@
     "rimraf": "^2.6.2",
     "rollup": "^0.62.0",
     "sourcemap-validator": "^1.1.0",
+    "tslint": "5.10.0",
     "typescript": "^2.9.2"
   },
   "lint-staged": {
     "*.ts": [
+      "yarn lint --fix",
       "prettier --config .prettierrc --write",
       "git add"
     ]
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "yarn test"
+      "pre-push": "yarn test",
+      "pre-commit": "lint-staged"
     }
   }
 }
