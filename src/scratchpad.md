@@ -77,3 +77,45 @@ function baz () {
 
 export { foo, bar, baz, qux };
 ````
+
+### Both Named and Default Exports
+#### Input
+```
+// qux.js
+export var qux = 'QUX';
+
+// main.js - entry
+export var foo = 1;
+
+export function bar () {
+	return foo; // try changing this to `foo++`
+}
+
+function baz () {
+	return bar();
+}
+
+export { baz };
+export * from './qux';
+
+export default function() { console.log('yay'); }
+```
+#### Output
+````
+var qux = 'QUX';
+
+var foo = 1;
+
+function bar () {
+	return foo; // try changing this to `foo++`
+}
+
+function baz () {
+	return bar();
+}
+
+function main() { console.log('yay'); }
+
+export default main;
+export { foo, bar, baz, qux };
+````
