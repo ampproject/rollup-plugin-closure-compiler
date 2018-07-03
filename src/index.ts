@@ -18,10 +18,10 @@ import { compiler, CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
 import { readFileSync } from 'fs';
 import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
-import { DiscoveredExports, transform } from './identify-exports';
-// import { identifyExportsTransform, Exports } from './identify-exports';
+import { closureTransform as ExternsClosureTransform } from './transforms/identify-exports';
+import { closureTransform as IifeClosureTransform } from './transforms/iife-wrapper';
 
-export const defaultCompileOptions = (outputOptions: OutputOptions): CompileOptions => {
+export const defaultCompileOptions = (options: OutputOptions): CompileOptions => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
@@ -30,34 +30,21 @@ export const defaultCompileOptions = (outputOptions: OutputOptions): CompileOpti
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
-  console.log(`creating default compile options`, DiscoveredExports);
-  let generatedExterns: string = '';
-  // Object.keys(DiscoveredExports).forEach(key => {
-  //   generatedExterns += `Window.prototype.${key}=function(a){}; var ${key};`
-  // });
-
-  const options: CompileOptions = {
+  const externs = [IifeClosureTransform.externFile(options), ExternsClosureTransform.externFile(options)];
+  const flags: CompileOptions = {
     language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: outputOptions.format === 'es' ? true : false,
+    assume_function_wrapper: options.format === 'es' ? true : false,
     warning_level: 'QUIET',
+    externs,
   };
-  if (outputOptions.format === 'iife' && outputOptions.name) {
-    generatedExterns += `function ${outputOptions.name}(){};`;
-  }
-  if (generatedExterns.length > 0) {
-    options['externs'] = sync(generatedExterns);
-  }
 
-  console.log('generated externs', options, generatedExterns);
-  // options['externs'] = sync('function exported(argument){};');
-
-  return options;
+  return flags;
 };
 
 export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
   return {
     name: 'closure-compiler',
-    transform,
+    transform: ExternsClosureTransform.transform,
     transformBundle: (code: string, outputOptions: OutputOptions): Promise<{ code: string; map: RawSourceMap } | void> => {
       // console.log(code, this.parse);
       const temp = {

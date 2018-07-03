@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../dist/index';
+import compiler, { defaultCompileOptions } from '../dist/index';
 import { rollup } from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -23,33 +23,34 @@ import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-test('es2015 does minify', async t => {
-  const source = await readFile(join('test/fixtures/es2015.js'), 'utf8');
-  const compilerBundle = await rollup({
-    input: 'test/fixtures/es2015.js',
-    plugins: [compiler()],
+test('when rollup configuration specifies format iife with a name, an extern is generated', async t => {
+  const externFixtureContent = await readFile('test/fixtures/iife-wrapped-extern.js', 'utf8');
+  const options = defaultCompileOptions({
+    format: 'iife',
+    name: 'wrapper',
   });
 
-  const compilerResults = await compilerBundle.generate({
-    format: 'es',
-    sourcemap: true,
+  const contentMatch = options.externs.some(async externFilePath => {
+    const fileContent = await readFile(externFilePath, 'utf8');
+    return fileContent === externFixtureContent;
   });
+  console.log('match', contentMatch);
 
-  t.truthy(compilerResults.code.length < source.length);
+  t.is(contentMatch, true);
 });
 
-test('es5 does minify', async t => {
-  const source = await readFile(join('test/fixtures/es5.js'), 'utf8');
+test('preserves iife wrapper name', async t => {
+  const minifiedBundle = await readFile(join('test/fixtures/iife-wrapped-minified.js'), 'utf8');
   const compilerBundle = await rollup({
-    input: 'test/fixtures/es5.js',
+    input: 'test/fixtures/iife-wrapped.js',
     plugins: [compiler()],
   });
 
   const compilerResults = await compilerBundle.generate({
     format: 'iife',
-    name: 'foobar',
+    name: 'wrapper',
     sourcemap: true,
   });
 
-  t.truthy(compilerResults.code.length < source.length);
+  t.is(compilerResults.code, minifiedBundle);
 });

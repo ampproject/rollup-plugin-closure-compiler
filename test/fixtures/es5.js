@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-function greeting(name) {
-  return 'hello ' + name;
+function changeContent(name) {
+  document.body.innerHTML = 'hello ' + name;
 }
 
-console.log(greeting('superuser'));
+export function greeting(name) {
+  changeContent(name || 'you');
+
+  document.body.addEventListener('click', greeting('superuser'), false);
+}

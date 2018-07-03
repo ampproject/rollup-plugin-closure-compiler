@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ExportSpecifier, ExportNamedDeclaration, ExportDefaultDeclaration, FunctionDeclaration } from 'estree';
+import { ExportSpecifier, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
 import { PluginContext } from 'rollup';
-import { ExportNameToType, ExportType } from './identify-exports';
+import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
 type DeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
@@ -25,28 +25,31 @@ export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
 export function functionDeclarationName(context: PluginContext, declaration: DeclarationsWithFunctions): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'FunctionDeclaration') {
-    const FunctionDeclaration: FunctionDeclaration = declaration.declaration;
+    const functionDeclaration = declaration.declaration;
 
-    if (FunctionDeclaration === null) {
+    if (functionDeclaration === null) {
       context.error(`Plugin requires exports to be named, 'export function Foo(){}' not 'export function(){}'`);
     }
     // This function declaration is the export name we need to know.
-    return FunctionDeclaration.id && FunctionDeclaration.id.name ? FunctionDeclaration.id.name : null;
+    return functionDeclaration.id && functionDeclaration.id.name ? functionDeclaration.id.name : null;
   }
-  
+
   return null;
 }
 
-export function NamedDeclaration(context: PluginContext, declaration: ExportNamedDeclaration): ExportNameToType | null {
+export function NamedDeclaration(
+  context: PluginContext,
+  declaration: ExportNamedDeclaration,
+): ExportNameToClosureMapping | null {
   const value = functionDeclarationName(context, declaration);
   if (value !== null) {
     return {
-      [value]: ExportType.NAMED_FUNCTION,
+      [value]: ExportClosureMapping.NAMED_FUNCTION,
     };
   } else if (declaration.specifiers) {
-    const exportMap: ExportNameToType = {};
+    const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
-      exportMap[exportSpecifierName(exportSpecifier)] = ExportType.NAMED_CONSTANT;
+      exportMap[exportSpecifierName(exportSpecifier)] = ExportClosureMapping.NAMED_CONSTANT;
     });
     return exportMap;
   }

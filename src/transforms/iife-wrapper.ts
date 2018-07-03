@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-import test from 'ava';
-import {defaultCompileOptions} from '../dist/index';
+import { sync } from 'temp-write';
+import { ClosureTransformPlugin } from '../types';
 
-test('with no rollup configuration defaults are valid', t => {
-  const options = defaultCompileOptions({});
-  const {externs, ...optionsMinusExterns} = options; 
+export const closureTransform: ClosureTransformPlugin = {
+  externFile(options) {
+    let content = `/**
+ * @fileoverview Externs built via derived configuration from Rollup or input code.
+ * This extern contains the iife name so it does not get mangled at the top level.
+ * @externs
+ */
+`;
 
-  t.deepEqual(optionsMinusExterns, {
-    language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: false,
-    warning_level: 'QUIET',
-  });
-  t.is(externs.length, 2);
-});
+    if (options.format === 'iife' && options.name) {
+      content += `function ${options.name}(){};\n`;
+    }
 
-test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
-  const options = defaultCompileOptions({
-    format: 'es',
-  });
-
-  t.true(options.assume_function_wrapper);
-});
+    return sync(content);
+  },
+  transform: () => void 0,
+};

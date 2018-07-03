@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 
-import test from 'ava';
-import {defaultCompileOptions} from '../dist/index';
-
-test('with no rollup configuration defaults are valid', t => {
-  const options = defaultCompileOptions({});
-  const {externs, ...optionsMinusExterns} = options; 
-
-  t.deepEqual(optionsMinusExterns, {
-    language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: false,
-    warning_level: 'QUIET',
-  });
-  t.is(externs.length, 2);
-});
-
-test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
-  const options = defaultCompileOptions({
-    format: 'es',
-  });
-
-  t.true(options.assume_function_wrapper);
-});
+export function greeting(name) {
+  document.body.innerHTML = 'hello ' + name;
+}
