@@ -28,17 +28,25 @@ export const defaultCompileOptions = (outputOptions: OutputOptions): CompileOpti
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
+  let externs: string = `
+/**
+ * @fileoverview Externs built via derived configuration from Rollup or input code.
+ * @externs
+ */`;
+
   const options: CompileOptions = {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: outputOptions.format === 'es' ? true : false,
     warning_level: 'QUIET',
   };
   if (outputOptions.format === 'iife' && outputOptions.name) {
-    options['externs'] = sync(`function ${outputOptions.name}(){}`);
+    externs = `${externs}\nvar ${outputOptions.name} = function(){};`;
+
+    options['externs'] = sync(externs);
   }
 
   return options;
-}
+};
 
 export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
   return {
@@ -58,11 +66,7 @@ export default function closureCompiler(compileOptions: CompileOptions = {}): Pl
       });
 
       const compile: Promise<string> = new Promise((resolve, reject) => {
-        new compiler(compileOptions).run((
-          exitCode: number,
-          stdOut: string,
-          stdErr: string,
-        ) => {
+        new compiler(compileOptions).run((exitCode: number, stdOut: string, stdErr: string) => {
           if (exitCode !== 0) {
             reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
           } else {

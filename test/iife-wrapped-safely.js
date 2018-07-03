@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-function changeContent(name) {
-  document.body.innerHTML = 'hello ' + name;
-}
+import test from 'ava';
+import compiler from '../dist/index';
+import { rollup } from 'rollup';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-export function greeting(name) {
-  changeContent(name || 'you');
+test('preserves iife wrapper name', async t => {
+  const minifiedBundle = readFileSync(join('test/input/iife-wrapped-minified.js'), 'utf8');
+  const compilerBundle = await rollup({
+    input: 'test/input/iife-wrapped.js',
+    plugins: [
+      compiler(),
+    ],
+  });
 
-  document.body.addEventListener('click', greeting('superuser'), false);
-}
+  const compilerResults = await compilerBundle.generate({
+    format: 'iife',
+    name: 'wrapper',
+    sourcemap: true,
+  });
+
+  t.is(compilerResults.code, minifiedBundle);
+});

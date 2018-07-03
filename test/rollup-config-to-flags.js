@@ -36,7 +36,11 @@ test('when rollup configuration specifies format iife with a name, an extern is 
   t.not(options.externs, undefined);
 
   const externs = readFileSync(options.externs, 'utf8');
-  t.is(externs, `function Wrapper(){}`);
+  t.is(externs, `
+/**
+ * @fileoverview Externs built via derived configuration from Rollup or input code.
+ * @externs
+ */\nvar Wrapper = function(){};`);
 });
 
 test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
