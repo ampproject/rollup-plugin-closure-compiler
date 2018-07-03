@@ -38,13 +38,13 @@ export function functionDeclarationName(context: PluginContext, declaration: Dec
 }
 
 export function NamedDeclaration(context: PluginContext, declaration: ExportNamedDeclaration): ExportNameToType | null {
-  let value = functionDeclarationName(context, declaration);
+  const value = functionDeclarationName(context, declaration);
   if (value !== null) {
     return {
       [value]: ExportType.NAMED_FUNCTION,
     };
   } else if (declaration.specifiers) {
-    let exportMap: ExportNameToType = {};
+    const exportMap: ExportNameToType = {};
     declaration.specifiers.forEach(exportSpecifier => {
       exportMap[exportSpecifierName(exportSpecifier)] = ExportType.NAMED_CONSTANT;
     });
