@@ -16,11 +16,13 @@
 
 import { compiler, CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
-import { readFileSync } from 'fs';
+import * as fs from 'fs';
+import { promisify } from 'util';
 import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
 import { closureTransform as ExternsClosureTransform } from './transforms/identify-exports';
 import { closureTransform as IifeClosureTransform } from './transforms/iife-wrapper';
 
+const readFile = promisify(fs.readFile);
 const REGISTERED_TRANSFORMS = [IifeClosureTransform, ExternsClosureTransform];
 
 export const defaultCompileOptions = (options: OutputOptions): CompileOptions => {
@@ -43,41 +45,43 @@ export const defaultCompileOptions = (options: OutputOptions): CompileOptions =>
   return flags;
 };
 
+export const transformBundle = (compileOptions: CompileOptions) => (
+  code: string,
+  outputOptions: OutputOptions,
+): Promise<{ code: string; map: RawSourceMap } | void> => {
+  const jsAsFile = sync(code);
+  const mapAsFile = sync('');
+
+  compileOptions = Object.assign(defaultCompileOptions(outputOptions), compileOptions, {
+    js: jsAsFile,
+    create_source_map: mapAsFile,
+  });
+
+  const compile: Promise<string> = new Promise((resolve, reject) => {
+    new compiler(compileOptions).run((exitCode: number, stdOut: string, stdErr: string) => {
+      if (exitCode !== 0) {
+        reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
+      } else {
+        resolve(stdOut);
+      }
+    });
+  });
+
+  return compile.then(
+    async stdOut => {
+      const sourceMap: RawSourceMap = JSON.parse(await readFile(mapAsFile, 'utf8'));
+      return { code: stdOut, map: sourceMap };
+    },
+    (error: Error) => {
+      throw error;
+    },
+  );
+};
+
 export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
   return {
     name: 'closure-compiler',
     transform: ExternsClosureTransform.transform,
-    transformBundle: (code: string, outputOptions: OutputOptions): Promise<{ code: string; map: RawSourceMap } | void> => {
-      // console.log(code, this.parse);
-      const temp = {
-        js: sync(code),
-        map: sync(''),
-      };
-
-      compileOptions = Object.assign(defaultCompileOptions(outputOptions), compileOptions, {
-        js: temp.js,
-        create_source_map: temp.map,
-      });
-
-      const compile: Promise<string> = new Promise((resolve, reject) => {
-        new compiler(compileOptions).run((exitCode: number, stdOut: string, stdErr: string) => {
-          if (exitCode !== 0) {
-            reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
-          } else {
-            resolve(stdOut);
-          }
-        });
-      });
-
-      return compile.then(
-        stdOut => {
-          const sourceMap: RawSourceMap = JSON.parse(readFileSync(temp.map, 'utf8'));
-          return { code: stdOut, map: sourceMap };
-        },
-        (error: Error) => {
-          throw error;
-        },
-      );
-    },
+    transformBundle: transformBundle(compileOptions),
   };
 }
