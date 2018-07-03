@@ -47,9 +47,11 @@ test('es5 does minify', async t => {
   });
 
   const compilerResults = await compilerBundle.generate({
-    format: 'es',
+    format: 'iife',
+    name: 'foobar',
     sourcemap: true,
   });
 
+  console.log({code: compilerResults.code});
   t.truthy(compilerResults.code.length < source.length);
 });

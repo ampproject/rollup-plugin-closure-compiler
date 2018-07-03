@@ -15,23 +15,21 @@
  */
 
 import test from 'ava';
-import compiler from '../dist/index';
+import compiler from '../dist/index.js';
 import { rollup } from 'rollup';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-test.failing('esm does minify', async t => {
+test.skip('esm does minify', async t => {
   const source = readFileSync(join('test/input/esm.js'), 'utf8');
-  const externs = readFileSync(join('test/input/esm-externs.js'), 'utf8');
+  // const externs = readFileSync(join('test/input/esm-externs.js'), 'utf8');
   const compilerBundle = await rollup({
     input: 'test/input/esm.js',
     output: {
       format: 'es',
     },
     plugins: [
-      compiler({
-        externs: 'test/input/esm-externs.js',
-      }),
+      compiler(),
     ],
   });
 
@@ -42,4 +40,24 @@ test.failing('esm does minify', async t => {
 
   console.log({code: compilerResults.code, externs: externs});
   // t.truthy(compilerResults.code.length < source.length);
+});
+
+test('es output does not mangle exported function name', async t => {
+  const source = readFileSync(join('test/input/esm-named-export-function.js'), 'utf8');
+  const compilerBundle = await rollup({
+    input: 'test/input/esm-named-export-function.js',
+    output: {
+      format: 'es',
+    },
+    plugins: [
+      compiler(),
+    ],
+  });
+
+  const compilerResults = await compilerBundle.generate({
+    format: 'es',
+    sourcemap: true,
+  });
+
+  console.log({source, minified: compilerResults.code});
 });

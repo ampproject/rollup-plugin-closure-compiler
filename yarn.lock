@@ -59,7 +59,7 @@
   dependencies:
     any-observable "^0.3.0"
 
-"@types/estree@0.0.39":
+"@types/estree@0.0.39", "@types/estree@^0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
 
