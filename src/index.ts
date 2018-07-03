@@ -21,6 +21,8 @@ import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
 import { closureTransform as ExternsClosureTransform } from './transforms/identify-exports';
 import { closureTransform as IifeClosureTransform } from './transforms/iife-wrapper';
 
+const REGISTERED_TRANSFORMS = [IifeClosureTransform, ExternsClosureTransform];
+
 export const defaultCompileOptions = (options: OutputOptions): CompileOptions => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
@@ -30,7 +32,7 @@ export const defaultCompileOptions = (options: OutputOptions): CompileOptions =>
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
-  const externs = [IifeClosureTransform.externFile(options), ExternsClosureTransform.externFile(options)];
+  const externs = REGISTERED_TRANSFORMS.map(transform => transform.externFile(options));
   const flags: CompileOptions = {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: options.format === 'es' ? true : false,
