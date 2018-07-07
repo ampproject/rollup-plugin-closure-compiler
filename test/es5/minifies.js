@@ -15,25 +15,37 @@
  */
 
 import test from 'ava';
-import compiler from '../dist/index';
+import compiler from '../../dist/index';
 import * as rollup from 'rollup';
-import validate from 'sourcemap-validator';
 import * as fs from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-test.failing('sourcemap is accurate for es 2015 input', async t => {
-  const source = await readFile(join('test/fixtures/es2015.js'), 'utf8');
-  const bundle = await rollup.rollup({
-    input: 'test/fixtures/es2015.js',
-    plugins: [compiler()]
-  });
-  const { code, map } = await bundle.generate({
-    format: 'es',
+async function input(input) {
+  const ROLLUP_OUTPUT_OPTIONS = {
+    format: 'iife',
+    name: 'foobar',
     sourcemap: true,
+  };
+
+  const bundle = await rollup.rollup({
+    input: `test/es5/fixtures/${input}.js`,
+    plugins: [compiler(ROLLUP_OUTPUT_OPTIONS)],
   });
 
-  t.notThrows(validate(code, map.toString(), source));
+  return {
+    minified: await readFile(join(`test/es5/fixtures/${input}.minified.js`), 'utf8'),
+    code: (await bundle.generate(ROLLUP_OUTPUT_OPTIONS)).code,
+  };
+}
+
+test('es5 does minify', async t => {
+  const source = await readFile(join('test/es5/fixtures/es5.js'), 'utf8');
+  const { minified, code } = await input('es5');
+
+  //console.log({code, minified, source});
+  t.truthy(code.length < source.length);
+  t.is(code, minified);
 });

@@ -15,42 +15,52 @@
  */
 
 import test from 'ava';
-import compiler, { defaultCompileOptions } from '../dist/index';
-import { rollup } from 'rollup';
+import compiler, { defaultCompileOptions, instantiateTransforms } from '../../dist/index.js';
+import * as rollup from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-test('when rollup configuration specifies format iife with a name, an extern is generated', async t => {
-  const externFixtureContent = await readFile('test/fixtures/iife-wrapped-extern.js', 'utf8');
-  const options = defaultCompileOptions({
+async function input(input) {
+  const bundle = await rollup.rollup({
+    input: `test/iife/fixtures/${input}.js`,
+    plugins: [compiler({
+      format: 'iife',
+    })],
+  });
+
+  return {
+    minified: await readFile(join(`test/iife/fixtures/${input}.minified.js`), 'utf8'),
+    code: (await bundle.generate({
+      format: 'iife',
+      name: 'wrapper',
+      sourcemap: true,
+    })).code,
+  };
+}
+
+test.failing('generate extern for iife name', async t => {
+  const externFixtureContent = await readFile('test/iife/fixtures/iife.extern.js', 'utf8');
+  const outputOptions = {
     format: 'iife',
     name: 'wrapper',
-  });
+  };
+
+  const transforms = instantiateTransforms({}, {entry: "only"}, outputOptions, "only");
+  const options = defaultCompileOptions(transforms, outputOptions);
 
   const contentMatch = options.externs.some(async externFilePath => {
     const fileContent = await readFile(externFilePath, 'utf8');
     return fileContent === externFixtureContent;
   });
-  console.log('match', contentMatch);
 
   t.is(contentMatch, true);
 });
 
 test('preserves iife wrapper name', async t => {
-  const minifiedBundle = await readFile(join('test/fixtures/iife-wrapped-minified.js'), 'utf8');
-  const compilerBundle = await rollup({
-    input: 'test/fixtures/iife-wrapped.js',
-    plugins: [compiler()],
-  });
+  const { minified, code } = await input('iife');
 
-  const compilerResults = await compilerBundle.generate({
-    format: 'iife',
-    name: 'wrapper',
-    sourcemap: true,
-  });
-
-  t.is(compilerResults.code, minifiedBundle);
+  t.is(code, minified);
 });

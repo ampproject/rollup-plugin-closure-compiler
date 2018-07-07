@@ -15,24 +15,25 @@
  */
 
 import test from 'ava';
-import {defaultCompileOptions} from '../dist/index';
+import compiler from '../../dist/index';
+import { rollup } from 'rollup';
+import * as fs from 'fs';
+import { join } from 'path';
+import { promisify } from 'util';
 
-test('with no rollup configuration defaults are valid', t => {
-  const options = defaultCompileOptions({});
-  const {externs, ...optionsMinusExterns} = options; 
+const readFile = promisify(fs.readFile);
 
-  t.deepEqual(optionsMinusExterns, {
-    language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: false,
-    warning_level: 'QUIET',
+test('es2015 does minify', async t => {
+  const source = await readFile(join('test/es2015/fixtures/es2015.js'), 'utf8');
+  const compilerBundle = await rollup({
+    input: 'test/es2015/fixtures/es2015.js',
+    plugins: [compiler()],
   });
-  t.is(externs.length, 2);
-});
 
-test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
-  const options = defaultCompileOptions({
+  const compilerResults = await compilerBundle.generate({
     format: 'es',
+    sourcemap: true,
   });
 
-  t.true(options.assume_function_wrapper);
+  t.truthy(compilerResults.code.length < source.length);
 });

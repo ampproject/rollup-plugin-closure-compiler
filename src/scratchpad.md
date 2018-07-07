@@ -1,5 +1,21 @@
 ## ES Modules Patterns
 
+```
+import {yay} from './esm-import';
+
+export function exported(argument) {
+  console.log(argument);
+  console.log(yay);
+}
+
+window["exported"] = exported;
+```
+converts to 
+```
+window.exported=function(a){console.log(a);console.log(1)};
+```
+
+
 Rough outline:
 #### Rollup Ingest Entry Point
 Rollup will define both the named and default exports.

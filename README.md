@@ -18,14 +18,16 @@ Invoke Closure Compiler from your Rollup configuration.
 // rollup.config.js
 import compiler from '@ampproject/rollup-plugin-closure-compiler';
 
+const ROLLUP_OUTPUT_OPTIONS = {
+  file: 'bundle.js',
+  format: 'iife',
+};
+
 export default {
   input: 'main.js',
-  output: {
-    file: 'bundle.js',
-    format: 'iife',
-  },
+  output: ROLLUP_OUTPUT_OPTIONS,
   plugins: [
-    compiler(),
+    compiler(ROLLUP_OUTPUT_OPTIONS),
   ],
 }
 ```
@@ -36,14 +38,16 @@ If you would like to provide additional [flags and options](https://github.com/g
 // rollup.config.js
 import compiler from '@ampproject/rollup-plugin-closure-compiler';
 
+const ROLLUP_OUTPUT_OPTIONS = {
+  file: 'bundle.js',
+  format: 'iife',
+};
+
 export default {
   input: 'main.js',
-  output: {
-    file: 'bundle.js',
-    format: 'iife',
-  },
+  output: ROLLUP_OUTPUT_OPTIONS,
   plugins: [
-    compiler({
+    compiler(ROLLUP_OUTPUT_OPTIONS, {
       formatting: 'PRETTY_PRINT'
     }),
   ],
@@ -58,14 +62,16 @@ This plugin will modify the enable the `assume_function_wrapper` output option f
 // rollup.config.js
 import compiler from '@ampproject/rollup-plugin-closure-compiler';
 
+const ROLLUP_OUTPUT_OPTIONS = {
+  file: 'bundle.js',
+  format: 'es',
+};
+
 export default {
   input: 'main.js',
-  output: {
-    file: 'bundle.js',
-    format: 'es',
-  },
+  output: ROLLUP_OUTPUT_OPTIONS,
   plugins: [
-    compiler(),
+    compiler(ROLLUP_OUTPUT_OPTIONS),
   ],
 }
 ```
@@ -76,15 +82,17 @@ If your Rollup configuration outputs an IIFE format bundle with a specified name
 // rollup.config.js
 import compiler from '@ampproject/rollup-plugin-closure-compiler';
 
+const ROLLUP_OUTPUT_OPTIONS = {
+  file: 'bundle.js',
+  format: 'iife',
+  name: 'MyAwesomeThing'
+};
+
 export default {
   input: 'main.js',
-  output: {
-    file: 'bundle.js',
-    format: 'iife',
-    name: 'MyAwesomeThing'
-  },
+  output: ROLLUP_OUTPUT_OPTIONS,
   plugins: [
-    compiler(),
+    compiler(ROLLUP_OUTPUT_OPTIONS),
   ],
 }
 ```

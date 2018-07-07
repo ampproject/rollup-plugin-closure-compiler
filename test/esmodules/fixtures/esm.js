@@ -10,4 +10,4 @@ const bar = 10;
 const baz = _ => console.log('baz');
 export { bar, baz };
 
-export * from "./esm-import";
+// export * from "./esm-import";

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, TransformHook } from 'rollup';
+import { OutputOptions, TransformSourceDescription, PluginContext } from 'rollup';
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#exports
 export const EXPORT_NAMED_DECLARATION = 'ExportNamedDeclaration';
@@ -30,15 +30,50 @@ export const ALL_EXPORT_TYPES = [
 
 export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,
-  NAMED_CONSTANT = 1,
-  DEFAULT = 2,
+  NAMED_DEFAULT_FUNCTION = 1,
+  NAMED_CONSTANT = 2,
+  DEFAULT = 3,
 }
 export interface ExportNameToClosureMapping {
   [key: string]: ExportClosureMapping;
 }
 
-type DeriveExternFromOptions = (options: OutputOptions) => string;
-export interface ClosureTransformPlugin {
-  externFile: DeriveExternFromOptions;
-  transform: TransformHook;
+// type DeriveExternFromOptions = (options: OutputOptions) => string;
+// export interface ClosureTransformPlugin {
+//   externFile: DeriveExternFromOptions;
+//   transformInput: TransformHook;
+//   transformOutput: TransformHook;
+//   entry: string | null;
+// }
+export interface TransformInterface {
+  extern: (options: OutputOptions) => string;
+  input: (code: string, id: string) => Promise<TransformSourceDescription>;
+  output: (code: string, id: string) => Promise<TransformSourceDescription>;
+}
+export class Transform implements TransformInterface {
+  protected context: PluginContext;
+  protected entry: string;
+  protected outputOptions: OutputOptions;
+
+  constructor(context: PluginContext, entry: string, outputOptions: OutputOptions) {
+    this.context = context;
+    this.entry = entry;
+    this.outputOptions = outputOptions;
+  }
+
+  public extern(options: OutputOptions) {
+    return '';
+  }
+
+  public async input(code: string, id: string): Promise<TransformSourceDescription> {
+    return {
+      code,
+    };
+  }
+
+  public async output(code: string, id: string): Promise<TransformSourceDescription> {
+    return {
+      code,
+    };
+  }
 }

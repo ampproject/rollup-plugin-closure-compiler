@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../dist/index';
+import compiler from '../../dist/index.js';
 import { rollup } from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -23,33 +23,22 @@ import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-test('es2015 does minify', async t => {
-  const source = await readFile(join('test/fixtures/es2015.js'), 'utf8');
-  const compilerBundle = await rollup({
-    input: 'test/fixtures/es2015.js',
-    plugins: [compiler()],
-  });
+const ROLLUP_OUTPUT_OPTIONS = {
+  format: 'es',
+  sourcemap: true,
+};
 
-  const compilerResults = await compilerBundle.generate({
-    format: 'es',
-    sourcemap: true,
+test('esm does minify', async t => {
+  const source = await readFile(join('test/esmodules/fixtures/esm.js'), 'utf8');
+  const compilerBundle = await rollup({
+    input: 'test/esmodules/fixtures/esm.js',
+    plugins: [
+      compiler(ROLLUP_OUTPUT_OPTIONS),
+    ],
   });
+  const compilerResults = await compilerBundle.generate(ROLLUP_OUTPUT_OPTIONS);
 
   t.truthy(compilerResults.code.length < source.length);
 });
 
-test('es5 does minify', async t => {
-  const source = await readFile(join('test/fixtures/es5.js'), 'utf8');
-  const compilerBundle = await rollup({
-    input: 'test/fixtures/es5.js',
-    plugins: [compiler()],
-  });
-
-  const compilerResults = await compilerBundle.generate({
-    format: 'iife',
-    name: 'foobar',
-    sourcemap: true,
-  });
-
-  t.truthy(compilerResults.code.length < source.length);
-});
+// TODO(KB): Tests verifying exported code contains the correct exported members via acorn AST parse.
