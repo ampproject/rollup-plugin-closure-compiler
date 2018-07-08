@@ -61,7 +61,7 @@ export class Transform implements TransformInterface {
     this.outputOptions = outputOptions;
   }
 
-  public extern(options: OutputOptions) {
+  public extern(options: OutputOptions): string {
     return '';
   }
 

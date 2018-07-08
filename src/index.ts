@@ -30,6 +30,7 @@ import {
 } from 'rollup';
 import { ExportTransform } from './transforms/exports';
 import { IifeTransform } from './transforms/iife';
+import { StrictTransform } from './transforms/strict';
 import { Transform } from './types';
 
 const readFile = promisify(fs.readFile);
@@ -50,7 +51,7 @@ export const defaultCompileOptions = (transformers: Array<Transform> | null, opt
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
-  const externs = transformers ? transformers.map(transform => transform.extern(options)) : '';
+  const externs = transformers ? transformers.map(transform => sync(transform.extern(options))) : '';
   const flags: CompileOptions = {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: options.format === 'es' ? true : false,
@@ -76,7 +77,11 @@ export const instantiateTransforms = (
 ): Array<Transform> | null => {
   const entry = inputOptions && inputOptions.entry && path.resolve(inputOptions.entry);
   if (entry === id) {
-    return [new IifeTransform(context, entry, outputOptions), new ExportTransform(context, entry, outputOptions)];
+    return [
+      new IifeTransform(context, entry, outputOptions),
+      new ExportTransform(context, entry, outputOptions),
+      new StrictTransform(context, entry, outputOptions),
+    ];
   }
 
   return null;

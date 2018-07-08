@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { sync } from 'temp-write';
 import { Transform } from '../types';
 import { OutputOptions } from 'rollup';
 
@@ -39,6 +38,6 @@ export class IifeTransform extends Transform {
       content += `function ${options.name}(){};\n`;
     }
 
-    return sync(content);
+    return content;
   }
 }

@@ -17,7 +17,6 @@
 import { ModuleDeclaration, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
 import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
-import { sync } from 'temp-write';
 import {
   ExportNameToClosureMapping,
   ALL_EXPORT_TYPES,
@@ -54,7 +53,7 @@ export class ExportTransform extends Transform {
       });
     }
 
-    return sync(content);
+    return content;
   }
 
   /**
