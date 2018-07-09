@@ -30,7 +30,7 @@ const HEADER = `/**
  * In order to preserve the name of the iife output, derive an extern definition for Closure Compiler.
  * This preserves the name after compilation since Closure now believes it to be a well known global.
  */
-export class IifeTransform extends Transform {
+export default class IifeTransform extends Transform {
   public extern(options: OutputOptions): string {
     let content = HEADER;
 

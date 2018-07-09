@@ -43,7 +43,7 @@ const HEADER = `/**
  * 2. Insert additional JS referencing the exported names on the window scope
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
-export class ExportTransform extends Transform implements TransformInterface {
+export default class ExportTransform extends Transform implements TransformInterface {
   private exported: ExportNameToClosureMapping = {};
 
   public extern(options: OutputOptions): string {

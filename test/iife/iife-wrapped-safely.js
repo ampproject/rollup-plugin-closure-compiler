@@ -15,7 +15,9 @@
  */
 
 import test from 'ava';
-import compiler, { defaultCompileOptions, instantiateTransforms } from '../../dist/index.js';
+import compiler from '../../dist/index';
+import { createTransforms } from '../../dist/transforms';
+import { defaults } from '../../dist/options';
 import * as rollup from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -46,8 +48,8 @@ test('generate extern for iife name', async t => {
     name: 'wrapper',
   };
 
-  const transforms = instantiateTransforms({}, { entry: 'only' }, outputOptions, 'only');
-  const options = defaultCompileOptions(transforms, outputOptions);
+  const transforms = createTransforms({});
+  const options = defaults(outputOptions, transforms);
 
   const contentMatch = options.externs.some(async externFilePath => {
     const fileContent = await readFile(externFilePath, 'utf8');

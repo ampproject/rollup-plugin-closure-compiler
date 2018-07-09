@@ -20,7 +20,7 @@ import { TransformSourceDescription } from 'rollup';
 const STRICT_MODE_DECLARATION = `'use strict';`;
 const STRICT_MODE_DECLARATION_LENGTH = STRICT_MODE_DECLARATION.length;
 
-export class StrictTransform extends Transform {
+export default class StrictTransform extends Transform {
   /**
    * When outputting an es module, runtimes automatically apply strict mode conventions.
    * This means we can safely strip the 'use strict'; declaration from the top of the file.

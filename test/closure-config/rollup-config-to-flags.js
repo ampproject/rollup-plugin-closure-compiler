@@ -15,14 +15,14 @@
  */
 
 import test from 'ava';
-import { defaultCompileOptions } from '../../dist/index';
+import { defaults } from '../../dist/options';
 
 test.beforeEach(t => {
   t.context = {
-    default: defaultCompileOptions(null, {}),
-    esOutput: defaultCompileOptions(null, {
+    default: defaults({}, null),
+    esOutput: defaults({
       format: 'es',
-    }),
+    }, null),
   };
 });
 
