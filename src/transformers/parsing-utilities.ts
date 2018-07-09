@@ -31,15 +31,18 @@ export function functionDeclarationName(
   if (declaration.declaration && declaration.declaration.type === 'FunctionDeclaration') {
     const functionDeclaration = declaration.declaration;
 
-    if (functionDeclaration === null) {
+    if (
+      functionDeclaration === null ||
+      functionDeclaration.id === null ||
+      functionDeclaration.id.name === null
+    ) {
       context.error(
         `Plugin requires exports to be named, 'export function Foo(){}' not 'export function(){}'`,
       );
+    } else {
+      // This function declaration is the export name we need to know.
+      return functionDeclaration.id.name;
     }
-    // This function declaration is the export name we need to know.
-    return functionDeclaration.id && functionDeclaration.id.name
-      ? functionDeclaration.id.name
-      : null;
   }
 
   return null;
