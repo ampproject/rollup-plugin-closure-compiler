@@ -38,40 +38,35 @@ export interface ExportNameToClosureMapping {
   [key: string]: ExportClosureMapping;
 }
 
-// type DeriveExternFromOptions = (options: OutputOptions) => string;
-// export interface ClosureTransformPlugin {
-//   externFile: DeriveExternFromOptions;
-//   transformInput: TransformHook;
-//   transformOutput: TransformHook;
-//   entry: string | null;
-// }
+export type TransformMethod = (code: string, id: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   extern: (options: OutputOptions) => string;
-  input: (code: string, id: string) => Promise<TransformSourceDescription>;
-  output: (code: string, id: string) => Promise<TransformSourceDescription>;
+  deriveFromInputSource: (code: string, id: string) => Promise<void>;
+  preCompilation: TransformMethod;
+  postCompilation: TransformMethod;
 }
 export class Transform implements TransformInterface {
   protected context: PluginContext;
-  protected entry: string;
-  protected outputOptions: OutputOptions;
+  public outputOptions: OutputOptions | null;
 
-  constructor(context: PluginContext, entry: string, outputOptions: OutputOptions) {
+  constructor(context: PluginContext) {
     this.context = context;
-    this.entry = entry;
-    this.outputOptions = outputOptions;
   }
 
   public extern(options: OutputOptions): string {
     return '';
   }
 
-  public async input(code: string, id: string): Promise<TransformSourceDescription> {
+  public async deriveFromInputSource(code: string, id: string): Promise<void> {
+    return void 0;
+  }
+
+  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     return {
       code,
     };
   }
-
-  public async output(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     return {
       code,
     };

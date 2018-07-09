@@ -17,17 +17,8 @@
 import { compiler, CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
 import * as fs from 'fs';
-import * as path from 'path';
 import { promisify } from 'util';
-import {
-  OutputOptions,
-  RawSourceMap,
-  Plugin,
-  InputOptions,
-  TransformSourceDescription,
-  PluginContext,
-  OutputChunk,
-} from 'rollup';
+import { OutputOptions, RawSourceMap, Plugin, PluginContext, OutputChunk } from 'rollup';
 import { ExportTransform } from './transforms/exports';
 import { IifeTransform } from './transforms/iife';
 import { StrictTransform } from './transforms/strict';
@@ -69,50 +60,8 @@ export const defaultCompileOptions = (transformers: Array<Transform> | null, opt
  * @param id Rollup's id entry for this source.
  * @return Instantiated transform class instances for the given entry point.
  */
-export const instantiateTransforms = (
-  context: PluginContext,
-  inputOptions: InputOptions | null,
-  outputOptions: OutputOptions,
-  id: string,
-): Array<Transform> | null => {
-  const entry = inputOptions && inputOptions.entry && path.resolve(inputOptions.entry);
-  if (entry === id) {
-    return [
-      new IifeTransform(context, entry, outputOptions),
-      new ExportTransform(context, entry, outputOptions),
-      new StrictTransform(context, entry, outputOptions),
-    ];
-  }
-
-  return null;
-};
-
-/**
- * Invoke all transformations for this Plugin invocation.
- * @param transforms Bound Transformations instances to apply
- * @param code source code to transform
- * @param id Rollup's id entry for this source
- * @return Transformed source from all transforms associated with this Plugin invocation.
- */
-export const transform = async (
-  transforms: Array<Transform> | null,
-  code: string,
-  id: string,
-): Promise<TransformSourceDescription> => {
-  let output: TransformSourceDescription = {
-    code,
-  };
-
-  if (transforms) {
-    for (let iterator = 0; iterator < transforms.length; iterator++) {
-      const transformed = await transforms[iterator].input(output.code, id);
-      if (transformed) {
-        output = transformed;
-      }
-    }
-  }
-
-  return output;
+export const instantiateTransforms = (context: PluginContext): Array<Transform> => {
+  return [new IifeTransform(context), new ExportTransform(context), new StrictTransform(context)];
 };
 
 /**
@@ -124,41 +73,57 @@ export const transform = async (
  * @return Closure Compiled form of the Rollup Chunk
  */
 export const transformChunk = async (
+  transforms: Array<Transform>,
   compileOptions: CompileOptions,
-  transforms: Array<Transform> | null,
   code: string,
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: RawSourceMap } | void> => {
+  // Each transform has a 'preCompilation' step that must complete before passing
+  // the resulting code to Closure Compiler.
+  for (const transform of transforms) {
+    transform.outputOptions = outputOptions;
+    const result = await transform.preCompilation(code, 'none');
+    if (result && result.code) {
+      code = result.code;
+    }
+  }
+
   const jsAsFile = sync(code);
   const mapAsFile = sync('');
 
-  compileOptions = Object.assign(defaultCompileOptions(transforms, outputOptions), compileOptions, {
-    js: jsAsFile,
-    create_source_map: mapAsFile,
-  });
+  // Compile Options is the final configuration to pass into Closure Compiler.
+  // defaultCompileOptions are overrideable by ones passed in directly to the plugin
+  // but the js source and sourcemap are not overrideable, since this would break the output if passed.
+  compileOptions = {
+    ...defaultCompileOptions(transforms, outputOptions),
+    ...compileOptions,
+    ...{
+      js: jsAsFile,
+      create_source_map: mapAsFile,
+    },
+  };
 
   const compile: Promise<string> = new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
-    new compiler(compileOptions).run(async (exitCode: number, stdOut: string, stdErr: string) => {
+    new compiler(compileOptions).run(async (exitCode: number, code: string, stdErr: string) => {
       if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
-        if (transforms) {
-          for (let iterator = 0; iterator < transforms.length; iterator++) {
-            const transformed = await transforms[iterator].output(stdOut, 'none');
-            if (transformed && transformed.code) {
-              stdOut = transformed.code;
-            }
+        // Following successful Closure Compiler compilation, each transform needs an opportunity
+        // to clean up work is performed in preCompilation via postCompilation.
+        for (const transform of transforms) {
+          const result = await transform.postCompilation(code, 'none');
+          if (result && result.code) {
+            code = result.code;
           }
         }
-        resolve(stdOut);
+        resolve(code);
       }
     });
   });
 
   return compile.then(
-    async stdOut => {
-      const sourceMap: RawSourceMap = JSON.parse(await readFile(mapAsFile, 'utf8'));
-      return { code: stdOut, map: sourceMap };
+    async code => {
+      return { code, map: JSON.parse(await readFile(mapAsFile, 'utf8')) };
     },
     (error: Error) => {
       throw error;
@@ -166,23 +131,20 @@ export const transformChunk = async (
   );
 };
 
-export default function closureCompiler(outputOptions: OutputOptions = {}, compileOptions: CompileOptions = {}): Plugin {
-  let inputOptions: InputOptions | null = null;
-  let transforms: Array<Transform> | null = null;
+export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
+  let transforms: Array<Transform>;
 
   return {
     name: 'closure-compiler',
-    options: options => (inputOptions = options),
-    load(id: string) {
-      if (outputOptions.format === undefined) {
-        this.warn(
-          'When invoking Rollup Plugin Closure Compiler, pass OutputOptions directly. See: https://github.com/ampproject/rollup-plugin-closure-compiler/faq/OPTIONS.md for more details.',
-        );
-      }
-      transforms = transforms || instantiateTransforms(this, inputOptions, outputOptions, id);
+    load() {
+      transforms = transforms || instantiateTransforms(this);
     },
-    transform: async (code: string, id: string) => await transform(transforms, code, id),
+    transform: async (code: string) => {
+      for (const transform of transforms) {
+        await transform.deriveFromInputSource(code, 'none');
+      }
+    },
     transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>
-      await transformChunk(compileOptions, transforms, code, outputOptions),
+      await transformChunk(transforms, compileOptions, code, outputOptions),
   };
 }

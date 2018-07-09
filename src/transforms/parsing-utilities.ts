@@ -58,5 +58,14 @@ export function NamedDeclaration(
 }
 
 export function DefaultDeclaration(context: PluginContext, declaration: ExportDefaultDeclaration): string | null {
-  return functionDeclarationName(context, declaration);
+  if (declaration.declaration) {
+    switch (declaration.declaration.type) {
+      case 'FunctionDeclaration':
+        return functionDeclarationName(context, declaration);
+      case 'Identifier':
+        return declaration.declaration.name || null;
+    }
+  }
+
+  return null;
 }

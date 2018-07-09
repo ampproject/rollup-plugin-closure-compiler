@@ -23,20 +23,18 @@ import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-const ROLLUP_OUTPUT_OPTIONS = {
-  format: 'es',
-  sourcemap: true,
-};
-
 test('esm does minify', async t => {
   const source = await readFile(join('test/esmodules/fixtures/esm.js'), 'utf8');
   const compilerBundle = await rollup({
     input: 'test/esmodules/fixtures/esm.js',
     plugins: [
-      compiler(ROLLUP_OUTPUT_OPTIONS),
+      compiler(),
     ],
   });
-  const compilerResults = await compilerBundle.generate(ROLLUP_OUTPUT_OPTIONS);
+  const compilerResults = await compilerBundle.generate({
+    format: 'es',
+    sourcemap: true,
+  });
 
   t.truthy(compilerResults.code.length < source.length);
 });

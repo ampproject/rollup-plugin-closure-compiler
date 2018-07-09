@@ -25,6 +25,7 @@ import {
   EXPORT_ALL_DECLARATION,
   ExportClosureMapping,
   Transform,
+  TransformInterface,
 } from '../types';
 
 const HEADER = `/**
@@ -42,7 +43,7 @@ const HEADER = `/**
  * 2. Insert additional JS referencing the exported names on the window scope
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
-export class ExportTransform extends Transform {
+export class ExportTransform extends Transform implements TransformInterface {
   private exported: ExportNameToClosureMapping = {};
 
   public extern(options: OutputOptions): string {
@@ -57,49 +58,63 @@ export class ExportTransform extends Transform {
   }
 
   /**
-   * Before Closure Compiler is given a chance to look at the code, we need to:
-   * 1. Find and store all export statements with their correct type
-   * 2. Insert JS references to the identifiers on the window scope (so they do not get mangled).
+   * Before Closure Compiler is given a chance to look at the code, we need to
+   * find and store all export statements with their correct type
    * @param code source to parse, and modify
    * @param id Rollup id reference to the source
    * @return Promise containing the modified source
    */
-  public async input(code: string, id: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions.format === 'es' && id === this.entry) {
-      // This transform only operates on the entry point.
-      const program = this.context.parse(code, {});
-      const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
+  public async deriveFromInputSource(code: string, id: string): Promise<void> {
+    const program = this.context.parse(code, {});
+    const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
 
-      exportNodes.forEach((node: ModuleDeclaration) => {
-        switch (node.type) {
-          case EXPORT_NAMED_DECLARATION:
-            const namedDeclarationValues = NamedDeclaration(this.context, node as ExportNamedDeclaration);
-            if (namedDeclarationValues !== null) {
-              Object.keys(namedDeclarationValues).forEach(key => {
-                this.exported[key] = namedDeclarationValues[key];
-                code += `\nwindow['${key}'] = ${key}`;
-              });
-            }
-            break;
-          case EXPORT_DEFAULT_DECLARATION:
-            // TODO(KB): This case is not fully supported – only named default exports.
-            // `export default Foo(){};`, or `export default Foo;`, not `export default function(){};`
-            const defaultDeclarationValue = DefaultDeclaration(this.context, node as ExportDefaultDeclaration);
-            if (defaultDeclarationValue !== null) {
-              this.exported[defaultDeclarationValue] = ExportClosureMapping.NAMED_DEFAULT_FUNCTION;
-              code += `\nwindow['${defaultDeclarationValue}'] = ${defaultDeclarationValue}`;
-            }
-            break;
-          case EXPORT_ALL_DECLARATION:
-            // TODO(KB): This case `export * from "./import"` is not currently supported.
-            this.context.error(new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`));
-            break;
-          default:
-            this.context.error(
-              new Error(`Rollup Plugin Closure Compiler found unsupported module declaration type, ${node.type}`),
-            );
-            break;
-        }
+    exportNodes.forEach((node: ModuleDeclaration) => {
+      switch (node.type) {
+        case EXPORT_NAMED_DECLARATION:
+          const namedDeclarationValues = NamedDeclaration(this.context, node as ExportNamedDeclaration);
+          if (namedDeclarationValues !== null) {
+            this.exported = { ...this.exported, ...namedDeclarationValues };
+            // Object.keys(namedDeclarationValues).forEach(key => {
+            //   this.exported[key] = namedDeclarationValues[key];
+            // });
+          }
+          break;
+        case EXPORT_DEFAULT_DECLARATION:
+          // TODO(KB): This case is not fully supported – only named default exports.
+          // `export default Foo(){};`, or `export default Foo;`, not `export default function(){};`
+          const defaultDeclarationValue = DefaultDeclaration(this.context, node as ExportDefaultDeclaration);
+          if (defaultDeclarationValue !== null) {
+            this.exported[defaultDeclarationValue] = ExportClosureMapping.NAMED_DEFAULT_FUNCTION;
+          }
+          break;
+        case EXPORT_ALL_DECLARATION:
+          // TODO(KB): This case `export * from "./import"` is not currently supported.
+          this.context.error(new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`));
+          break;
+        default:
+          this.context.error(
+            new Error(`Rollup Plugin Closure Compiler found unsupported module declaration type, ${node.type}`),
+          );
+          break;
+      }
+    });
+
+    return void 0;
+  }
+
+  /**
+   * Before Closure Compiler modifies the source, we need to ensure it has window scoped
+   * references to the named exports. This prevents Closure from mangling their names.
+   * @param code source to parse, and modify
+   * @param id Rollup id reference to the source
+   * @return modified input source with window scoped references.
+   */
+  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+    if (this.outputOptions === null) {
+      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+    } else if (this.outputOptions.format === 'es') {
+      Object.keys(this.exported).forEach(key => {
+        code += `\nwindow['${key}'] = ${key}`;
       });
     }
 
@@ -110,14 +125,16 @@ export class ExportTransform extends Transform {
   }
 
   /**
-   * After Closure Compiler has modified the source, we need to:
-   * 1. Replace the global references we added with the intended export statements
+   * After Closure Compiler has modified the source, we need to replace the window scoped
+   * references we added with the intended export statements
    * @param code source post Closure Compiler Compilation
    * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async output(code: string, id: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions.format === 'es') {
+  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+    if (this.outputOptions === null) {
+      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+    } else if (this.outputOptions.format === 'es') {
       const exportedConstants: Array<string> = [];
 
       Object.keys(this.exported).forEach(key => {

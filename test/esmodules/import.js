@@ -24,19 +24,17 @@ import { promisify } from 'util';
 const readFile = promisify(fs.readFile);
 
 async function input(input) {
-  const ROLLUP_OUTPUT_OPTIONS = {
-    format: 'es',
-    sourcemap: true,
-  };
-
   const bundle = await rollup.rollup({
     input: `test/esmodules/fixtures/${input}.js`,
-    plugins: [compiler(ROLLUP_OUTPUT_OPTIONS)],
+    plugins: [compiler()],
   });
 
   return {
     minified: await readFile(join(`test/esmodules/fixtures/${input}.minified.js`), 'utf8'),
-    code: (await bundle.generate(ROLLUP_OUTPUT_OPTIONS)).code,
+    code: (await bundle.generate({
+      format: 'es',
+      sourcemap: true,
+    })).code,
   };
 }
 

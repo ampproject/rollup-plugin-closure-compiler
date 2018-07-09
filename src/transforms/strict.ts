@@ -28,8 +28,10 @@ export class StrictTransform extends Transform {
    * @param id Rollup Resource id
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async output(code: string, id: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions.format === 'es' && code.startsWith(STRICT_MODE_DECLARATION)) {
+  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+    if (this.outputOptions === null) {
+      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+    } else if (this.outputOptions.format === 'es' && code.startsWith(STRICT_MODE_DECLARATION)) {
       // This will only remove the top level 'use strict' directive since we cannot
       // be certain source does not contain strings with the intended content.
       code = code.slice(STRICT_MODE_DECLARATION_LENGTH, code.length);

@@ -26,9 +26,7 @@ const readFile = promisify(fs.readFile);
 async function input(input) {
   const bundle = await rollup.rollup({
     input: `test/iife/fixtures/${input}.js`,
-    plugins: [compiler({
-      format: 'iife',
-    })],
+    plugins: [compiler()],
   });
 
   return {
@@ -41,7 +39,7 @@ async function input(input) {
   };
 }
 
-test.failing('generate extern for iife name', async t => {
+test('generate extern for iife name', async t => {
   const externFixtureContent = await readFile('test/iife/fixtures/iife.extern.js', 'utf8');
   const outputOptions = {
     format: 'iife',
