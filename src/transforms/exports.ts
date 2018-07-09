@@ -74,9 +74,6 @@ export class ExportTransform extends Transform implements TransformInterface {
           const namedDeclarationValues = NamedDeclaration(this.context, node as ExportNamedDeclaration);
           if (namedDeclarationValues !== null) {
             this.exported = { ...this.exported, ...namedDeclarationValues };
-            // Object.keys(namedDeclarationValues).forEach(key => {
-            //   this.exported[key] = namedDeclarationValues[key];
-            // });
           }
           break;
         case EXPORT_DEFAULT_DECLARATION:
@@ -157,7 +154,7 @@ export class ExportTransform extends Transform implements TransformInterface {
         if (code.endsWith('\n')) {
           code = code.substr(0, code.lastIndexOf('\n'));
         }
-        code += `export {${exportedConstants.join(',')}}`;
+        code += `export {${exportedConstants.join(',')}};`;
       }
     }
 
