@@ -33,7 +33,10 @@ const readFile = promisify(fs.readFile);
  * @param options
  * @return derived CompileOptions for Closure Compiler
  */
-export const defaultCompileOptions = (transformers: Array<Transform> | null, options: OutputOptions): CompileOptions => {
+export const defaultCompileOptions = (
+  transformers: Array<Transform> | null,
+  options: OutputOptions,
+): CompileOptions => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
@@ -42,7 +45,9 @@ export const defaultCompileOptions = (transformers: Array<Transform> | null, opt
   // - When Rollup is configured to output an iife, ensure Closure Compiler does not
   // mangle the name of the iife wrapper.
 
-  const externs = transformers ? transformers.map(transform => sync(transform.extern(options))) : '';
+  const externs = transformers
+    ? transformers.map(transform => sync(transform.extern(options)))
+    : '';
   const flags: CompileOptions = {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: options.format === 'es' ? true : false,
@@ -103,23 +108,25 @@ export const transformChunk = async (
     },
   };
 
-  const compile: Promise<string> = new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
-    new compiler(compileOptions).run(async (exitCode: number, code: string, stdErr: string) => {
-      if (exitCode !== 0) {
-        reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
-      } else {
-        // Following successful Closure Compiler compilation, each transform needs an opportunity
-        // to clean up work is performed in preCompilation via postCompilation.
-        for (const transform of transforms) {
-          const result = await transform.postCompilation(code, 'none');
-          if (result && result.code) {
-            code = result.code;
+  const compile: Promise<string> = new Promise(
+    (resolve: (stdOut: string) => void, reject: (error: any) => void) => {
+      new compiler(compileOptions).run(async (exitCode: number, code: string, stdErr: string) => {
+        if (exitCode !== 0) {
+          reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
+        } else {
+          // Following successful Closure Compiler compilation, each transform needs an opportunity
+          // to clean up work is performed in preCompilation via postCompilation.
+          for (const transform of transforms) {
+            const result = await transform.postCompilation(code, 'none');
+            if (result && result.code) {
+              code = result.code;
+            }
           }
+          resolve(code);
         }
-        resolve(code);
-      }
-    });
-  });
+      });
+    },
+  );
 
   return compile.then(
     async code => {
@@ -140,9 +147,9 @@ export default function closureCompiler(compileOptions: CompileOptions = {}): Pl
       transforms = transforms || instantiateTransforms(this);
     },
     transform: async (code: string) => {
-      for (const transform of transforms) {
-        await transform.deriveFromInputSource(code, 'none');
-      }
+      await Promise.all(
+        transforms.map(transform => transform.deriveFromInputSource(code, 'none')),
+      ).then(_ => void 0);
     },
     transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>
       await transformChunk(transforms, compileOptions, code, outputOptions),
