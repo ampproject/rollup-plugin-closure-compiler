@@ -46,7 +46,7 @@ test('generate extern for iife name', async t => {
     name: 'wrapper',
   };
 
-  const transforms = instantiateTransforms({}, {entry: "only"}, outputOptions, "only");
+  const transforms = instantiateTransforms({}, { entry: 'only' }, outputOptions, 'only');
   const options = defaultCompileOptions(transforms, outputOptions);
 
   const contentMatch = options.externs.some(async externFilePath => {

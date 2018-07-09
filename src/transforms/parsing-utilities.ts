@@ -20,18 +20,26 @@ import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
 type DeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
-export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string => exportSpecifier.exported.name;
+export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
+  exportSpecifier.exported.name;
 
-export function functionDeclarationName(context: PluginContext, declaration: DeclarationsWithFunctions): string | null {
+export function functionDeclarationName(
+  context: PluginContext,
+  declaration: DeclarationsWithFunctions,
+): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'FunctionDeclaration') {
     const functionDeclaration = declaration.declaration;
 
     if (functionDeclaration === null) {
-      context.error(`Plugin requires exports to be named, 'export function Foo(){}' not 'export function(){}'`);
+      context.error(
+        `Plugin requires exports to be named, 'export function Foo(){}' not 'export function(){}'`,
+      );
     }
     // This function declaration is the export name we need to know.
-    return functionDeclaration.id && functionDeclaration.id.name ? functionDeclaration.id.name : null;
+    return functionDeclaration.id && functionDeclaration.id.name
+      ? functionDeclaration.id.name
+      : null;
   }
 
   return null;
@@ -57,7 +65,10 @@ export function NamedDeclaration(
   return null;
 }
 
-export function DefaultDeclaration(context: PluginContext, declaration: ExportDefaultDeclaration): string | null {
+export function DefaultDeclaration(
+  context: PluginContext,
+  declaration: ExportDefaultDeclaration,
+): string | null {
   if (declaration.declaration) {
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':

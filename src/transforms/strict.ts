@@ -30,7 +30,9 @@ export class StrictTransform extends Transform {
    */
   public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
-      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+      this.context.warn(
+        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
+      );
     } else if (this.outputOptions.format === 'es' && code.startsWith(STRICT_MODE_DECLARATION)) {
       // This will only remove the top level 'use strict' directive since we cannot
       // be certain source does not contain strings with the intended content.

@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import {defaultCompileOptions} from '../../dist/index';
+import { defaultCompileOptions } from '../../dist/index';
 
 test.beforeEach(t => {
   t.context = {
@@ -23,7 +23,7 @@ test.beforeEach(t => {
     esOutput: defaultCompileOptions(null, {
       format: 'es',
     }),
-  }
+  };
 });
 
 test('with no rollup configuration, language out is NO_TRANSPILE', t => {

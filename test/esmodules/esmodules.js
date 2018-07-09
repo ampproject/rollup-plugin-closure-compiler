@@ -27,9 +27,7 @@ test('esm does minify', async t => {
   const source = await readFile(join('test/esmodules/fixtures/esm.js'), 'utf8');
   const compilerBundle = await rollup({
     input: 'test/esmodules/fixtures/esm.js',
-    plugins: [
-      compiler(),
-    ],
+    plugins: [compiler()],
   });
   const compilerResults = await compilerBundle.generate({
     format: 'es',

@@ -71,7 +71,10 @@ export class ExportTransform extends Transform implements TransformInterface {
     exportNodes.forEach((node: ModuleDeclaration) => {
       switch (node.type) {
         case EXPORT_NAMED_DECLARATION:
-          const namedDeclarationValues = NamedDeclaration(this.context, node as ExportNamedDeclaration);
+          const namedDeclarationValues = NamedDeclaration(
+            this.context,
+            node as ExportNamedDeclaration,
+          );
           if (namedDeclarationValues !== null) {
             this.exported = { ...this.exported, ...namedDeclarationValues };
           }
@@ -79,18 +82,27 @@ export class ExportTransform extends Transform implements TransformInterface {
         case EXPORT_DEFAULT_DECLARATION:
           // TODO(KB): This case is not fully supported – only named default exports.
           // `export default Foo(){};`, or `export default Foo;`, not `export default function(){};`
-          const defaultDeclarationValue = DefaultDeclaration(this.context, node as ExportDefaultDeclaration);
+          const defaultDeclarationValue = DefaultDeclaration(
+            this.context,
+            node as ExportDefaultDeclaration,
+          );
           if (defaultDeclarationValue !== null) {
             this.exported[defaultDeclarationValue] = ExportClosureMapping.NAMED_DEFAULT_FUNCTION;
           }
           break;
         case EXPORT_ALL_DECLARATION:
           // TODO(KB): This case `export * from "./import"` is not currently supported.
-          this.context.error(new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`));
+          this.context.error(
+            new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
+          );
           break;
         default:
           this.context.error(
-            new Error(`Rollup Plugin Closure Compiler found unsupported module declaration type, ${node.type}`),
+            new Error(
+              `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
+                node.type
+              }`,
+            ),
           );
           break;
       }
@@ -108,7 +120,9 @@ export class ExportTransform extends Transform implements TransformInterface {
    */
   public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
-      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+      this.context.warn(
+        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
+      );
     } else if (this.outputOptions.format === 'es') {
       Object.keys(this.exported).forEach(key => {
         code += `\nwindow['${key}'] = ${key}`;
@@ -130,7 +144,9 @@ export class ExportTransform extends Transform implements TransformInterface {
    */
   public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
-      this.context.warn('Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.');
+      this.context.warn(
+        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
+      );
     } else if (this.outputOptions.format === 'es') {
       const exportedConstants: Array<string> = [];
 
