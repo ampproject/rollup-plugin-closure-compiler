@@ -9,7 +9,6 @@
   },
   "author": "The AMP HTML Authors",
   "engines": {
-    "yarn": ">=1",
     "node": ">=8"
   },
   "keywords": [
@@ -17,8 +16,8 @@
   ],
   "license": "Apache-2.0",
   "scripts": {
-    "pretest": "yarn build",
-    "test": "ava test/*.js",
+    "pretest": "npm run build",
+    "test": "ava test/**/*.js",
     "build": "rimraf dist && tsc -p tsconfig.json",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
@@ -27,28 +26,28 @@
     "temp-write": "^3.4.0"
   },
   "devDependencies": {
+    "@types/estree": "^0.0.39",
     "@types/google-closure-compiler": "^0.0.18",
     "@types/temp-write": "^3.3.0",
-    "ava": "^0.25.0",
-    "husky": "1.0.0-rc.9",
+    "ava": "1.0.0-beta.6",
+    "husky": "1.0.0-rc.13",
     "lint-staged": "^7.2.0",
     "prettier": "^1.13.5",
     "rimraf": "^2.6.2",
     "rollup": "^0.62.0",
-    "sourcemap-validator": "^1.1.0",
-    "tslint": "5.10.0",
+    "tslint": "^5.10.0",
     "typescript": "^2.9.2"
   },
   "lint-staged": {
     "*.ts": [
-      "yarn lint --fix",
+      "npm run lint --fix",
       "prettier --config .prettierrc --write",
       "git add"
     ]
   },
   "husky": {
     "hooks": {
-      "pre-push": "yarn test",
+      "pre-push": "npm run test",
       "pre-commit": "lint-staged"
     }
   }
