@@ -87,8 +87,9 @@ export default class ExportTransform extends Transform implements TransformInter
             node as ExportDefaultDeclaration,
           );
           if (defaultDeclarationValue !== null) {
-            this.exported[defaultDeclarationValue] = ExportClosureMapping.NAMED_DEFAULT_FUNCTION;
+            this.exported = { ...this.exported, ...defaultDeclarationValue };
           }
+          console.log(this.exported);
           break;
         case EXPORT_ALL_DECLARATION:
           // TODO(KB): This case `export * from "./import"` is not currently supported.
@@ -156,15 +157,26 @@ export default class ExportTransform extends Transform implements TransformInter
             code = code.replace(`window.${key}=function`, `export function ${key}`);
             break;
           case ExportClosureMapping.NAMED_CLASS:
-            const match = new RegExp(`window.${key}=(\\w+);`).exec(code);
-            if (match && match.length > 0) {
+            const namedClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
+            if (namedClassMatch && namedClassMatch.length > 0) {
               // Remove the declaration on window scope, i.e. `window.Exported=a;`
               // Replace it with an export statement `export {a as Exported};`
-              code = code.replace(match[0], `export {${match[1]} as ${key}};`);
+              code = code.replace(namedClassMatch[0], `export {${namedClassMatch[1]} as ${key}};`);
             }
             break;
           case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
             code = code.replace(`window.${key}=function`, `export default function ${key}`);
+            break;
+          case ExportClosureMapping.NAMED_DEFAULT_CLASS:
+            const namedDefaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
+            if (namedDefaultClassMatch && namedDefaultClassMatch.length > 0) {
+              // Remove the declaration on window scope, i.e. `window.Exported=a;`
+              // Replace it with an export statement `export default a;`
+              code = code.replace(
+                namedDefaultClassMatch[0],
+                `export default ${namedDefaultClassMatch[1]};`,
+              );
+            }
             break;
           case ExportClosureMapping.NAMED_CONSTANT:
             exportedConstants.push(key);

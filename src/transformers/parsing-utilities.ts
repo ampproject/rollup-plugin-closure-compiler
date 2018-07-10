@@ -101,13 +101,32 @@ export function NamedDeclaration(
 export function DefaultDeclaration(
   context: PluginContext,
   declaration: ExportDefaultDeclaration,
-): string | null {
+): ExportNameToClosureMapping | null {
   if (declaration.declaration) {
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
-        return functionDeclarationName(context, declaration);
+        const functionName = functionDeclarationName(context, declaration);
+        if (functionName !== null) {
+          return {
+            [functionName]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+          };
+        }
+        break;
       case 'Identifier':
-        return declaration.declaration.name || null;
+        if (declaration.declaration.name) {
+          return {
+            [declaration.declaration.name]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+          };
+        }
+        break;
+      case 'ClassDeclaration':
+        const className = classDeclarationName(context, declaration);
+        if (className !== null) {
+          return {
+            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+          };
+        }
+        break;
     }
   }
 

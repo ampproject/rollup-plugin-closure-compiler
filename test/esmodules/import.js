@@ -61,3 +61,9 @@ test('export class exports the class', async t => {
 
   t.is(code, minified);
 });
+
+test('export default class exports the class', async t => {
+  const { minified, code } = await input('export-default-class');
+
+  t.is(code, minified);
+});
