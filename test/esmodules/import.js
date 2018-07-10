@@ -55,3 +55,9 @@ test('export const values exports the const values', async t => {
 
   t.is(code, minified);
 });
+
+test('export class exports the class', async t => {
+  const { minified, code } = await input('export-class');
+
+  t.is(code, minified);
+});

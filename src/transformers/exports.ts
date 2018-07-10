@@ -155,13 +155,25 @@ export default class ExportTransform extends Transform implements TransformInter
           case ExportClosureMapping.NAMED_FUNCTION:
             code = code.replace(`window.${key}=function`, `export function ${key}`);
             break;
+          case ExportClosureMapping.NAMED_CLASS:
+            const match = new RegExp(`window.${key}=(\\w+);`).exec(code);
+            if (match && match.length > 0) {
+              // Remove the declaration on window scope, i.e. `window.Exported=a;`
+              // Replace it with an export statement `export {a as Exported};`
+              code = code.replace(match[0], `export {${match[1]} as ${key}};`);
+            }
+            break;
           case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
             code = code.replace(`window.${key}=function`, `export default function ${key}`);
             break;
           case ExportClosureMapping.NAMED_CONSTANT:
-          default:
             exportedConstants.push(key);
             code = code.replace(`window.${key}=`, `const ${key}=`);
+            break;
+          default:
+            this.context.warn(
+              'Rollup Plugin Closure Compiler could not restore all exports statements.',
+            );
             break;
         }
       });

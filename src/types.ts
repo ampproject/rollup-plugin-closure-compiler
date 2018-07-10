@@ -30,9 +30,10 @@ export const ALL_EXPORT_TYPES = [
 
 export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,
-  NAMED_DEFAULT_FUNCTION = 1,
-  NAMED_CONSTANT = 2,
-  DEFAULT = 3,
+  NAMED_CLASS = 1,
+  NAMED_DEFAULT_FUNCTION = 2,
+  NAMED_CONSTANT = 3,
+  DEFAULT = 4,
 }
 export interface ExportNameToClosureMapping {
   [key: string]: ExportClosureMapping;

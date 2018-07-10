@@ -48,14 +48,44 @@ export function functionDeclarationName(
   return null;
 }
 
+export function classDeclarationName(
+  context: PluginContext,
+  declaration: DeclarationsWithFunctions,
+): string | null {
+  // For the Declaration passed, there can be a function declaration.
+  if (declaration.declaration && declaration.declaration.type === 'ClassDeclaration') {
+    const classDeclaration = declaration.declaration;
+
+    if (
+      classDeclaration === null ||
+      classDeclaration.id === null ||
+      classDeclaration.id.name === null
+    ) {
+      context.error(
+        `Plugin requires exports to be named, 'export class Foo(){}' not 'export class(){}'`,
+      );
+    } else {
+      // This class declaration is the export name we need to know.
+      return classDeclaration.id.name;
+    }
+  }
+
+  return null;
+}
+
 export function NamedDeclaration(
   context: PluginContext,
   declaration: ExportNamedDeclaration,
 ): ExportNameToClosureMapping | null {
-  const value = functionDeclarationName(context, declaration);
-  if (value !== null) {
+  const functionName = functionDeclarationName(context, declaration);
+  const className = classDeclarationName(context, declaration);
+  if (functionName !== null) {
     return {
-      [value]: ExportClosureMapping.NAMED_FUNCTION,
+      [functionName]: ExportClosureMapping.NAMED_FUNCTION,
+    };
+  } else if (className !== null) {
+    return {
+      [className]: ExportClosureMapping.NAMED_CLASS,
     };
   } else if (declaration.specifiers) {
     const exportMap: ExportNameToClosureMapping = {};
