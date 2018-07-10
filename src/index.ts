@@ -14,76 +14,59 @@
  * limitations under the License.
  */
 
-import { compiler, CompileOptions } from 'google-closure-compiler';
-import { sync } from 'temp-write';
-import { readFileSync } from 'fs';
-import { OutputOptions, RawSourceMap, Plugin } from 'rollup';
+import { CompileOptions } from 'google-closure-compiler';
+import * as fs from 'fs';
+import { promisify } from 'util';
+import { OutputOptions, RawSourceMap, Plugin, OutputChunk } from 'rollup';
+import compiler from './compiler';
+import options from './options';
+import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
+import { Transform } from './types';
 
-export const defaultCompileOptions = (outputOptions: OutputOptions): CompileOptions => {
-  // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
-  // - Users of Rollup tend to transpile their code before handing it to a minifier,
-  // so no transpile is default.
-  // - When Rollup output is set to "es" it is expected the code will live in a ES Module,
-  // so safely be more aggressive in minification.
-  // - When Rollup is configured to output an iife, ensure Closure Compiler does not
-  // mangle the name of the iife wrapper.
+const readFile = promisify(fs.readFile);
 
-  let externs: string = `
 /**
- * @fileoverview Externs built via derived configuration from Rollup or input code.
- * @externs
- */`;
+ * Transform the tree-shaken code from Rollup with Closure Compiler (with derived configuration and transforms)
+ * @param compileOptions Closure Compiler compilation options from Rollup configuration.
+ * @param transforms Transforms to apply to source followin Closure Compiler completion.
+ * @param code Source to compile.
+ * @param outputOptions Rollup Output Options.
+ * @return Closure Compiled form of the Rollup Chunk
+ */
+export const transformChunk = async (
+  transforms: Array<Transform>,
+  requestedCompileOptions: CompileOptions,
+  sourceCode: string,
+  outputOptions: OutputOptions,
+): Promise<{ code: string; map: RawSourceMap } | void> => {
+  const code = await preCompilation(sourceCode, outputOptions, transforms);
+  const [compileOptions, mapFile] = options(
+    requestedCompileOptions,
+    outputOptions,
+    code,
+    transforms,
+  );
 
-  const options: CompileOptions = {
-    language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: outputOptions.format === 'es' ? true : false,
-    warning_level: 'QUIET',
-  };
-  if (outputOptions.format === 'iife' && outputOptions.name) {
-    externs = `${externs}\nvar ${outputOptions.name} = function(){};`;
-
-    options['externs'] = sync(externs);
-  }
-
-  return options;
+  return compiler(compileOptions, transforms).then(
+    async code => {
+      return { code, map: JSON.parse(await readFile(mapFile, 'utf8')) };
+    },
+    (error: Error) => {
+      throw error;
+    },
+  );
 };
 
-export default function closureCompiler(compileOptions: CompileOptions = {}): Plugin {
+export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+  let transforms: Array<Transform>;
+
   return {
     name: 'closure-compiler',
-    transformBundle: (
-      code: string,
-      outputOptions: OutputOptions,
-    ): Promise<{ code: string; map: RawSourceMap } | void> => {
-      const temp = {
-        js: sync(code),
-        map: sync(''),
-      };
-
-      compileOptions = Object.assign(defaultCompileOptions(outputOptions), compileOptions, {
-        js: temp.js,
-        create_source_map: temp.map,
-      });
-
-      const compile: Promise<string> = new Promise((resolve, reject) => {
-        new compiler(compileOptions).run((exitCode: number, stdOut: string, stdErr: string) => {
-          if (exitCode !== 0) {
-            reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
-          } else {
-            resolve(stdOut);
-          }
-        });
-      });
-
-      return compile.then(
-        stdOut => {
-          const sourceMap: RawSourceMap = JSON.parse(readFileSync(temp.map, 'utf8'));
-          return { code: stdOut, map: sourceMap };
-        },
-        (error: Error) => {
-          throw error;
-        },
-      );
+    load() {
+      transforms = transforms || createTransforms(this);
     },
+    transform: async (code: string) => deriveFromInputSource(code, transforms),
+    transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>
+      await transformChunk(transforms, requestedCompileOptions, code, outputOptions),
   };
 }

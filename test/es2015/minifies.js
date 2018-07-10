@@ -15,22 +15,25 @@
  */
 
 import test from 'ava';
-import compiler from '../dist/index';
-import * as rollup from 'rollup';
-import validate from 'sourcemap-validator';
-import { readFileSync } from 'fs';
+import compiler from '../../dist/index';
+import { rollup } from 'rollup';
+import * as fs from 'fs';
 import { join } from 'path';
+import { promisify } from 'util';
 
-test.failing('sourcemap is accurate for es 2015 input', async t => {
-  const source = readFileSync(join('test/input/es2015.js'), 'utf8');
-  const bundle = await rollup.rollup({
-    input: 'test/input/es2015.js',
-    plugins: [compiler()]
+const readFile = promisify(fs.readFile);
+
+test('es2015 does minify', async t => {
+  const source = await readFile(join('test/es2015/fixtures/es2015.js'), 'utf8');
+  const compilerBundle = await rollup({
+    input: 'test/es2015/fixtures/es2015.js',
+    plugins: [compiler()],
   });
-  const { code, map } = await bundle.generate({
+
+  const compilerResults = await compilerBundle.generate({
     format: 'es',
     sourcemap: true,
   });
 
-  t.notThrows(validate(code, map.toString(), source));
+  t.truthy(compilerResults.code.length < source.length);
 });
