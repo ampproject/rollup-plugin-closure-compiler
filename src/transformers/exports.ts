@@ -160,8 +160,9 @@ export default class ExportTransform extends Transform implements TransformInter
             const namedClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
             if (namedClassMatch && namedClassMatch.length > 0) {
               // Remove the declaration on window scope, i.e. `window.Exported=a;`
-              // Replace it with an export statement `export {a as Exported};`
-              code = code.replace(namedClassMatch[0], `export {${namedClassMatch[1]} as ${key}};`);
+              code = code.replace(namedClassMatch[0], '');
+              // Store a new export constant to output at the end. `a as Exported`
+              exportedConstants.push(`${namedClassMatch[1]} as ${key}`);
             }
             break;
           case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
@@ -170,7 +171,7 @@ export default class ExportTransform extends Transform implements TransformInter
           case ExportClosureMapping.NAMED_DEFAULT_CLASS:
             const namedDefaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
             if (namedDefaultClassMatch && namedDefaultClassMatch.length > 0) {
-              // Remove the declaration on window scope, i.e. `window.Exported=a;`
+              // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
               // Replace it with an export statement `export default a;`
               code = code.replace(
                 namedDefaultClassMatch[0],
@@ -179,8 +180,11 @@ export default class ExportTransform extends Transform implements TransformInter
             }
             break;
           case ExportClosureMapping.NAMED_CONSTANT:
-            exportedConstants.push(key);
+            // Remove the declaration on the window scope, i.e. `window.ExportedThree=value`
+            // Replace it with a const declaration, i.e `const ExportedThree=value`
             code = code.replace(`window.${key}=`, `const ${key}=`);
+            // Store a new export constant to output at the end, i.e `ExportedThree`
+            exportedConstants.push(key);
             break;
           default:
             this.context.warn(
@@ -191,9 +195,11 @@ export default class ExportTransform extends Transform implements TransformInter
       });
 
       if (exportedConstants.length > 0) {
+        // Remove the newline at the end since we are going to append exports.
         if (code.endsWith('\n')) {
           code = code.substr(0, code.lastIndexOf('\n'));
         }
+        // Append the exports that were gathered, i.e `export {a as Exported, ExportedThree};`
         code += `export {${exportedConstants.join(',')}};`;
       }
     }
