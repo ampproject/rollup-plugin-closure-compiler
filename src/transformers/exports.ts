@@ -89,7 +89,6 @@ export default class ExportTransform extends Transform implements TransformInter
           if (defaultDeclarationValue !== null) {
             this.exported = { ...this.exported, ...defaultDeclarationValue };
           }
-          console.log(this.exported);
           break;
         case EXPORT_ALL_DECLARATION:
           // TODO(KB): This case `export * from "./import"` is not currently supported.
