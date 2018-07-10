@@ -15,9 +15,19 @@
  */
 
 import { Transform } from './types';
-import { OutputOptions } from 'rollup';
+import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
+
+/**
+ * Checks if output format is ESM
+ * @param format
+ * @return boolean
+ */
+export const isESMFormat = (format?: ModuleFormat | 'esm'): boolean => {
+  // TODO: remove `| 'esm'` when rollup upgrades its typings
+  return format === 'esm' || format === 'es';
+};
 
 /**
  * Generate default Closure Compiler CompileOptions an author can override if they wish.
@@ -44,7 +54,7 @@ export const defaults = (
 
   return {
     language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: options.format === 'es' ? true : false,
+    assume_function_wrapper: isESMFormat(options.format) ? true : false,
     warning_level: 'QUIET',
     externs,
   };

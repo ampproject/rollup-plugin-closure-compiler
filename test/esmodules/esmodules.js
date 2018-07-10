@@ -23,18 +23,23 @@ import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
 
-test('esm does minify', async t => {
-  const source = await readFile(join('test/esmodules/fixtures/esm.js'), 'utf8');
-  const compilerBundle = await rollup({
-    input: 'test/esmodules/fixtures/esm.js',
-    plugins: [compiler()],
-  });
-  const compilerResults = await compilerBundle.generate({
-    format: 'es',
-    sourcemap: true,
-  });
+const createTests = format => {
+  test(`${format} - does minify`, async t => {
+    const source = await readFile(join('test/esmodules/fixtures/esm.js'), 'utf8');
+    const compilerBundle = await rollup({
+      input: 'test/esmodules/fixtures/esm.js',
+      plugins: [compiler()],
+    });
+    const compilerResults = await compilerBundle.generate({
+      format,
+      sourcemap: true,
+    });
 
-  t.truthy(compilerResults.code.length < source.length);
-});
+    t.truthy(compilerResults.code.length < source.length);
+  });
+}
+
+createTests('esm');
+createTests('es');
 
 // TODO(KB): Tests verifying exported code contains the correct exported members via acorn AST parse.
