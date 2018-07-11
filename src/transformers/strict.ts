@@ -15,6 +15,7 @@
  */
 
 import { Transform } from '../types';
+import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
 
 const STRICT_MODE_DECLARATION = `'use strict';`;
@@ -33,7 +34,7 @@ export default class StrictTransform extends Transform {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
-    } else if (this.outputOptions.format === 'es' && code.startsWith(STRICT_MODE_DECLARATION)) {
+    } else if (isESMFormat(this.outputOptions.format) && code.startsWith(STRICT_MODE_DECLARATION)) {
       // This will only remove the top level 'use strict' directive since we cannot
       // be certain source does not contain strings with the intended content.
       code = code.slice(STRICT_MODE_DECLARATION_LENGTH, code.length);
