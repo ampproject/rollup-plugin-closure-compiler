@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../../transpile/index.js';
+import compiler from '../../transpile/index';
 import { rollup } from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
