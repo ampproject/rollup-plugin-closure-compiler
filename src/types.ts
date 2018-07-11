@@ -32,9 +32,11 @@ export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,
   NAMED_CLASS = 1,
   NAMED_DEFAULT_FUNCTION = 2,
-  NAMED_DEFAULT_CLASS = 3,
-  NAMED_CONSTANT = 4,
-  DEFAULT = 5,
+  DEFAULT_FUNCTION = 3,
+  NAMED_DEFAULT_CLASS = 4,
+  DEFAULT_CLASS = 5,
+  NAMED_CONSTANT = 6,
+  DEFAULT = 7,
 }
 export interface ExportNameToClosureMapping {
   [key: string]: ExportClosureMapping;

@@ -24,10 +24,12 @@
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
+    "camelcase": "^5.0.0",
     "google-closure-compiler": "^20180610.0.2",
     "temp-write": "^3.4.0"
   },
   "devDependencies": {
+    "@types/camelcase": "^4.1.0",
     "@types/estree": "^0.0.39",
     "@types/google-closure-compiler": "^0.0.18",
     "@types/temp-write": "^3.3.0",

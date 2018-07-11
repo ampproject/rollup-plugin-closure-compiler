@@ -65,7 +65,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     load() {
       transforms = transforms || createTransforms(this);
     },
-    transform: async (code: string) => deriveFromInputSource(code, transforms),
+    transform: async (code: string, id: string) => deriveFromInputSource(code, id, transforms),
     transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>
       await transformChunk(transforms, requestedCompileOptions, code, outputOptions),
   };

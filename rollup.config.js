@@ -16,7 +16,7 @@
 
 export default {
   input: './transpile/index.js',
-  external: ['util', 'fs', 'google-closure-compiler', 'temp-write'],
+  external: ['util', 'fs', 'path', 'google-closure-compiler', 'temp-write', 'camelcase'],
   output: [
     {
       file: './dist/index.mjs',

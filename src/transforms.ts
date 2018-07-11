@@ -78,13 +78,15 @@ export async function postCompilation(code: string, transforms: Array<Transform>
 /**
  * Run each transform's `deriveFromInputSource` phase in parallel.
  * @param code source code to derive information from, pre Closure Compiler minification.
+ * @param id Rollup identifier for this input source.
  * @param transforms Transforms to execute.
  */
 export async function deriveFromInputSource(
   code: string,
+  id: string,
   transforms: Array<Transform>,
 ): Promise<void> {
-  await Promise.all(
-    transforms.map(transform => transform.deriveFromInputSource(code, 'none')),
-  ).then(_ => void 0);
+  await Promise.all(transforms.map(transform => transform.deriveFromInputSource(code, id))).then(
+    _ => void 0,
+  );
 }
