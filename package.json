@@ -28,7 +28,6 @@
     "temp-write": "^3.4.0"
   },
   "devDependencies": {
-    "@types/camelcase": "^4.1.0",
     "@types/estree": "^0.0.39",
     "@types/google-closure-compiler": "^0.0.18",
     "@types/temp-write": "^3.3.0",
