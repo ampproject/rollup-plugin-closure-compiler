@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext } from 'rollup';
+import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
 import ExportTransform from './transformers/exports';
@@ -24,11 +24,17 @@ import StrictTransform from './transformers/strict';
  * Instantiate transform class instances for the plugin invocation.
  * @param context Plugin context to bind for each transform instance.
  * @param options Rollup input options
- * @param id Rollup's id entry for this source.
  * @return Instantiated transform class instances for the given entry point.
  */
-export const createTransforms = (context: PluginContext): Array<Transform> => {
-  return [new IifeTransform(context), new ExportTransform(context), new StrictTransform(context)];
+export const createTransforms = (
+  context: PluginContext,
+  options: InputOptions,
+): Array<Transform> => {
+  return [
+    new IifeTransform(context, options),
+    new ExportTransform(context, options),
+    new StrictTransform(context, options),
+  ];
 };
 
 /**

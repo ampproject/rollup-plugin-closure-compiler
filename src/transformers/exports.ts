@@ -66,48 +66,50 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return Promise containing the modified source
    */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    const program = this.context.parse(code, {});
-    const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
+    if (this.isEntryPoint(id)) {
+      const program = this.context.parse(code, {});
+      const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
 
-    exportNodes.forEach((node: ModuleDeclaration) => {
-      switch (node.type) {
-        case EXPORT_NAMED_DECLARATION:
-          const namedDeclarationValues = NamedDeclaration(
-            this.context,
-            id,
-            node as ExportNamedDeclaration,
-          );
-          if (namedDeclarationValues !== null) {
-            this.exported = { ...this.exported, ...namedDeclarationValues };
-          }
-          break;
-        case EXPORT_DEFAULT_DECLARATION:
-          const defaultDeclarationValue = DefaultDeclaration(
-            this.context,
-            id,
-            node as ExportDefaultDeclaration,
-          );
-          if (defaultDeclarationValue !== null) {
-            this.exported = { ...this.exported, ...defaultDeclarationValue };
-          }
-          break;
-        case EXPORT_ALL_DECLARATION:
-          // TODO(KB): This case `export * from "./import"` is not currently supported.
-          this.context.error(
-            new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
-          );
-          break;
-        default:
-          this.context.error(
-            new Error(
-              `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
-                node.type
-              }`,
-            ),
-          );
-          break;
-      }
-    });
+      exportNodes.forEach((node: ModuleDeclaration) => {
+        switch (node.type) {
+          case EXPORT_NAMED_DECLARATION:
+            const namedDeclarationValues = NamedDeclaration(
+              this.context,
+              id,
+              node as ExportNamedDeclaration,
+            );
+            if (namedDeclarationValues !== null) {
+              this.exported = { ...this.exported, ...namedDeclarationValues };
+            }
+            break;
+          case EXPORT_DEFAULT_DECLARATION:
+            const defaultDeclarationValue = DefaultDeclaration(
+              this.context,
+              id,
+              node as ExportDefaultDeclaration,
+            );
+            if (defaultDeclarationValue !== null) {
+              this.exported = { ...this.exported, ...defaultDeclarationValue };
+            }
+            break;
+          case EXPORT_ALL_DECLARATION:
+            // TODO(KB): This case `export * from "./import"` is not currently supported.
+            this.context.error(
+              new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
+            );
+            break;
+          default:
+            this.context.error(
+              new Error(
+                `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
+                  node.type
+                }`,
+              ),
+            );
+            break;
+        }
+      });
+    }
 
     return void 0;
   }

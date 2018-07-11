@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { OutputOptions, TransformSourceDescription, PluginContext } from 'rollup';
+import * as path from 'path';
+import {
+  OutputOptions,
+  TransformSourceDescription,
+  PluginContext,
+  InputOptions,
+  InputOption,
+} from 'rollup';
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#exports
 export const EXPORT_NAMED_DECLARATION = 'ExportNamedDeclaration';
@@ -51,10 +58,12 @@ export interface TransformInterface {
 }
 export class Transform implements TransformInterface {
   protected context: PluginContext;
+  protected inputOptions: InputOptions;
   public outputOptions: OutputOptions | null;
 
-  constructor(context: PluginContext) {
+  constructor(context: PluginContext, inputOptions: InputOptions) {
     this.context = context;
+    this.inputOptions = inputOptions;
   }
 
   public extern(options: OutputOptions): string {
@@ -74,5 +83,21 @@ export class Transform implements TransformInterface {
     return {
       code,
     };
+  }
+
+  protected isEntryPoint(id: string) {
+    const inputs = (input: InputOption): Array<string> => {
+      if (typeof this.inputOptions.input === 'string') {
+        return [this.inputOptions.input];
+      } else if (typeof this.inputOptions.input === 'object') {
+        return Object.values(this.inputOptions.input);
+      } else {
+        return this.inputOptions.input;
+      }
+    };
+
+    return inputs(this.inputOptions.input)
+      .map(input => path.resolve(input))
+      .includes(id);
   }
 }
