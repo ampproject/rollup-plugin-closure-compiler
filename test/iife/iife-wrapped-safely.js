@@ -15,9 +15,9 @@
  */
 
 import test from 'ava';
-import compiler from '../../dist/index';
-import { createTransforms } from '../../dist/transforms';
-import { defaults } from '../../dist/options';
+import compiler from '../../transpile/index';
+import { createTransforms } from '../../transpile/transforms';
+import { defaults } from '../../transpile/options';
 import * as rollup from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';

@@ -33,7 +33,7 @@ const readFile = promisify(fs.readFile);
  * @param outputOptions Rollup Output Options.
  * @return Closure Compiled form of the Rollup Chunk
  */
-export const transformChunk = async (
+const transformChunk = async (
   transforms: Array<Transform>,
   requestedCompileOptions: CompileOptions,
   sourceCode: string,

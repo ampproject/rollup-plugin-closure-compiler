@@ -4,7 +4,7 @@
     "lib": [
       "es2017",
     ],
-    "outDir": "dist",
+    "outDir": "transpile",
     "sourceMap": true,
     "moduleResolution": "node",
     "target": "esnext",
@@ -15,7 +15,7 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    "module": "commonjs"
+    "module": "esnext"
   },
   "include": [
     "./**/*.ts"
