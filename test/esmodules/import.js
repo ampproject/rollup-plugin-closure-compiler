@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../../dist/index';
+import compiler from '../../transpile/index';
 import * as rollup from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';

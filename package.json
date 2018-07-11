@@ -17,7 +17,7 @@
   ],
   "license": "Apache-2.0",
   "scripts": {
-    "pretest": "npm run build",
+    "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
     "test": "ava test/**/*.js",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",

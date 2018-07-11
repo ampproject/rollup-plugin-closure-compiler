@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import { defaults } from '../../dist/options';
+import { defaults } from '../../transpile/options';
 
 test.beforeEach(t => {
   t.context = {
