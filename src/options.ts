@@ -38,6 +38,7 @@ export const isESMFormat = (format?: ModuleFormat | 'esm'): boolean => {
  */
 export const defaults = (
   options: OutputOptions,
+  providedExterns: Array<string>,
   transformers: Array<Transform> | null,
 ): CompileOptions => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
@@ -49,13 +50,16 @@ export const defaults = (
   // mangle the name of the iife wrapper.
 
   const externs = transformers
-    ? transformers.map(transform => sync(transform.extern(options)))
-    : '';
+    ? transformers.map(transform => sync(transform.extern(options))).concat(providedExterns)
+    : providedExterns.length > 0
+      ? providedExterns
+      : '';
 
   return {
     language_out: 'NO_TRANSPILE',
     assume_function_wrapper: isESMFormat(options.format) ? true : false,
     warning_level: 'QUIET',
+    module_resolution: 'NODE',
     externs,
   };
 };
@@ -76,10 +80,24 @@ export default function(
   transforms: Array<Transform> | null,
 ): [CompileOptions, string] {
   const mapFile = sync('');
+  const externs = (compileOptions: CompileOptions): Array<string> => {
+    if ('externs' in compileOptions) {
+      switch (typeof compileOptions.externs) {
+        case 'boolean':
+          return [];
+        case 'string':
+          return [compileOptions.externs as string];
+        default:
+          return compileOptions.externs as Array<string>;
+      }
+    }
+
+    return [];
+  };
 
   return [
     {
-      ...defaults(outputOptions, transforms),
+      ...defaults(outputOptions, externs(compileOptions), transforms),
       ...compileOptions,
       js: sync(code),
       create_source_map: mapFile,

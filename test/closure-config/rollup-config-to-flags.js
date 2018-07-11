@@ -19,10 +19,10 @@ import { defaults } from '../../transpile/options';
 
 test.beforeEach(t => {
   t.context = {
-    default: defaults({}, null),
+    default: defaults({}, [], null),
     esOutput: defaults({
       format: 'es',
-    }, null),
+    }, [], null),
   };
 });
 

@@ -35,7 +35,7 @@ const readFile = promisify(fs.readFile);
  */
 const transformChunk = async (
   transforms: Array<Transform>,
-  requestedCompileOptions: CompileOptions,
+  requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: RawSourceMap } | void> => {

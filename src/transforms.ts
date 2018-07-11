@@ -18,6 +18,7 @@ import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
 import ExportTransform from './transformers/exports';
+import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
 
 /**
@@ -33,6 +34,7 @@ export const createTransforms = (
   return [
     new IifeTransform(context, options),
     new ExportTransform(context, options),
+    new ImportTransform(context, options),
     new StrictTransform(context, options),
   ];
 };

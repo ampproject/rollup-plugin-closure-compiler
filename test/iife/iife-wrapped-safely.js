@@ -49,7 +49,7 @@ test('generate extern for iife name', async t => {
   };
 
   const transforms = createTransforms({});
-  const options = defaults(outputOptions, transforms);
+  const options = defaults(outputOptions, [], transforms);
 
   const contentMatch = options.externs.some(async externFilePath => {
     const fileContent = await readFile(externFilePath, 'utf8');
