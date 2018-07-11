@@ -2,3 +2,5 @@ node_modules/*
 yarn-error.log
 .vscode/*
 .DS_Store
+dist/
+transpile/
