@@ -17,6 +17,7 @@
 import { ModuleDeclaration, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
 import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
+import { isESMFormat } from '../options';
 import {
   ExportNameToClosureMapping,
   ALL_EXPORT_TYPES,
@@ -30,13 +31,13 @@ import {
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
-* This extern contains top level exported members. 
+* This extern contains top level exported members.
 * @externs
 */
 `;
 
 /**
- * This Transform will apply only if the Rollup configuration is for 'es' output.
+ * This Transform will apply only if the Rollup configuration is for 'esm' output.
  *
  * In order to preserve the export statements:
  * 1. Create extern definitions for them (to keep them their names from being mangled).
@@ -48,7 +49,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
   public extern(options: OutputOptions): string {
     let content = HEADER;
-    if (options.format === 'es') {
+    if (isESMFormat(options.format)) {
       Object.keys(this.exported).forEach(key => {
         content += `window['${key}'] = ${key};\n`;
       });
@@ -123,7 +124,7 @@ export default class ExportTransform extends Transform implements TransformInter
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
-    } else if (this.outputOptions.format === 'es') {
+    } else if (isESMFormat(this.outputOptions.format)) {
       Object.keys(this.exported).forEach(key => {
         code += `\nwindow['${key}'] = ${key}`;
       });
@@ -147,7 +148,7 @@ export default class ExportTransform extends Transform implements TransformInter
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
-    } else if (this.outputOptions.format === 'es') {
+    } else if (isESMFormat(this.outputOptions.format)) {
       const exportedConstants: Array<string> = [];
 
       Object.keys(this.exported).forEach(key => {
