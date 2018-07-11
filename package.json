@@ -24,7 +24,6 @@
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
-    "camelcase": "^5.0.0",
     "google-closure-compiler": "^20180610.0.2",
     "temp-write": "^3.4.0"
   },

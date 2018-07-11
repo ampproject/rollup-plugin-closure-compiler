@@ -16,7 +16,6 @@
 
 import { ExportSpecifier, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
 import * as path from 'path';
-import camelcase from 'camelcase';
 import { PluginContext } from 'rollup';
 import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
@@ -24,6 +23,12 @@ type DeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclarati
 
 export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
   exportSpecifier.exported.name;
+
+const camelcase = (input: string): string =>
+  input
+    .replace(/^[_.\- ]+/, '')
+    .toLowerCase()
+    .replace(/[_.\- ]+(\w|$)/g, (m, p1) => p1.toUpperCase());
 
 export function functionDeclarationName(
   context: PluginContext,
