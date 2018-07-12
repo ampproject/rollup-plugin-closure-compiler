@@ -44,7 +44,7 @@ export default class StrictTransform extends Transform {
 
       return {
         code: source.toString(),
-        map: source.toString(),
+        map: source.generateMap(),
       };
     }
 
