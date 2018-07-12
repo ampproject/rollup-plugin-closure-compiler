@@ -14,31 +14,98 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
+import {
+  Transform,
+  ALL_IMPORT_DECLARATIONS,
+  IMPORT_DECLARATION,
+  ImportNameToClosureMapping,
+} from '../types';
+import { literalName } from './parsing-utilities';
+import { TransformSourceDescription } from 'rollup';
+import MagicString from 'magic-string';
 
-// Note for future self implementing.
-// When an import is for something included in the 'externals' configuration from Rollup.
-// We need to remove the import statement from the source.
-/*
-import React from 'react';
-
-export class MyComponent extends React.Component {
-  render() {
-    return React.createElement("div", null, this.props.string);
-  }
-}
-*/
-// Here we need to remove "react" import
-
-// Also, we likely need to generate an extern for all the usages of the import across the files it's imported into.
-// for this example... UNLESS ONE IS PASSED TO THE PLUGIN INVOCATION FOR THE IMPORT.
-// var React = {}
-// React.Component = function() {};
-// React.createElement = function(a, b, c);
 export default class ImportTransform extends Transform {
+  private importedExternals: ImportNameToClosureMapping = {};
+
+  /**
+   * Rollup allows configuration for 'external' imports.
+   * These are items that will not be bundled with the resulting code, but instead are expected
+   * to already be available via `import` or other means.
+   * @param source parsed from import statements, this is the source of a particular import statement.
+   * @param parent parent id requesting the import.
+   * @return Promise<boolean> if the import is listed in the external list.
+   */
+  private async isExternalImport(source: string, parent: string): Promise<boolean> {
+    if (this.inputOptions.external === undefined) {
+      return false;
+    }
+    if (Array.isArray(this.inputOptions.external)) {
+      return this.inputOptions.external.includes(source);
+    }
+    if (typeof this.inputOptions.external === 'function') {
+      const configDrivenExternal = await this.inputOptions.external(source, parent, true);
+      return configDrivenExternal !== undefined && configDrivenExternal === true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Before Closure Compiler is given a chance to look at the code, we need to
+   * find and store all import statements with their location range.
+   * @param code source to parse
+   * @param id Rollup id reference to the source
+   */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    // const program = this.context.parse(code, {});
-    // const importNodes = program.body.filter(node => ALL_IMPORT_TYPES.includes(node.type));
-    // console.log('imports', importNodes);
+    const program = this.context.parse(code, { ranges: true });
+    const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
+
+    for (const node of importNodes) {
+      switch (node.type) {
+        case IMPORT_DECLARATION:
+          if (await this.isExternalImport(literalName(this.context, id, node.source), id)) {
+            const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+            this.importedExternals[code.slice(range[0], range[1])] = range;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  /**
+   * Before Closure Compiler modifies the source, we need to ensure external imports have been removed
+   * since Closure will error out when it encounters them.
+   * @param code source to parse, and modify
+   * @param id Rollup id reference to the source
+   * @return modified input source with external imports removed.
+   */
+  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+    const source = new MagicString(code);
+    Object.values(this.importedExternals).forEach(range => source.remove(range[0], range[1]));
+
+    return {
+      code: source.toString(),
+      map: source.generateMap(),
+    };
+  }
+
+  /**
+   * After Closure Compiler has modified the source, we need to re-add the external imports
+   * @param code source post Closure Compiler Compilation
+   * @param id Rollup identifier for the source
+   * @return Promise containing the repaired source
+   */
+  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+    const source = new MagicString(code);
+    Object.keys(this.importedExternals).forEach(importedExternal =>
+      source.prepend(importedExternal),
+    );
+
+    return {
+      code: source.toString(),
+      map: source.generateMap(),
+    };
   }
 }

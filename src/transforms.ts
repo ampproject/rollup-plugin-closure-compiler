@@ -33,9 +33,9 @@ export const createTransforms = (
 ): Array<Transform> => {
   return [
     new IifeTransform(context, options),
+    new StrictTransform(context, options),
     new ExportTransform(context, options),
     new ImportTransform(context, options),
-    new StrictTransform(context, options),
   ];
 };
 

@@ -1,5 +1,6 @@
 node_modules/*
 yarn-error.log
+yarn.lock
 .vscode/*
 .DS_Store
 dist/

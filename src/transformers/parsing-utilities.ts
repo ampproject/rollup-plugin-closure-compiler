@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-import { ExportSpecifier, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
+import {
+  ExportSpecifier,
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  Literal,
+  SimpleLiteral,
+} from 'estree';
 import * as path from 'path';
 import { PluginContext } from 'rollup';
 import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
-type DeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
+type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
 export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
   exportSpecifier.exported.name;
@@ -33,7 +39,7 @@ const camelcase = (input: string): string =>
 export function functionDeclarationName(
   context: PluginContext,
   id: string,
-  declaration: DeclarationsWithFunctions,
+  declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'FunctionDeclaration') {
@@ -56,7 +62,7 @@ export function functionDeclarationName(
 export function classDeclarationName(
   context: PluginContext,
   id: string,
-  declaration: DeclarationsWithFunctions,
+  declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'ClassDeclaration') {
@@ -152,3 +158,23 @@ export function DefaultDeclaration(
 
   return null;
 }
+
+export function literalName(context: PluginContext, id: string, literal: Literal): string {
+  // Literal can either be a SimpleLiteral, or RegExpLiteral
+  if ('regex' in literal) {
+    // This is a RegExpLiteral
+    context.warn(
+      'Rollup Plugin Closure Compiler found a Regex Literal Named Import. `import foo from "*/.hbs"`',
+    );
+    return '';
+  }
+
+  const literalValue = (literal as SimpleLiteral).value;
+  return typeof literalValue === 'string' ? literalValue : '';
+}
+
+// export function ImportDeclaration(
+//   context: PluginContext,
+//   id: string,
+//   declaration: ImportDeclaration,
+// ):

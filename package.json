@@ -25,9 +25,11 @@
   },
   "dependencies": {
     "google-closure-compiler": "^20180610.0.2",
+    "magic-string": "^0.25.0",
     "temp-write": "^3.4.0"
   },
   "devDependencies": {
+    "@types/acorn": "^4.0.3",
     "@types/estree": "^0.0.39",
     "@types/google-closure-compiler": "^0.0.18",
     "@types/temp-write": "^3.3.0",
@@ -40,6 +42,10 @@
     "tslint": "^5.10.0",
     "typescript": "^2.9.2"
   },
+  "files": [
+    "dist/index.js",
+    "dist/index.mjs"
+  ],
   "lint-staged": {
     "*.ts": [
       "npm run lint --fix",

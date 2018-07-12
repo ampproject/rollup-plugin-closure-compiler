@@ -27,10 +27,7 @@ const createTests = format => {
   async function input(input) {
     const bundle = await rollup.rollup({
       input: `test/esmodules/fixtures/${input}.js`,
-      external: ['react', 'prop-types'],
-      plugins: [compiler({
-        externs: join('test/esmodules/fixtures/react.extern.js'),
-      })],
+      plugins: [compiler()],
     });
 
     return {
@@ -80,12 +77,6 @@ const createTests = format => {
 
   test(`${format} - export default unnamed class exports the unnamed class`, async t => {
     const { minified, code } = await input('export-default-unnamed-class');
-
-    t.is(code, minified);
-  });
-
-  test.skip(`${format} - import external`, async t => {
-    const { minified, code } = await input('external-import');
 
     t.is(code, minified);
   });

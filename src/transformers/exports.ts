@@ -20,14 +20,16 @@ import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
   ExportNameToClosureMapping,
-  ALL_EXPORT_TYPES,
   EXPORT_NAMED_DECLARATION,
   EXPORT_DEFAULT_DECLARATION,
   EXPORT_ALL_DECLARATION,
   ExportClosureMapping,
   Transform,
   TransformInterface,
+  ALL_EXPORT_DECLARATIONS,
 } from '../types';
+import MagicString from 'magic-string';
+import { replace } from './replacement-utilities';
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -61,14 +63,13 @@ export default class ExportTransform extends Transform implements TransformInter
   /**
    * Before Closure Compiler is given a chance to look at the code, we need to
    * find and store all export statements with their correct type
-   * @param code source to parse, and modify
+   * @param code source to parse
    * @param id Rollup id reference to the source
-   * @return Promise containing the modified source
    */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
     if (this.isEntryPoint(id)) {
       const program = this.context.parse(code, {});
-      const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
+      const exportNodes = program.body.filter(node => ALL_EXPORT_DECLARATIONS.includes(node.type));
 
       exportNodes.forEach((node: ModuleDeclaration) => {
         switch (node.type) {
@@ -127,10 +128,16 @@ export default class ExportTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
+      const source = new MagicString(code);
       // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       Object.keys(this.exported).forEach(key => {
-        code += `\nwindow['${key}'] = ${key}`;
+        source.append(`\nwindow['${key}'] = ${key}`);
       });
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
     // TODO(KB): Sourcemaps fail :(
@@ -152,37 +159,36 @@ export default class ExportTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
+      const source = new MagicString(code);
       const exportedConstants: Array<string> = [];
 
       Object.keys(this.exported).forEach(key => {
         switch (this.exported[key]) {
           case ExportClosureMapping.NAMED_FUNCTION:
-            code = code.replace(`window.${key}=function`, `export function ${key}`);
+            replace(`window.${key}=function`, `export function ${key}`, code, source);
             break;
           case ExportClosureMapping.NAMED_CLASS:
             const namedClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
             if (namedClassMatch && namedClassMatch.length > 0) {
               // Remove the declaration on window scope, i.e. `window.Exported=a;`
-              code = code.replace(namedClassMatch[0], '');
+              replace(namedClassMatch[0], '', code, source);
               // Store a new export constant to output at the end. `a as Exported`
               exportedConstants.push(`${namedClassMatch[1]} as ${key}`);
             }
             break;
           case ExportClosureMapping.DEFAULT_FUNCTION:
-            code = code.replace(`window.${key}=function`, `export default function`);
+            replace(`window.${key}=function`, `export default function`, code, source);
             break;
           case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-            code = code.replace(`window.${key}=function`, `export default function ${key}`);
+            replace(`window.${key}=function`, `export default function ${key}`, code, source);
             break;
           case ExportClosureMapping.DEFAULT_CLASS:
             const defaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
             if (defaultClassMatch && defaultClassMatch.length > 0) {
               // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
               // Replace it with an export statement `export default a;`
-              code = code
-                .replace(`class ${defaultClassMatch[1]}`, `export default class`)
-                .replace(defaultClassMatch[0], '');
-              // code = code.replace(defaultClassMatch[0], '');
+              replace(`class ${defaultClassMatch[1]}`, `export default class`, code, source);
+              replace(defaultClassMatch[0], '', code, source);
             }
             break;
           case ExportClosureMapping.NAMED_DEFAULT_CLASS:
@@ -190,16 +196,18 @@ export default class ExportTransform extends Transform implements TransformInter
             if (namedDefaultClassMatch && namedDefaultClassMatch.length > 0) {
               // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
               // Replace it with an export statement `export default a;`
-              code = code.replace(
+              replace(
                 namedDefaultClassMatch[0],
                 `export default ${namedDefaultClassMatch[1]};`,
+                code,
+                source,
               );
             }
             break;
           case ExportClosureMapping.NAMED_CONSTANT:
             // Remove the declaration on the window scope, i.e. `window.ExportedThree=value`
             // Replace it with a const declaration, i.e `const ExportedThree=value`
-            code = code.replace(`window.${key}=`, `const ${key}=`);
+            replace(`window.${key}=`, `const ${key}=`, code, source);
             // Store a new export constant to output at the end, i.e `ExportedThree`
             exportedConstants.push(key);
             break;
@@ -214,14 +222,18 @@ export default class ExportTransform extends Transform implements TransformInter
       if (exportedConstants.length > 0) {
         // Remove the newline at the end since we are going to append exports.
         if (code.endsWith('\n')) {
-          code = code.substr(0, code.lastIndexOf('\n'));
+          source.trimLines();
         }
         // Append the exports that were gathered, i.e `export {a as Exported, ExportedThree};`
-        code += `export {${exportedConstants.join(',')}};`;
+        source.append(`export {${exportedConstants.join(',')}};`);
       }
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
-    // TODO(KB): Sourcemaps fail :(
     return {
       code,
     };
