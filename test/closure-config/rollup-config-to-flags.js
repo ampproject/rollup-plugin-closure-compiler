@@ -38,6 +38,10 @@ test('with no rollup configuration, warning_level is QUIET', t => {
   t.is(t.context.default.warning_level, 'QUIET');
 });
 
+test('with no rollup configuration, module_resolution is NODE', t => {
+  t.is(t.context.default.module_resolution, 'NODE');
+});
+
 test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
   t.is(t.context.esOutput.assume_function_wrapper, true);
 });

@@ -14,19 +14,6 @@
  * limitations under the License.
  */
 
-class Foo {
-  constructor(bar) {
-    this.bar = bar;
-  }
-
-  get baz() {
-    return this.bar;
-  }
-}
-
-const x = new Foo('bar');
-console.log(x.baz);
-
 class Bar extends Foo {
   constructor(happy) {
     super('bar');
