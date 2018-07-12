@@ -34,6 +34,7 @@
     "@types/google-closure-compiler": "^0.0.18",
     "@types/temp-write": "^3.3.0",
     "ava": "1.0.0-beta.6",
+    "builtins": "^2.0.0",
     "husky": "1.0.0-rc.13",
     "lint-staged": "^7.2.0",
     "prettier": "^1.13.5",
