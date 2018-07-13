@@ -20,6 +20,8 @@ import IifeTransform from './transformers/iife';
 import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
+import { sync } from 'temp-write';
+import { logSource } from './debug';
 
 /**
  * Instantiate transform class instances for the plugin invocation.
@@ -73,6 +75,7 @@ export async function preCompilation(
 export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
+  logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
     const result = await transform.postCompilation(code, 'none');
     if (result && result.code) {
@@ -80,6 +83,7 @@ export async function postCompilation(code: string, transforms: Array<Transform>
     }
   }
 
+  logSource('after postCompilation handlers', code);
   return code;
 }
 

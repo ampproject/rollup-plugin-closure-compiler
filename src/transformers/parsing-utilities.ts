@@ -86,6 +86,11 @@ export function NamedDeclaration(
 ): ExportNameToClosureMapping | null {
   const functionName = functionDeclarationName(context, id, declaration);
   const className = classDeclarationName(context, id, declaration);
+  // console.log(functionName, className);
+
+  // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
+  // var Foo=function(){}export{Foo as default} => default export function
+
   if (functionName !== null) {
     return {
       [functionName]: ExportClosureMapping.NAMED_FUNCTION,
@@ -95,6 +100,7 @@ export function NamedDeclaration(
       [className]: ExportClosureMapping.NAMED_CLASS,
     };
   } else if (declaration.specifiers) {
+    // console.log(declaration.specifiers);
     const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
       exportMap[exportSpecifierName(exportSpecifier)] = ExportClosureMapping.NAMED_CONSTANT;
