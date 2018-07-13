@@ -20,7 +20,6 @@ import {
   ExportDefaultDeclaration,
   Literal,
   SimpleLiteral,
-  Node,
 } from 'estree';
 import * as path from 'path';
 import { PluginContext } from 'rollup';

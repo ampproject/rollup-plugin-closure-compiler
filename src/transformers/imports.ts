@@ -22,12 +22,12 @@ import MagicString from 'magic-string';
 // TODO(KB): Need to generate externs for external members if we do not have an extern passed in.
 // Otherwise, advanced mode compilation will fail.
 // Likely this means moving scanning for external imports from `preCompilation` to the `derive` phase.
-const HEADER = `/**
-* @fileoverview Externs built via derived configuration from Rollup or input code.
-* This extern contains the external import names, to prevent compilation failures.
-* @externs
-*/
-`;
+// const HEADER = `/**
+// * @fileoverview Externs built via derived configuration from Rollup or input code.
+// * This extern contains the external import names, to prevent compilation failures.
+// * @externs
+// */
+// `;
 
 export default class ImportTransform extends Transform {
   private importedExternalsSyntax: { [key: string]: string } = {};

@@ -141,7 +141,6 @@ export default class ExportTransform extends Transform implements TransformInter
         // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
         // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
         Identifier(node: Identifier, ancestors: Array<Node>) {
-          // console.log('node', node.name);
           if (node.name === 'window') {
             ancestors.forEach((ancestor: Node) => {
               if (

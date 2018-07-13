@@ -51,10 +51,18 @@ formats.forEach(format => {
   }
 
   Object.keys(closureFlags).forEach(option => {
-    test.failing(`external-import – ${format}, ${option}`, async t => {
-      const { minified, code } = await compile('external-import', option);
-
-      t.is(code, minified);
-    });
+    if (option === 'default') {
+      test(`external-import – ${format}, ${option}`, async t => {
+        const { minified, code } = await compile('external-import', option);
+  
+        t.is(code, minified);
+      });
+    } else {
+      test.failing(`external-import – ${format}, ${option}`, async t => {
+        const { minified, code } = await compile('external-import', option);
+  
+        t.is(code, minified);
+      });
+    }
   });
 });
