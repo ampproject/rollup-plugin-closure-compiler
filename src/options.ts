@@ -57,7 +57,7 @@ export const defaults = (
 
   return {
     language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: isESMFormat(options.format) ? true : false,
+    assume_function_wrapper: isESMFormat(options.format),
     warning_level: 'QUIET',
     module_resolution: 'NODE',
     externs,
@@ -95,13 +95,12 @@ export default function(
     return [];
   };
 
-  return [
-    {
-      ...defaults(outputOptions, externs(compileOptions), transforms),
-      ...compileOptions,
-      js: sync(code),
-      create_source_map: mapFile,
-    },
-    mapFile,
-  ];
+  const options = {
+    ...defaults(outputOptions, externs(compileOptions), transforms),
+    ...compileOptions,
+    js: sync(code),
+    create_source_map: mapFile,
+  };
+
+  return [options, mapFile];
 }

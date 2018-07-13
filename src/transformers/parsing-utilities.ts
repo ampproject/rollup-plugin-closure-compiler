@@ -20,6 +20,7 @@ import {
   ExportDefaultDeclaration,
   Literal,
   SimpleLiteral,
+  Node,
 } from 'estree';
 import * as path from 'path';
 import { PluginContext } from 'rollup';
@@ -51,8 +52,6 @@ export function functionDeclarationName(
       functionDeclaration.id.name !== null
     ) {
       return functionDeclaration.id.name;
-    } else {
-      context.warn(`Plugin encountered an unnamed function export, these are discouraged.`);
     }
   }
 
@@ -75,8 +74,6 @@ export function classDeclarationName(
     ) {
       // This class declaration is the export name we need to know.
       return classDeclaration.id.name;
-    } else {
-      context.warn(`Plugin encountered an unnamed class exports, these are discouraged.`);
     }
   }
 

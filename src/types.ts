@@ -40,9 +40,6 @@ export const ALL_EXPORT_DECLARATIONS = [
   EXPORT_DEFAULT_DECLARATION,
   EXPORT_ALL_DECLARATION,
 ];
-export interface ImportNameToClosureMapping {
-  [key: string]: [number, number];
-}
 
 export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,

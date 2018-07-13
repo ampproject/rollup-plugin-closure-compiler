@@ -16,15 +16,13 @@
 
 import test from 'ava';
 import compiler from '../../transpile';
-import { createTransforms } from '../../transpile/transforms';
-import { defaults } from '../../transpile/options';
 import * as rollup from 'rollup';
 import * as fs from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
-const formats = ['iife'];
+const formats = ['es', 'esm'];
 const closureFlags = {
   default: {},
   advanced: {
@@ -32,24 +30,6 @@ const closureFlags = {
     language_out: 'ECMASCRIPT_2015',
   },
 };
-
-test('generate extern for iife name', async t => {
-  const externFixtureContent = await readFile('test/iife/fixtures/iife.extern.js', 'utf8');
-  const outputOptions = {
-    format: 'iife',
-    name: 'wrapper',
-  };
-
-  const transforms = createTransforms({});
-  const options = defaults(outputOptions, [], transforms);
-
-  const contentMatch = options.externs.some(async externFilePath => {
-    const fileContent = await readFile(externFilePath, 'utf8');
-    return fileContent === externFixtureContent;
-  });
-
-  t.is(contentMatch, true);
-});
 
 formats.forEach(format => {
   async function compile(name, option) {
@@ -64,16 +44,15 @@ formats.forEach(format => {
       minified: await readFile(join(`test/${name}/fixtures/${format}.${option}.minified.js`), 'utf8'),
       code: (await bundle.generate({
         format,
-        name: 'wrapper',
         sourcemap: true,
       })).code,
     };
   }
 
   Object.keys(closureFlags).forEach(option => {
-    test(`preserves iife wrapper name – ${format}, ${option}`, async t => {
-      const { minified, code } = await compile('iife', option);
-    
+    test(`import flattened – ${format}, ${option}`, async t => {
+      const { minified, code } = await compile('import-flattened', option);
+
       t.is(code, minified);
     });
   });

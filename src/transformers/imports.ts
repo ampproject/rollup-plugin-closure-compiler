@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-import {
-  Transform,
-  ALL_IMPORT_DECLARATIONS,
-  IMPORT_DECLARATION,
-  ImportNameToClosureMapping,
-} from '../types';
+import { Transform, ALL_IMPORT_DECLARATIONS, IMPORT_DECLARATION } from '../types';
 import { literalName } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 
+// TODO(KB): Need to generate externs for external members if we do not have an extern passed in.
+// Otherwise, advanced mode compilation will fail.
+// Likely this means moving scanning for external imports from `preCompilation` to the `derive` phase.
+const HEADER = `/**
+* @fileoverview Externs built via derived configuration from Rollup or input code.
+* This extern contains the external import names, to prevent compilation failures.
+* @externs
+*/
+`;
+
 export default class ImportTransform extends Transform {
-  private importedExternals: ImportNameToClosureMapping = {};
+  private importedExternalsSyntax: { [key: string]: string } = {};
 
   /**
    * Rollup allows configuration for 'external' imports.
@@ -51,30 +56,6 @@ export default class ImportTransform extends Transform {
   }
 
   /**
-   * Before Closure Compiler is given a chance to look at the code, we need to
-   * find and store all import statements with their location range.
-   * @param code source to parse
-   * @param id Rollup id reference to the source
-   */
-  public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    const program = this.context.parse(code, { ranges: true });
-    const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
-
-    for (const node of importNodes) {
-      switch (node.type) {
-        case IMPORT_DECLARATION:
-          if (await this.isExternalImport(literalName(this.context, id, node.source), id)) {
-            const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
-            this.importedExternals[code.slice(range[0], range[1])] = range;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  /**
    * Before Closure Compiler modifies the source, we need to ensure external imports have been removed
    * since Closure will error out when it encounters them.
    * @param code source to parse, and modify
@@ -83,7 +64,23 @@ export default class ImportTransform extends Transform {
    */
   public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
-    Object.values(this.importedExternals).forEach(range => source.remove(range[0], range[1]));
+    const program = this.context.parse(code, { ranges: true });
+    const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
+
+    for (const node of importNodes) {
+      switch (node.type) {
+        case IMPORT_DECLARATION:
+          const name = literalName(this.context, id, node.source);
+          if (await this.isExternalImport(name, id)) {
+            const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+            this.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
+            source.remove(range[0], range[1]);
+          }
+          break;
+        default:
+          break;
+      }
+    }
 
     return {
       code: source.toString(),
@@ -99,8 +96,8 @@ export default class ImportTransform extends Transform {
    */
   public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
-    Object.keys(this.importedExternals).forEach(importedExternal =>
-      source.prepend(importedExternal),
+    Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
+      source.prepend(importedExternalSyntax),
     );
 
     return {
