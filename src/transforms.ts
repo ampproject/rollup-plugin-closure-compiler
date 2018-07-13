@@ -20,7 +20,6 @@ import IifeTransform from './transformers/iife';
 import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
-import { sync } from 'temp-write';
 import { logSource } from './debug';
 
 /**
