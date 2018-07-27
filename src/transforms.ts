@@ -17,6 +17,7 @@
 import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
+import LiteralComputedKeys from './transformers/literal-computed-keys';
 import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
@@ -34,6 +35,7 @@ export const createTransforms = (
 ): Array<Transform> => {
   return [
     new IifeTransform(context, options),
+    new LiteralComputedKeys(context, options),
     new StrictTransform(context, options),
     new ExportTransform(context, options),
     new ImportTransform(context, options),
