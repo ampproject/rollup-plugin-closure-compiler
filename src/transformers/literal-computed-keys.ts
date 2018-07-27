@@ -25,7 +25,7 @@ const walk = require('acorn/dist/walk');
  * e.g {[0]: 'value'} => {0: 'value'}
  *
  * This transform does so only if a computed key is a Literal, and thus easily known to be static.
- * @see https://astexplorer.net/#/gist/d2414b45a81db3a41ee6902bfd09947a/98905f372aa36cc6814616db3c37eed5ba51bab2
+ * @see https://astexplorer.net/#/gist/d2414b45a81db3a41ee6902bfd09947a/d7176ac33a2733e1a4b1f65ec3ac626e24f7b60d
  */
 export default class LiteralComputedKeys extends Transform {
   /**
