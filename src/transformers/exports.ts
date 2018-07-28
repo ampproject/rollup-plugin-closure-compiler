@@ -66,48 +66,50 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return Promise containing the modified source
    */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    const program = this.context.parse(code, {});
-    const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
+    if (this.isEntryPoint(id)) {
+      const program = this.context.parse(code, {});
+      const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
 
-    exportNodes.forEach((node: ModuleDeclaration) => {
-      switch (node.type) {
-        case EXPORT_NAMED_DECLARATION:
-          const namedDeclarationValues = NamedDeclaration(
-            this.context,
-            node as ExportNamedDeclaration,
-          );
-          if (namedDeclarationValues !== null) {
-            this.exported = { ...this.exported, ...namedDeclarationValues };
-          }
-          break;
-        case EXPORT_DEFAULT_DECLARATION:
-          // TODO(KB): This case is not fully supported – only named default exports.
-          // `export default Foo(){};`, or `export default Foo;`, not `export default function(){};`
-          const defaultDeclarationValue = DefaultDeclaration(
-            this.context,
-            node as ExportDefaultDeclaration,
-          );
-          if (defaultDeclarationValue !== null) {
-            this.exported = { ...this.exported, ...defaultDeclarationValue };
-          }
-          break;
-        case EXPORT_ALL_DECLARATION:
-          // TODO(KB): This case `export * from "./import"` is not currently supported.
-          this.context.error(
-            new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
-          );
-          break;
-        default:
-          this.context.error(
-            new Error(
-              `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
-                node.type
-              }`,
-            ),
-          );
-          break;
-      }
-    });
+      exportNodes.forEach((node: ModuleDeclaration) => {
+        switch (node.type) {
+          case EXPORT_NAMED_DECLARATION:
+            const namedDeclarationValues = NamedDeclaration(
+              this.context,
+              id,
+              node as ExportNamedDeclaration,
+            );
+            if (namedDeclarationValues !== null) {
+              this.exported = { ...this.exported, ...namedDeclarationValues };
+            }
+            break;
+          case EXPORT_DEFAULT_DECLARATION:
+            const defaultDeclarationValue = DefaultDeclaration(
+              this.context,
+              id,
+              node as ExportDefaultDeclaration,
+            );
+            if (defaultDeclarationValue !== null) {
+              this.exported = { ...this.exported, ...defaultDeclarationValue };
+            }
+            break;
+          case EXPORT_ALL_DECLARATION:
+            // TODO(KB): This case `export * from "./import"` is not currently supported.
+            this.context.error(
+              new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
+            );
+            break;
+          default:
+            this.context.error(
+              new Error(
+                `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
+                  node.type
+                }`,
+              ),
+            );
+            break;
+        }
+      });
+    }
 
     return void 0;
   }
@@ -125,6 +127,7 @@ export default class ExportTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
+      // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       Object.keys(this.exported).forEach(key => {
         code += `\nwindow['${key}'] = ${key}`;
       });
@@ -165,8 +168,22 @@ export default class ExportTransform extends Transform implements TransformInter
               exportedConstants.push(`${namedClassMatch[1]} as ${key}`);
             }
             break;
+          case ExportClosureMapping.DEFAULT_FUNCTION:
+            code = code.replace(`window.${key}=function`, `export default function`);
+            break;
           case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
             code = code.replace(`window.${key}=function`, `export default function ${key}`);
+            break;
+          case ExportClosureMapping.DEFAULT_CLASS:
+            const defaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
+            if (defaultClassMatch && defaultClassMatch.length > 0) {
+              // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
+              // Replace it with an export statement `export default a;`
+              code = code
+                .replace(`class ${defaultClassMatch[1]}`, `export default class`)
+                .replace(defaultClassMatch[0], '');
+              // code = code.replace(defaultClassMatch[0], '');
+            }
             break;
           case ExportClosureMapping.NAMED_DEFAULT_CLASS:
             const namedDefaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);

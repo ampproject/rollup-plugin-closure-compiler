@@ -17,7 +17,7 @@
 import { CompileOptions } from 'google-closure-compiler';
 import * as fs from 'fs';
 import { promisify } from 'util';
-import { OutputOptions, RawSourceMap, Plugin, OutputChunk } from 'rollup';
+import { OutputOptions, RawSourceMap, Plugin, OutputChunk, InputOptions } from 'rollup';
 import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
@@ -58,14 +58,16 @@ const transformChunk = async (
 };
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+  let inputOptions: InputOptions;
   let transforms: Array<Transform>;
 
   return {
     name: 'closure-compiler',
+    options: options => (inputOptions = options),
     load() {
-      transforms = transforms || createTransforms(this);
+      transforms = transforms || createTransforms(this, inputOptions);
     },
-    transform: async (code: string) => deriveFromInputSource(code, transforms),
+    transform: async (code: string, id: string) => deriveFromInputSource(code, id, transforms),
     transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>
       await transformChunk(transforms, requestedCompileOptions, code, outputOptions),
   };

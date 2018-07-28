@@ -51,6 +51,12 @@ const createTests = format => {
     t.is(code, minified);
   });
 
+  test(`${format} - export default unnamed function exports the default function`, async t => {
+    const { minified, code } = await input('export-default-unnamed');
+
+    t.is(code, minified);
+  });
+
   test(`${format} - export const values exports the const values`, async t => {
     const { minified, code } = await input('export-const');
 
@@ -63,8 +69,14 @@ const createTests = format => {
     t.is(code, minified);
   });
 
-  test(`${format} - export default class exports the class`, async t => {
+  test(`${format} - export default named class exports the named class`, async t => {
     const { minified, code } = await input('export-default-class');
+
+    t.is(code, minified);
+  });
+
+  test(`${format} - export default unnamed class exports the unnamed class`, async t => {
+    const { minified, code } = await input('export-default-unnamed-class');
 
     t.is(code, minified);
   });
