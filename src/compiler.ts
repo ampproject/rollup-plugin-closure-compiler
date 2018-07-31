@@ -15,8 +15,20 @@
  */
 
 import { compiler, CompileOptions } from 'google-closure-compiler';
+const {
+  getNativeImagePath,
+  getFirstSupportedPlatform,
+} = require('google-closure-compiler/lib/utils.js');
 import { Transform } from './types';
 import { postCompilation } from './transforms';
+
+enum Platform {
+  NATIVE = 'native',
+  JAVA = 'java',
+  JAVASCRIPT = 'javascript',
+}
+
+const PLATFORM_PRECEDENCE = [Platform.NATIVE, Platform.JAVA, Platform.JAVASCRIPT];
 
 /**
  * Run Closure Compiler and `postCompilation` Transforms on input source.
@@ -29,7 +41,18 @@ export default function(
   transforms: Array<Transform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
-    new compiler(compileOptions).run(async (exitCode: number, code: string, stdErr: string) => {
+    const instance = new compiler(compileOptions);
+
+    if (getFirstSupportedPlatform(PLATFORM_PRECEDENCE) === Platform.NATIVE) {
+      // We would like to use the native platform instead of Java or Javascript on this system.
+
+      // TODO(KB): Provide feedback on this API. It's a little strange to nullify the JAR_PATH
+      // and provide a fake java path.
+      instance.JAR_PATH = null;
+      instance.javaPath = getNativeImagePath();
+    }
+
+    instance.run(async (exitCode: number, code: string, stdErr: string) => {
       if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
