@@ -23,14 +23,20 @@ import {
   InputOption,
 } from 'rollup';
 
+// @see https://github.com/estree/estree/blob/master/es2015.md#imports
+export const IMPORT_DECLARATION = 'ImportDeclaration';
+export const IMPORT_SPECIFIER = 'ImportSpecifier';
+export const IMPORT_DEFAULT_SPECIFIER = 'ImportDefaultSpecifier';
+export const IMPORT_NAMESPACE_SPECIFIER = 'ImportNamespaceSpecifier';
+export const ALL_IMPORT_DECLARATIONS = [IMPORT_DECLARATION];
+
 // @see https://github.com/estree/estree/blob/master/es2015.md#exports
 export const EXPORT_NAMED_DECLARATION = 'ExportNamedDeclaration';
 export const EXPORT_SPECIFIER = 'ExportSpecifier';
 export const EXPORT_DEFAULT_DECLARATION = 'ExportDefaultDeclaration';
 export const EXPORT_ALL_DECLARATION = 'ExportAllDeclaration';
-export const ALL_EXPORT_TYPES = [
+export const ALL_EXPORT_DECLARATIONS = [
   EXPORT_NAMED_DECLARATION,
-  EXPORT_SPECIFIER,
   EXPORT_DEFAULT_DECLARATION,
   EXPORT_ALL_DECLARATION,
 ];

@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
+import pkg from './package.json';
+import builtins from 'builtins';
+
 export default {
   input: './transpile/index.js',
-  external: ['util', 'fs', 'path', 'google-closure-compiler', 'temp-write'],
+  external: [
+    ...builtins(),
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}), 
+  ],
   output: [
     {
       file: './dist/index.mjs',

@@ -17,6 +17,7 @@
 import { Transform } from '../types';
 import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
+import MagicString from 'magic-string';
 
 const STRICT_MODE_DECLARATION = `'use strict';`;
 const STRICT_MODE_DECLARATION_LENGTH = STRICT_MODE_DECLARATION.length;
@@ -35,9 +36,16 @@ export default class StrictTransform extends Transform {
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format) && code.startsWith(STRICT_MODE_DECLARATION)) {
+      const source = new MagicString(code);
+
       // This will only remove the top level 'use strict' directive since we cannot
       // be certain source does not contain strings with the intended content.
-      code = code.slice(STRICT_MODE_DECLARATION_LENGTH, code.length);
+      source.remove(0, STRICT_MODE_DECLARATION_LENGTH);
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
     return {

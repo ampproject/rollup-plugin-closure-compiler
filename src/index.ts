@@ -17,11 +17,19 @@
 import { CompileOptions } from 'google-closure-compiler';
 import * as fs from 'fs';
 import { promisify } from 'util';
-import { OutputOptions, RawSourceMap, Plugin, OutputChunk, InputOptions } from 'rollup';
+import {
+  OutputOptions,
+  RawSourceMap,
+  Plugin,
+  OutputChunk,
+  InputOptions,
+  PluginContext,
+} from 'rollup';
 import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
 import { Transform } from './types';
+import { logSource } from './debug';
 
 const readFile = promisify(fs.readFile);
 
@@ -35,11 +43,12 @@ const readFile = promisify(fs.readFile);
  */
 const transformChunk = async (
   transforms: Array<Transform>,
-  requestedCompileOptions: CompileOptions,
+  requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: RawSourceMap } | void> => {
   const code = await preCompilation(sourceCode, outputOptions, transforms);
+  logSource('transform', sourceCode, code);
   const [compileOptions, mapFile] = options(
     requestedCompileOptions,
     outputOptions,
@@ -59,13 +68,21 @@ const transformChunk = async (
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
   let inputOptions: InputOptions;
+  let context: PluginContext;
   let transforms: Array<Transform>;
+  let transformsDefined: boolean = false;
 
   return {
     name: 'closure-compiler',
     options: options => (inputOptions = options),
+    buildStart() {
+      context = this;
+    },
     load() {
-      transforms = transforms || createTransforms(this, inputOptions);
+      if (!transformsDefined) {
+        transforms = createTransforms(context, inputOptions);
+        transformsDefined = true;
+      }
     },
     transform: async (code: string, id: string) => deriveFromInputSource(code, id, transforms),
     transformChunk: async (code: string, outputOptions: OutputOptions, chunk: OutputChunk) =>

@@ -1,6 +1,6 @@
 {
   "name": "@ampproject/rollup-plugin-closure-compiler",
-  "version": "0.4.3",
+  "version": "0.5.0-alpha.5",
   "description": "Rollup + Google Closure Compiler",
   "main": "dist/index.js",
   "jsnext:main": "dist/index.mjs",
@@ -18,28 +18,35 @@
   "license": "Apache-2.0",
   "scripts": {
     "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
-    "test": "ava test/**/*.js",
+    "test": "ava -v test/**/*.js",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "dependencies": {
-    "google-closure-compiler": "^20180610.0.2",
-    "temp-write": "^3.4.0"
+    "acorn": "5.7.1",
+    "google-closure-compiler": "20180716.0.1",
+    "magic-string": "0.25.0",
+    "temp-write": "3.4.0"
   },
   "devDependencies": {
-    "@types/estree": "^0.0.39",
-    "@types/google-closure-compiler": "^0.0.18",
-    "@types/temp-write": "^3.3.0",
+    "@types/acorn": "4.0.3",
+    "@types/estree": "0.0.39",
+    "@types/temp-write": "3.3.0",
     "ava": "1.0.0-beta.6",
+    "builtins": "2.0.0",
     "husky": "1.0.0-rc.13",
-    "lint-staged": "^7.2.0",
-    "prettier": "^1.13.5",
-    "rimraf": "^2.6.2",
-    "rollup": "^0.62.0",
-    "tslint": "^5.10.0",
-    "typescript": "^2.9.2"
+    "lint-staged": "7.2.0",
+    "prettier": "1.14.0",
+    "rimraf": "2.6.2",
+    "rollup": "0.63.4",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1"
   },
+  "files": [
+    "dist/index.js",
+    "dist/index.mjs"
+  ],
   "lint-staged": {
     "*.ts": [
       "npm run lint --fix",

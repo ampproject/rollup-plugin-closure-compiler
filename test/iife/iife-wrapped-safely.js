@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../../transpile/index';
+import compiler from '../../transpile';
 import { createTransforms } from '../../transpile/transforms';
 import { defaults } from '../../transpile/options';
 import * as rollup from 'rollup';
@@ -24,22 +24,14 @@ import { join } from 'path';
 import { promisify } from 'util';
 
 const readFile = promisify(fs.readFile);
-
-async function input(input) {
-  const bundle = await rollup.rollup({
-    input: `test/iife/fixtures/${input}.js`,
-    plugins: [compiler()],
-  });
-
-  return {
-    minified: await readFile(join(`test/iife/fixtures/${input}.minified.js`), 'utf8'),
-    code: (await bundle.generate({
-      format: 'iife',
-      name: 'wrapper',
-      sourcemap: true,
-    })).code,
-  };
-}
+const formats = ['iife'];
+const closureFlags = {
+  default: {},
+  advanced: {
+    compilation_level: 'ADVANCED_OPTIMIZATIONS',
+    language_out: 'ECMASCRIPT_2015',
+  },
+};
 
 test('generate extern for iife name', async t => {
   const externFixtureContent = await readFile('test/iife/fixtures/iife.extern.js', 'utf8');
@@ -49,7 +41,7 @@ test('generate extern for iife name', async t => {
   };
 
   const transforms = createTransforms({});
-  const options = defaults(outputOptions, transforms);
+  const options = defaults(outputOptions, [], transforms);
 
   const contentMatch = options.externs.some(async externFilePath => {
     const fileContent = await readFile(externFilePath, 'utf8');
@@ -59,8 +51,30 @@ test('generate extern for iife name', async t => {
   t.is(contentMatch, true);
 });
 
-test('preserves iife wrapper name', async t => {
-  const { minified, code } = await input('iife');
+formats.forEach(format => {
+  async function compile(name, option) {
+    const bundle = await rollup.rollup({
+      input: `test/${name}/fixtures/input.js`,
+      plugins: [
+        compiler(closureFlags[option]),
+      ],
+    });
 
-  t.is(code, minified);
+    return {
+      minified: await readFile(join(`test/${name}/fixtures/${format}.${option}.minified.js`), 'utf8'),
+      code: (await bundle.generate({
+        format,
+        name: 'wrapper',
+        sourcemap: true,
+      })).code,
+    };
+  }
+
+  Object.keys(closureFlags).forEach(option => {
+    test(`preserves iife wrapper name – ${format}, ${option}`, async t => {
+      const { minified, code } = await compile('iife', option);
+    
+      t.is(code, minified);
+    });
+  });
 });

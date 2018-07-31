@@ -19,10 +19,10 @@ import { defaults } from '../../transpile/options';
 
 test.beforeEach(t => {
   t.context = {
-    default: defaults({}, null),
+    default: defaults({}, [], null),
     esOutput: defaults({
       format: 'es',
-    }, null),
+    }, [], null),
   };
 });
 
@@ -36,6 +36,10 @@ test('with no rollup configuration, assume_function_wrapper is false', t => {
 
 test('with no rollup configuration, warning_level is QUIET', t => {
   t.is(t.context.default.warning_level, 'QUIET');
+});
+
+test('with no rollup configuration, module_resolution is NODE', t => {
+  t.is(t.context.default.module_resolution, 'NODE');
 });
 
 test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {

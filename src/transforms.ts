@@ -17,8 +17,11 @@
 import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
+import LiteralComputedKeys from './transformers/literal-computed-keys';
 import ExportTransform from './transformers/exports';
+import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
+import { logSource } from './debug';
 
 /**
  * Instantiate transform class instances for the plugin invocation.
@@ -32,8 +35,10 @@ export const createTransforms = (
 ): Array<Transform> => {
   return [
     new IifeTransform(context, options),
-    new ExportTransform(context, options),
+    new LiteralComputedKeys(context, options),
     new StrictTransform(context, options),
+    new ExportTransform(context, options),
+    new ImportTransform(context, options),
   ];
 };
 
@@ -71,6 +76,7 @@ export async function preCompilation(
 export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
+  logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
     const result = await transform.postCompilation(code, 'none');
     if (result && result.code) {
@@ -78,6 +84,7 @@ export async function postCompilation(code: string, transforms: Array<Transform>
     }
   }
 
+  logSource('after postCompilation handlers', code);
   return code;
 }
 
