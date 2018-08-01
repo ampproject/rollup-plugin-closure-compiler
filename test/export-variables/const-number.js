@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import {failureGenerator} from '../generator';
+import {generator} from '../generator';
 
-failureGenerator('export-variables', 'const-number');
+generator('export-variables', 'const-number');

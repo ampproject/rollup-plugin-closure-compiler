@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import {failureGenerator} from '../generator';
+import {generator} from '../generator';
 
-failureGenerator('export-variables', 'var-function');
+generator('export-variables', 'var-function');

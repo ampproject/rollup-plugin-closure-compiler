@@ -103,8 +103,17 @@ export function NamedDeclaration(
     return {
       [className]: ExportClosureMapping.NAMED_CLASS,
     };
+  } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
+    const variableDeclarations = declaration.declaration.declarations;
+    const exportMap: ExportNameToClosureMapping = {};
+
+    variableDeclarations.forEach(variableDeclarator => {
+      if (variableDeclarator.id.type === 'Identifier') {
+        exportMap[variableDeclarator.id.name] = ExportClosureMapping.NAMED_CONSTANT;
+      }
+    });
+    return exportMap;
   } else if (declaration.specifiers) {
-    // console.log(declaration.specifiers);
     const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
       exportMap[exportSpecifierName(exportSpecifier)] = ExportClosureMapping.NAMED_CONSTANT;
