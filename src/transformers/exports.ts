@@ -22,8 +22,8 @@ import {
   Node,
   ClassDeclaration,
 } from 'estree';
-import { TransformSourceDescription } from 'rollup';
-import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
+import { TransformSourceDescription, OutputChunk } from 'rollup';
+import { NamedDeclaration, DefaultDeclaration, defaultUnamedExportName } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
   ExportNameToClosureMapping,
@@ -85,18 +85,55 @@ export default class ExportTransform extends Transform implements TransformInter
   }
 
   /**
+   * Rollup's naming scheme for default exports can sometimes clash with reserved
+   * words.
+   *
+   * Rollup protects output by renaming the values with it's own algorithm, so we need to
+   * ensure that when it changes the name of a default export this transform is aware of its
+   * new name in the output.
+   *
+   * i.e. default class {} => window._class = class {} => default class {}.
+   * @param chunk OutputChunk from Rollup for this code.
+   * @param id Rollup id reference to the source
+   */
+  private repairExportMapping(chunk: any, id: string): void {
+    const defaultExportName = defaultUnamedExportName(id);
+    if (
+      chunk.exportNames &&
+      chunk.exportNames.default &&
+      chunk.exportNames.default.safeName &&
+      defaultExportName !== chunk.exportNames.default.safeName &&
+      this.originalExports[defaultExportName]
+    ) {
+      // If there was a detected default export, we need to ensure Rollup
+      // did not rename the export.
+      this.originalExports[chunk.exportNames.default.safeName] = this.originalExports[
+        defaultExportName
+      ];
+      delete this.originalExports[defaultExportName];
+    }
+  }
+
+  /**
    * Before Closure Compiler modifies the source, we need to ensure it has window scoped
    * references to the named exports. This prevents Closure from mangling their names.
    * @param code source to parse, and modify
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async preCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
+      this.repairExportMapping(chunk, id);
+
       const source = new MagicString(code);
       // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       Object.keys(this.originalExports).forEach(key => {
@@ -118,10 +155,15 @@ export default class ExportTransform extends Transform implements TransformInter
    * After Closure Compiler has modified the source, we need to replace the window scoped
    * references we added with the intended export statements
    * @param code source post Closure Compiler Compilation
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: OutputChunk,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
@@ -223,6 +265,16 @@ export default class ExportTransform extends Transform implements TransformInter
 
                     collectedExportsToAppend.push(ancestor.expression.left.property.name);
                     break;
+                  case ExportClosureMapping.DEFAULT_VALUE:
+                  case ExportClosureMapping.DEFAULT_OBJECT:
+                    if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
+                      source.overwrite(
+                        ancestor.expression.left.object.range[0],
+                        ancestor.expression.right.range[0],
+                        'export default ',
+                      );
+                    }
+                    break;
                   default:
                     if (ancestor.range) {
                       source.remove(ancestor.range[0], ancestor.range[1]);
@@ -246,103 +298,6 @@ export default class ExportTransform extends Transform implements TransformInter
       if (collectedExportsToAppend.length > 0) {
         source.append(`export {${collectedExportsToAppend.join(',')}};`);
       }
-
-      // Object.keys(exportedConstants).forEach(exportedConstant => {
-      //   let range: [number, number] | undefined = undefined;
-      //   if ((range = exportedConstants[exportedConstant].range)) {
-      //     switch(this.exported[exportedConstant]) {
-      //       case ExportClosureMapping.NAMED_FUNCTION:
-      //       // replace(`window.${key}=function`, `export function ${key}`, code, source);
-      //         source.overwrite(range[0], range[1], `export function ${exportedConstant}`);
-      //         break;
-      //       case ExportClosureMapping.NAMED_CLASS:
-      //         break;
-      //       case ExportClosureMapping.DEFAULT_FUNCTION:
-      //         break;
-      //       case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-      //         break;
-      //       case ExportClosureMapping.DEFAULT_CLASS:
-      //         break;
-      //       case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-      //         break;
-      //       case ExportClosureMapping.NAMED_CONSTANT:
-      //         break;
-      //       default:
-      //         this.context.warn(
-      //           'Rollup Plugin Closure Compiler could not restore all exports statements.',
-      //         );
-      //         break;
-      //     }
-      //     range && source.overwrite(range[0], range[1], 'new text');
-      //   }
-      // });
-
-      // console.log('exportedConstants', exportedConstants);
-      // Object.keys(this.exported).forEach(key => {
-      //   switch (this.exported[key]) {
-      //     case ExportClosureMapping.NAMED_FUNCTION:
-      //       replace(`window.${key}=function`, `export function ${key}`, code, source);
-      //       break;
-      //     case ExportClosureMapping.NAMED_CLASS:
-      //       const namedClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
-      //       if (namedClassMatch && namedClassMatch.length > 0) {
-      //         // Remove the declaration on window scope, i.e. `window.Exported=a;`
-      //         replace(namedClassMatch[0], '', code, source);
-      //         // Store a new export constant to output at the end. `a as Exported`
-      //         exportedConstants.push(`${namedClassMatch[1]} as ${key}`);
-      //       }
-      //       break;
-      //     case ExportClosureMapping.DEFAULT_FUNCTION:
-      //       replace(`window.${key}=function`, `export default function`, code, source);
-      //       break;
-      //     case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-      //       replace(`window.${key}=function`, `export default function ${key}`, code, source);
-      //       break;
-      //     case ExportClosureMapping.DEFAULT_CLASS:
-      //       const defaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
-      //       if (defaultClassMatch && defaultClassMatch.length > 0) {
-      //         // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
-      //         // Replace it with an export statement `export default a;`
-      //         replace(`class ${defaultClassMatch[1]}`, `export default class`, code, source);
-      //         replace(defaultClassMatch[0], '', code, source);
-      //       }
-      //       break;
-      //     case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-      //       const namedDefaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
-      //       if (namedDefaultClassMatch && namedDefaultClassMatch.length > 0) {
-      //         // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
-      //         // Replace it with an export statement `export default a;`
-      //         replace(
-      //           namedDefaultClassMatch[0],
-      //           `export default ${namedDefaultClassMatch[1]};`,
-      //           code,
-      //           source,
-      //         );
-      //       }
-      //       break;
-      //     case ExportClosureMapping.NAMED_CONSTANT:
-      //       // Remove the declaration on the window scope, i.e. `window.ExportedThree=value`
-      //       // Replace it with a const declaration, i.e `const ExportedThree=value`
-      //       replace(`window.${key}=`, `const ${key}=`, code, source);
-      //       // Store a new export constant to output at the end, i.e `ExportedThree`
-      //       exportedConstants.push(key);
-      //       break;
-      //     default:
-      //       this.context.warn(
-      //         'Rollup Plugin Closure Compiler could not restore all exports statements.',
-      //       );
-      //       break;
-      //   }
-      // });
-
-      // if (exportedConstants.length > 0) {
-      //   // Remove the newline at the end since we are going to append exports.
-      //   if (code.endsWith('\n')) {
-      //     source.trimLines();
-      //   }
-      //   // Append the exports that were gathered, i.e `export {a as Exported, ExportedThree};`
-      //   source.append(`export {${exportedConstants.join(',')}};`);
-      // }
 
       return {
         code: source.toString(),

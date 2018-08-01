@@ -52,18 +52,21 @@ export const createTransforms = (
 export async function preCompilation(
   code: string,
   outputOptions: OutputOptions,
+  chunk: any,
   transforms: Array<Transform>,
 ): Promise<string> {
   // Each transform has a 'preCompilation' step that must complete before passing
   // the resulting code to Closure Compiler.
+  logSource('before preCompilation handlers', code);
   for (const transform of transforms) {
     transform.outputOptions = outputOptions;
-    const result = await transform.preCompilation(code, 'none');
+    const result = await transform.preCompilation(code, chunk, chunk.id);
     if (result && result.code) {
       code = result.code;
     }
   }
 
+  logSource('after preCompilation handlers', code);
   return code;
 }
 
@@ -73,12 +76,16 @@ export async function preCompilation(
  * @param transforms Transforms to execute.
  * @return source code following `postCompilation`
  */
-export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
+export async function postCompilation(
+  code: string,
+  chunk: any,
+  transforms: Array<Transform>,
+): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
   logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
-    const result = await transform.postCompilation(code, 'none');
+    const result = await transform.postCompilation(code, chunk, chunk.id);
     if (result && result.code) {
       code = result.code;
     }
