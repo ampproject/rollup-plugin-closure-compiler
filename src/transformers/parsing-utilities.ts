@@ -116,7 +116,13 @@ export function NamedDeclaration(
   } else if (declaration.specifiers) {
     const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
-      exportMap[exportSpecifierName(exportSpecifier)] = ExportClosureMapping.NAMED_CONSTANT;
+      if (exportSpecifier.exported.name === 'default') {
+        // This is a default export in a specifier list.
+        // e.g. export { foo as default };
+        exportMap[exportSpecifier.local.name] = ExportClosureMapping.DEFAULT;
+      } else {
+        exportMap[exportSpecifier.exported.name] = ExportClosureMapping.NAMED_CONSTANT;
+      }
     });
     return exportMap;
   }

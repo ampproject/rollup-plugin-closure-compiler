@@ -198,6 +198,7 @@ export default class ExportTransform extends Transform implements TransformInter
                 switch (originalExports[exportName]) {
                   case ExportClosureMapping.DEFAULT_FUNCTION:
                   case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
+                  case ExportClosureMapping.DEFAULT:
                     if (ancestor.expression.left.range) {
                       source.overwrite(
                         ancestor.expression.left.range[0],
