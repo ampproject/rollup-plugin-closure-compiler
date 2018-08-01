@@ -17,6 +17,7 @@
 import { Transform } from '../types';
 import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
+import MagicString from 'magic-string';
 
 const STRICT_MODE_DECLARATION = `'use strict';`;
 const STRICT_MODE_DECLARATION_LENGTH = STRICT_MODE_DECLARATION.length;
@@ -26,18 +27,24 @@ export default class StrictTransform extends Transform {
    * When outputting an es module, runtimes automatically apply strict mode conventions.
    * This means we can safely strip the 'use strict'; declaration from the top of the file.
    * @param code source following closure compiler minification
-   * @param id Rollup Resource id
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(code: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format) && code.startsWith(STRICT_MODE_DECLARATION)) {
+      const source = new MagicString(code);
+
       // This will only remove the top level 'use strict' directive since we cannot
       // be certain source does not contain strings with the intended content.
-      code = code.slice(STRICT_MODE_DECLARATION_LENGTH, code.length);
+      source.remove(0, STRICT_MODE_DECLARATION_LENGTH);
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
     return {

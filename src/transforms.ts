@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext } from 'rollup';
+import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
+import LiteralComputedKeys from './transformers/literal-computed-keys';
 import ExportTransform from './transformers/exports';
+import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
+import { logSource } from './debug';
 
 /**
  * Instantiate transform class instances for the plugin invocation.
  * @param context Plugin context to bind for each transform instance.
  * @param options Rollup input options
- * @param id Rollup's id entry for this source.
  * @return Instantiated transform class instances for the given entry point.
  */
-export const createTransforms = (context: PluginContext): Array<Transform> => {
-  return [new IifeTransform(context), new ExportTransform(context), new StrictTransform(context)];
+export const createTransforms = (
+  context: PluginContext,
+  options: InputOptions,
+): Array<Transform> => {
+  return [
+    new IifeTransform(context, options),
+    new LiteralComputedKeys(context, options),
+    new StrictTransform(context, options),
+    new ExportTransform(context, options),
+    new ImportTransform(context, options),
+  ];
 };
 
 /**
@@ -41,18 +52,21 @@ export const createTransforms = (context: PluginContext): Array<Transform> => {
 export async function preCompilation(
   code: string,
   outputOptions: OutputOptions,
+  chunk: any,
   transforms: Array<Transform>,
 ): Promise<string> {
   // Each transform has a 'preCompilation' step that must complete before passing
   // the resulting code to Closure Compiler.
+  logSource('before preCompilation handlers', code);
   for (const transform of transforms) {
     transform.outputOptions = outputOptions;
-    const result = await transform.preCompilation(code, 'none');
+    const result = await transform.preCompilation(code, chunk, chunk.id);
     if (result && result.code) {
       code = result.code;
     }
   }
 
+  logSource('after preCompilation handlers', code);
   return code;
 }
 
@@ -62,29 +76,37 @@ export async function preCompilation(
  * @param transforms Transforms to execute.
  * @return source code following `postCompilation`
  */
-export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
+export async function postCompilation(
+  code: string,
+  chunk: any,
+  transforms: Array<Transform>,
+): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
+  logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
-    const result = await transform.postCompilation(code, 'none');
+    const result = await transform.postCompilation(code, chunk, chunk.id);
     if (result && result.code) {
       code = result.code;
     }
   }
 
+  logSource('after postCompilation handlers', code);
   return code;
 }
 
 /**
  * Run each transform's `deriveFromInputSource` phase in parallel.
  * @param code source code to derive information from, pre Closure Compiler minification.
+ * @param id Rollup identifier for this input source.
  * @param transforms Transforms to execute.
  */
 export async function deriveFromInputSource(
   code: string,
+  id: string,
   transforms: Array<Transform>,
 ): Promise<void> {
-  await Promise.all(
-    transforms.map(transform => transform.deriveFromInputSource(code, 'none')),
-  ).then(_ => void 0);
+  await Promise.all(transforms.map(transform => transform.deriveFromInputSource(code, id))).then(
+    _ => void 0,
+  );
 }

@@ -14,33 +14,47 @@
  * limitations under the License.
  */
 
-import { ExportSpecifier, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
+import {
+  ExportSpecifier,
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  Literal,
+  SimpleLiteral,
+} from 'estree';
+import * as path from 'path';
 import { PluginContext } from 'rollup';
 import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
-type DeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
+type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
 export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
   exportSpecifier.exported.name;
 
+const camelcase = (input: string): string =>
+  input
+    .replace(/^[_.\- ]+/, '')
+    .toLowerCase()
+    .replace(/[_.\- ]+(\w|$)/g, (m, p1) => p1.toUpperCase());
+
+// When Rollup encounters a default export that is unnamed,
+// it uses camelCase(filename) of the id to name the function.
+// THIS IS NOT INTUITIVE!
+export const defaultUnamedExportName = (id: string) => camelcase(path.basename(id, '.js'));
+
 export function functionDeclarationName(
   context: PluginContext,
-  declaration: DeclarationsWithFunctions,
+  id: string,
+  declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'FunctionDeclaration') {
     const functionDeclaration = declaration.declaration;
 
     if (
-      functionDeclaration === null ||
-      functionDeclaration.id === null ||
-      functionDeclaration.id.name === null
+      functionDeclaration !== null &&
+      functionDeclaration.id !== null &&
+      functionDeclaration.id.name !== null
     ) {
-      context.error(
-        `Plugin requires exports to be named, 'export function Foo(){}' not 'export function(){}'`,
-      );
-    } else {
-      // This function declaration is the export name we need to know.
       return functionDeclaration.id.name;
     }
   }
@@ -50,21 +64,18 @@ export function functionDeclarationName(
 
 export function classDeclarationName(
   context: PluginContext,
-  declaration: DeclarationsWithFunctions,
+  id: string,
+  declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
   if (declaration.declaration && declaration.declaration.type === 'ClassDeclaration') {
     const classDeclaration = declaration.declaration;
 
     if (
-      classDeclaration === null ||
-      classDeclaration.id === null ||
-      classDeclaration.id.name === null
+      classDeclaration !== null &&
+      classDeclaration.id !== null &&
+      classDeclaration.id.name !== null
     ) {
-      context.error(
-        `Plugin requires exports to be named, 'export class Foo(){}' not 'export class(){}'`,
-      );
-    } else {
       // This class declaration is the export name we need to know.
       return classDeclaration.id.name;
     }
@@ -75,10 +86,15 @@ export function classDeclarationName(
 
 export function NamedDeclaration(
   context: PluginContext,
+  id: string,
   declaration: ExportNamedDeclaration,
 ): ExportNameToClosureMapping | null {
-  const functionName = functionDeclarationName(context, declaration);
-  const className = classDeclarationName(context, declaration);
+  const functionName = functionDeclarationName(context, id, declaration);
+  const className = classDeclarationName(context, id, declaration);
+
+  // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
+  // var Foo=function(){}export{Foo as default} => default export function
+
   if (functionName !== null) {
     return {
       [functionName]: ExportClosureMapping.NAMED_FUNCTION,
@@ -87,10 +103,26 @@ export function NamedDeclaration(
     return {
       [className]: ExportClosureMapping.NAMED_CLASS,
     };
+  } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
+    const variableDeclarations = declaration.declaration.declarations;
+    const exportMap: ExportNameToClosureMapping = {};
+
+    variableDeclarations.forEach(variableDeclarator => {
+      if (variableDeclarator.id.type === 'Identifier') {
+        exportMap[variableDeclarator.id.name] = ExportClosureMapping.NAMED_CONSTANT;
+      }
+    });
+    return exportMap;
   } else if (declaration.specifiers) {
     const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
-      exportMap[exportSpecifierName(exportSpecifier)] = ExportClosureMapping.NAMED_CONSTANT;
+      if (exportSpecifier.exported.name === 'default') {
+        // This is a default export in a specifier list.
+        // e.g. export { foo as default };
+        exportMap[exportSpecifier.local.name] = ExportClosureMapping.DEFAULT;
+      } else {
+        exportMap[exportSpecifier.exported.name] = ExportClosureMapping.NAMED_CONSTANT;
+      }
     });
     return exportMap;
   }
@@ -100,18 +132,33 @@ export function NamedDeclaration(
 
 export function DefaultDeclaration(
   context: PluginContext,
+  id: string,
   declaration: ExportDefaultDeclaration,
 ): ExportNameToClosureMapping | null {
   if (declaration.declaration) {
+    const defaultExportName = defaultUnamedExportName(id);
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
-        const functionName = functionDeclarationName(context, declaration);
+        const functionName = functionDeclarationName(context, id, declaration);
         if (functionName !== null) {
           return {
             [functionName]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
           };
+        } else {
+          return {
+            [defaultExportName]: ExportClosureMapping.DEFAULT_FUNCTION,
+          };
         }
-        break;
+      case 'ClassDeclaration':
+        const className = classDeclarationName(context, id, declaration);
+        if (className !== null) {
+          return {
+            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+          };
+        }
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_CLASS,
+        };
       case 'Identifier':
         if (declaration.declaration.name) {
           return {
@@ -119,16 +166,40 @@ export function DefaultDeclaration(
           };
         }
         break;
-      case 'ClassDeclaration':
-        const className = classDeclarationName(context, declaration);
-        if (className !== null) {
-          return {
-            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
-          };
-        }
-        break;
+      case 'Literal':
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
+        };
+      case 'ObjectExpression':
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_OBJECT,
+        };
+      case 'ArrayExpression':
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
+        };
     }
   }
 
   return null;
 }
+
+export function literalName(context: PluginContext, id: string, literal: Literal): string {
+  // Literal can either be a SimpleLiteral, or RegExpLiteral
+  if ('regex' in literal) {
+    // This is a RegExpLiteral
+    context.warn(
+      'Rollup Plugin Closure Compiler found a Regex Literal Named Import. `import foo from "*/.hbs"`',
+    );
+    return '';
+  }
+
+  const literalValue = (literal as SimpleLiteral).value;
+  return typeof literalValue === 'string' ? literalValue : '';
+}
+
+// export function ImportDeclaration(
+//   context: PluginContext,
+//   id: string,
+//   declaration: ImportDeclaration,
+// ):

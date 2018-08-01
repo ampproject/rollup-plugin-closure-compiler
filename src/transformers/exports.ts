@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-import { ModuleDeclaration, ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
-import { TransformSourceDescription, OutputOptions } from 'rollup';
-import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
+import {
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  ExportAllDeclaration,
+  Identifier,
+  Node,
+  ClassDeclaration,
+} from 'estree';
+import { TransformSourceDescription, OutputChunk } from 'rollup';
+import { NamedDeclaration, DefaultDeclaration, defaultUnamedExportName } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
   ExportNameToClosureMapping,
-  ALL_EXPORT_TYPES,
-  EXPORT_NAMED_DECLARATION,
-  EXPORT_DEFAULT_DECLARATION,
-  EXPORT_ALL_DECLARATION,
-  ExportClosureMapping,
   Transform,
   TransformInterface,
+  ExportClosureMapping,
 } from '../types';
-
-const HEADER = `/**
-* @fileoverview Externs built via derived configuration from Rollup or input code.
-* This extern contains top level exported members.
-* @externs
-*/
-`;
+import MagicString from 'magic-string';
+const walk = require('acorn/dist/walk');
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -45,92 +43,109 @@ const HEADER = `/**
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
 export default class ExportTransform extends Transform implements TransformInterface {
-  private exported: ExportNameToClosureMapping = {};
-
-  public extern(options: OutputOptions): string {
-    let content = HEADER;
-    if (isESMFormat(options.format)) {
-      Object.keys(this.exported).forEach(key => {
-        content += `window['${key}'] = ${key};\n`;
-      });
-    }
-
-    return content;
-  }
+  private originalExports: ExportNameToClosureMapping = {};
 
   /**
    * Before Closure Compiler is given a chance to look at the code, we need to
    * find and store all export statements with their correct type
-   * @param code source to parse, and modify
+   * @param code source to parse
    * @param id Rollup id reference to the source
-   * @return Promise containing the modified source
    */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    const program = this.context.parse(code, {});
-    const exportNodes = program.body.filter(node => ALL_EXPORT_TYPES.includes(node.type));
+    if (this.isEntryPoint(id)) {
+      const context = this.context;
+      let originalExports: ExportNameToClosureMapping = {};
+      const program = context.parse(code, { ranges: true });
 
-    exportNodes.forEach((node: ModuleDeclaration) => {
-      switch (node.type) {
-        case EXPORT_NAMED_DECLARATION:
-          const namedDeclarationValues = NamedDeclaration(
-            this.context,
-            node as ExportNamedDeclaration,
-          );
+      walk.simple(program, {
+        ExportNamedDeclaration(node: ExportNamedDeclaration) {
+          const namedDeclarationValues = NamedDeclaration(context, id, node);
           if (namedDeclarationValues !== null) {
-            this.exported = { ...this.exported, ...namedDeclarationValues };
+            originalExports = { ...originalExports, ...namedDeclarationValues };
           }
-          break;
-        case EXPORT_DEFAULT_DECLARATION:
-          // TODO(KB): This case is not fully supported – only named default exports.
-          // `export default Foo(){};`, or `export default Foo;`, not `export default function(){};`
-          const defaultDeclarationValue = DefaultDeclaration(
-            this.context,
-            node as ExportDefaultDeclaration,
-          );
+        },
+        ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
+          const defaultDeclarationValue = DefaultDeclaration(context, id, node);
           if (defaultDeclarationValue !== null) {
-            this.exported = { ...this.exported, ...defaultDeclarationValue };
+            originalExports = { ...originalExports, ...defaultDeclarationValue };
           }
-          break;
-        case EXPORT_ALL_DECLARATION:
+        },
+        ExportAllDeclaration(node: ExportAllDeclaration) {
           // TODO(KB): This case `export * from "./import"` is not currently supported.
-          this.context.error(
+          context.error(
             new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
           );
-          break;
-        default:
-          this.context.error(
-            new Error(
-              `Rollup Plugin Closure Compiler found unsupported module declaration type, ${
-                node.type
-              }`,
-            ),
-          );
-          break;
-      }
-    });
+        },
+      });
+
+      this.originalExports = originalExports;
+    }
 
     return void 0;
+  }
+
+  /**
+   * Rollup's naming scheme for default exports can sometimes clash with reserved
+   * words.
+   *
+   * Rollup protects output by renaming the values with it's own algorithm, so we need to
+   * ensure that when it changes the name of a default export this transform is aware of its
+   * new name in the output.
+   *
+   * i.e. default class {} => window._class = class {} => default class {}.
+   * @param chunk OutputChunk from Rollup for this code.
+   * @param id Rollup id reference to the source
+   */
+  private repairExportMapping(chunk: any, id: string): void {
+    const defaultExportName = defaultUnamedExportName(id);
+    if (
+      chunk.exportNames &&
+      chunk.exportNames.default &&
+      chunk.exportNames.default.safeName &&
+      defaultExportName !== chunk.exportNames.default.safeName &&
+      this.originalExports[defaultExportName]
+    ) {
+      // If there was a detected default export, we need to ensure Rollup
+      // did not rename the export.
+      this.originalExports[chunk.exportNames.default.safeName] = this.originalExports[
+        defaultExportName
+      ];
+      delete this.originalExports[defaultExportName];
+    }
   }
 
   /**
    * Before Closure Compiler modifies the source, we need to ensure it has window scoped
    * references to the named exports. This prevents Closure from mangling their names.
    * @param code source to parse, and modify
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async preCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
-      Object.keys(this.exported).forEach(key => {
-        code += `\nwindow['${key}'] = ${key}`;
+      this.repairExportMapping(chunk, id);
+
+      const source = new MagicString(code);
+      // Window scoped references for each key are required to ensure Closure Compilre retains the code.
+      Object.keys(this.originalExports).forEach(key => {
+        source.append(`\nwindow['${key}'] = ${key}`);
       });
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
-    // TODO(KB): Sourcemaps fail :(
     return {
       code,
     };
@@ -140,71 +155,157 @@ export default class ExportTransform extends Transform implements TransformInter
    * After Closure Compiler has modified the source, we need to replace the window scoped
    * references we added with the intended export statements
    * @param code source post Closure Compiler Compilation
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: OutputChunk,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
-      const exportedConstants: Array<string> = [];
+      const source = new MagicString(code);
+      const program = this.context.parse(code, { ranges: true });
+      const collectedExportsToAppend: Array<string> = [];
 
-      Object.keys(this.exported).forEach(key => {
-        switch (this.exported[key]) {
-          case ExportClosureMapping.NAMED_FUNCTION:
-            code = code.replace(`window.${key}=function`, `export function ${key}`);
-            break;
-          case ExportClosureMapping.NAMED_CLASS:
-            const namedClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
-            if (namedClassMatch && namedClassMatch.length > 0) {
-              // Remove the declaration on window scope, i.e. `window.Exported=a;`
-              code = code.replace(namedClassMatch[0], '');
-              // Store a new export constant to output at the end. `a as Exported`
-              exportedConstants.push(`${namedClassMatch[1]} as ${key}`);
-            }
-            break;
-          case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-            code = code.replace(`window.${key}=function`, `export default function ${key}`);
-            break;
-          case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-            const namedDefaultClassMatch = new RegExp(`window.${key}=(\\w+);`).exec(code);
-            if (namedDefaultClassMatch && namedDefaultClassMatch.length > 0) {
-              // Remove the declaration on window scope, i.e. `window.ExportedTwo=a;`
-              // Replace it with an export statement `export default a;`
-              code = code.replace(
-                namedDefaultClassMatch[0],
-                `export default ${namedDefaultClassMatch[1]};`,
-              );
-            }
-            break;
-          case ExportClosureMapping.NAMED_CONSTANT:
-            // Remove the declaration on the window scope, i.e. `window.ExportedThree=value`
-            // Replace it with a const declaration, i.e `const ExportedThree=value`
-            code = code.replace(`window.${key}=`, `const ${key}=`);
-            // Store a new export constant to output at the end, i.e `ExportedThree`
-            exportedConstants.push(key);
-            break;
-          default:
-            this.context.warn(
-              'Rollup Plugin Closure Compiler could not restore all exports statements.',
-            );
-            break;
-        }
+      const originalExports = this.originalExports;
+      const originalExportIdentifiers = Object.keys(originalExports);
+
+      source.trimEnd();
+      walk.ancestor(program, {
+        // We inserted window scoped assignments for all the export statements during `preCompilation`
+        // window['exportName'] = exportName;
+        // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
+        // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
+        Identifier(node: Identifier, ancestors: Array<Node>) {
+          if (node.name === 'window') {
+            ancestors.forEach((ancestor: Node) => {
+              if (
+                ancestor.type === 'ExpressionStatement' &&
+                ancestor.expression.type === 'AssignmentExpression' &&
+                ancestor.expression.left.type === 'MemberExpression' &&
+                ancestor.expression.left.object.type === 'Identifier' &&
+                ancestor.expression.left.object.name === 'window' &&
+                ancestor.expression.left.property.type === 'Identifier' &&
+                originalExportIdentifiers.includes(ancestor.expression.left.property.name)
+              ) {
+                const exportName = ancestor.expression.left.property.name;
+                switch (originalExports[exportName]) {
+                  case ExportClosureMapping.DEFAULT_FUNCTION:
+                  case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
+                  case ExportClosureMapping.DEFAULT:
+                    if (ancestor.expression.left.range) {
+                      source.overwrite(
+                        ancestor.expression.left.range[0],
+                        ancestor.expression.left.range[1] + ancestor.expression.operator.length,
+                        `export default `,
+                      );
+                    }
+                    break;
+                  case ExportClosureMapping.NAMED_FUNCTION:
+                    if (
+                      ancestor.expression.right.type === 'FunctionExpression' &&
+                      ancestor.expression.right.params.length > 0
+                    ) {
+                      const firstParameter = ancestor.expression.right.params[0];
+                      if (ancestor.expression.range && firstParameter.range) {
+                        source.overwrite(
+                          ancestor.expression.range[0],
+                          firstParameter.range[0] - 1,
+                          `export function ${ancestor.expression.left.property.name}`,
+                        );
+                      }
+                    }
+                    break;
+                  case ExportClosureMapping.DEFAULT_CLASS:
+                  case ExportClosureMapping.NAMED_DEFAULT_CLASS:
+                    if (ancestor.expression.right.type === 'Identifier') {
+                      const mangledName = ancestor.expression.right.name;
+
+                      walk.simple(program, {
+                        ClassDeclaration(node: ClassDeclaration) {
+                          if (
+                            node.id &&
+                            node.id.name === mangledName &&
+                            node.range &&
+                            node.body.range &&
+                            ancestor.range
+                          ) {
+                            if (node.superClass && node.superClass.type === 'Identifier') {
+                              source.overwrite(
+                                node.range[0],
+                                node.body.range[0],
+                                `export default class extends ${node.superClass.name}`,
+                              );
+                            } else {
+                              source.overwrite(
+                                node.range[0],
+                                node.body.range[0],
+                                `export default class`,
+                              );
+                            }
+                            source.remove(ancestor.range[0], ancestor.range[1]);
+                          }
+                        },
+                      });
+                    }
+                    break;
+                  case ExportClosureMapping.NAMED_CONSTANT:
+                    if (ancestor.expression.left.object.range) {
+                      source.overwrite(
+                        ancestor.expression.left.object.range[0],
+                        ancestor.expression.left.object.range[1] + 1,
+                        'var ',
+                      );
+                    }
+
+                    collectedExportsToAppend.push(ancestor.expression.left.property.name);
+                    break;
+                  case ExportClosureMapping.DEFAULT_VALUE:
+                  case ExportClosureMapping.DEFAULT_OBJECT:
+                    if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
+                      source.overwrite(
+                        ancestor.expression.left.object.range[0],
+                        ancestor.expression.right.range[0],
+                        'export default ',
+                      );
+                    }
+                    break;
+                  default:
+                    if (ancestor.range) {
+                      source.remove(ancestor.range[0], ancestor.range[1]);
+                    }
+
+                    if (ancestor.expression.right.type === 'Identifier') {
+                      collectedExportsToAppend.push(
+                        `${ancestor.expression.right.name} as ${
+                          ancestor.expression.left.property.name
+                        }`,
+                      );
+                    }
+                    break;
+                }
+              }
+            });
+          }
+        },
       });
 
-      if (exportedConstants.length > 0) {
-        // Remove the newline at the end since we are going to append exports.
-        if (code.endsWith('\n')) {
-          code = code.substr(0, code.lastIndexOf('\n'));
-        }
-        // Append the exports that were gathered, i.e `export {a as Exported, ExportedThree};`
-        code += `export {${exportedConstants.join(',')}};`;
+      if (collectedExportsToAppend.length > 0) {
+        source.append(`export {${collectedExportsToAppend.join(',')}};`);
       }
+
+      return {
+        code: source.toString(),
+        map: source.generateMap(),
+      };
     }
 
-    // TODO(KB): Sourcemaps fail :(
     return {
       code,
     };
