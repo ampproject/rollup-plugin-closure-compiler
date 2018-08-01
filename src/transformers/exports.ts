@@ -266,6 +266,7 @@ export default class ExportTransform extends Transform implements TransformInter
                     collectedExportsToAppend.push(ancestor.expression.left.property.name);
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
+                  case ExportClosureMapping.DEFAULT_OBJECT:
                     if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
                       source.overwrite(
                         ancestor.expression.left.object.range[0],

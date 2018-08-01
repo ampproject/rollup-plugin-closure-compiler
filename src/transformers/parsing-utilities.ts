@@ -121,6 +121,7 @@ export function DefaultDeclaration(
   declaration: ExportDefaultDeclaration,
 ): ExportNameToClosureMapping | null {
   if (declaration.declaration) {
+    const defaultExportName = defaultUnamedExportName(id);
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
         const functionName = functionDeclarationName(context, id, declaration);
@@ -129,11 +130,20 @@ export function DefaultDeclaration(
             [functionName]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
           };
         } else {
-          const functionName = defaultUnamedExportName(id);
           return {
-            [functionName]: ExportClosureMapping.DEFAULT_FUNCTION,
+            [defaultExportName]: ExportClosureMapping.DEFAULT_FUNCTION,
           };
         }
+      case 'ClassDeclaration':
+        const className = classDeclarationName(context, id, declaration);
+        if (className !== null) {
+          return {
+            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+          };
+        }
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_CLASS,
+        };
       case 'Identifier':
         if (declaration.declaration.name) {
           return {
@@ -141,27 +151,17 @@ export function DefaultDeclaration(
           };
         }
         break;
-      case 'ClassDeclaration':
-        const className = classDeclarationName(context, id, declaration);
-        if (className !== null) {
-          return {
-            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
-          };
-        } else {
-          const className = defaultUnamedExportName(id);
-          return {
-            [className]: ExportClosureMapping.DEFAULT_CLASS,
-          };
-        }
       case 'Literal':
-        const literalNameValue = defaultUnamedExportName(id);
         return {
-          [literalNameValue]: ExportClosureMapping.DEFAULT_VALUE,
+          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
+        };
+      case 'ObjectExpression':
+        return {
+          [defaultExportName]: ExportClosureMapping.DEFAULT_OBJECT,
         };
       case 'ArrayExpression':
-        const arrayName = defaultUnamedExportName(id);
         return {
-          [arrayName]: ExportClosureMapping.DEFAULT_VALUE,
+          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
         };
     }
   }
