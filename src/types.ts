@@ -50,12 +50,17 @@ export enum ExportClosureMapping {
   DEFAULT_CLASS = 5,
   NAMED_CONSTANT = 6,
   DEFAULT = 7,
+  DEFAULT_VALUE = 8,
 }
 export interface ExportNameToClosureMapping {
   [key: string]: ExportClosureMapping;
 }
 
-export type TransformMethod = (code: string, id: string) => Promise<TransformSourceDescription>;
+export type TransformMethod = (
+  code: string,
+  chunk: any,
+  id: string,
+) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   extern: (options: OutputOptions) => string;
   deriveFromInputSource: (code: string, id: string) => Promise<void>;
@@ -80,12 +85,20 @@ export class Transform implements TransformInterface {
     return void 0;
   }
 
-  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async preCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     return {
       code,
     };
   }
-  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     return {
       code,
     };

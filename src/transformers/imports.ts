@@ -59,10 +59,15 @@ export default class ImportTransform extends Transform {
    * Before Closure Compiler modifies the source, we need to ensure external imports have been removed
    * since Closure will error out when it encounters them.
    * @param code source to parse, and modify
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup id reference to the source
    * @return modified input source with external imports removed.
    */
-  public async preCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async preCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = this.context.parse(code, { ranges: true });
     const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
@@ -91,10 +96,15 @@ export default class ImportTransform extends Transform {
   /**
    * After Closure Compiler has modified the source, we need to re-add the external imports
    * @param code source post Closure Compiler Compilation
+   * @param chunk OutputChunk from Rollup for this code.
    * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string, id: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: any,
+    id: string,
+  ): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
       source.prepend(importedExternalSyntax),

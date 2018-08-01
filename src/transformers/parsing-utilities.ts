@@ -36,6 +36,11 @@ const camelcase = (input: string): string =>
     .toLowerCase()
     .replace(/[_.\- ]+(\w|$)/g, (m, p1) => p1.toUpperCase());
 
+// When Rollup encounters a default export that is unnamed,
+// it uses camelCase(filename) of the id to name the function.
+// THIS IS NOT INTUITIVE!
+export const defaultUnamedExportName = (id: string) => camelcase(path.basename(id, '.js'));
+
 export function functionDeclarationName(
   context: PluginContext,
   id: string,
@@ -86,7 +91,6 @@ export function NamedDeclaration(
 ): ExportNameToClosureMapping | null {
   const functionName = functionDeclarationName(context, id, declaration);
   const className = classDeclarationName(context, id, declaration);
-  // console.log(functionName, className);
 
   // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
   // var Foo=function(){}export{Foo as default} => default export function
@@ -125,10 +129,7 @@ export function DefaultDeclaration(
             [functionName]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
           };
         } else {
-          // When Rollup encounters a default export that is unnamed,
-          // it uses camelCase(filename) of the id to name the function.
-          // THIS IS NOT INTUITIVE!
-          const functionName = camelcase(path.basename(id, '.js'));
+          const functionName = defaultUnamedExportName(id);
           return {
             [functionName]: ExportClosureMapping.DEFAULT_FUNCTION,
           };
@@ -147,14 +148,21 @@ export function DefaultDeclaration(
             [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
           };
         } else {
-          // When Rollup encounters a default export that is unnamed,
-          // it uses camelCase(filename) of the id to name the class.
-          // THIS IS NOT INTUITIVE!
-          const className = camelcase(path.basename(id, '.js'));
+          const className = defaultUnamedExportName(id);
           return {
             [className]: ExportClosureMapping.DEFAULT_CLASS,
           };
         }
+      case 'Literal':
+        const literalNameValue = defaultUnamedExportName(id);
+        return {
+          [literalNameValue]: ExportClosureMapping.DEFAULT_VALUE,
+        };
+      case 'ArrayExpression':
+        const arrayName = defaultUnamedExportName(id);
+        return {
+          [arrayName]: ExportClosureMapping.DEFAULT_VALUE,
+        };
     }
   }
 
