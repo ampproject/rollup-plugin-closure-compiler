@@ -32,7 +32,7 @@ const ADVANCED_CLOSURE_OPTIONS = {
 };
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
-  // ...ADVANCED_CLOSURE_OPTIONS,
+  ...ADVANCED_CLOSURE_OPTIONS,
 };
 
 const ES_OUTPUT = 'es';

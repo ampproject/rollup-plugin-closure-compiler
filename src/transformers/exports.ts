@@ -195,7 +195,7 @@ export default class ExportTransform extends Transform implements TransformInter
                 originalExportIdentifiers.includes(ancestor.expression.left.property.name)
               ) {
                 const exportName = ancestor.expression.left.property.name;
-                switch (originalExports[exportName]) {
+                switch (originalExports[exportName].type) {
                   case ExportClosureMapping.DEFAULT_FUNCTION:
                   case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
                   case ExportClosureMapping.DEFAULT:
@@ -264,7 +264,15 @@ export default class ExportTransform extends Transform implements TransformInter
                       );
                     }
 
-                    collectedExportsToAppend.push(ancestor.expression.left.property.name);
+                    if (originalExports[exportName].alias !== null) {
+                      collectedExportsToAppend.push(
+                        `${ancestor.expression.left.property.name} as ${
+                          originalExports[exportName].alias
+                        }`,
+                      );
+                    } else {
+                      collectedExportsToAppend.push(ancestor.expression.left.property.name);
+                    }
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
                   case ExportClosureMapping.DEFAULT_OBJECT:
@@ -297,7 +305,7 @@ export default class ExportTransform extends Transform implements TransformInter
       });
 
       if (collectedExportsToAppend.length > 0) {
-        source.append(`export {${collectedExportsToAppend.join(',')}};`);
+        source.append(`export{${collectedExportsToAppend.join(',')}};`);
       }
 
       return {

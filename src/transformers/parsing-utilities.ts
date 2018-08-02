@@ -97,11 +97,17 @@ export function NamedDeclaration(
 
   if (functionName !== null) {
     return {
-      [functionName]: ExportClosureMapping.NAMED_FUNCTION,
+      [functionName]: {
+        alias: null,
+        type: ExportClosureMapping.NAMED_FUNCTION,
+      },
     };
   } else if (className !== null) {
     return {
-      [className]: ExportClosureMapping.NAMED_CLASS,
+      [className]: {
+        alias: null,
+        type: ExportClosureMapping.NAMED_CLASS,
+      },
     };
   } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
     const variableDeclarations = declaration.declaration.declarations;
@@ -109,7 +115,10 @@ export function NamedDeclaration(
 
     variableDeclarations.forEach(variableDeclarator => {
       if (variableDeclarator.id.type === 'Identifier') {
-        exportMap[variableDeclarator.id.name] = ExportClosureMapping.NAMED_CONSTANT;
+        exportMap[variableDeclarator.id.name] = {
+          alias: null,
+          type: ExportClosureMapping.NAMED_CONSTANT,
+        };
       }
     });
     return exportMap;
@@ -119,9 +128,18 @@ export function NamedDeclaration(
       if (exportSpecifier.exported.name === 'default') {
         // This is a default export in a specifier list.
         // e.g. export { foo as default };
-        exportMap[exportSpecifier.local.name] = ExportClosureMapping.DEFAULT;
+        exportMap[exportSpecifier.local.name] = {
+          alias: null,
+          type: ExportClosureMapping.DEFAULT,
+        };
       } else {
-        exportMap[exportSpecifier.exported.name] = ExportClosureMapping.NAMED_CONSTANT;
+        exportMap[exportSpecifier.local.name] = {
+          alias:
+            exportSpecifier.local.name !== exportSpecifier.exported.name
+              ? exportSpecifier.exported.name
+              : null,
+          type: ExportClosureMapping.NAMED_CONSTANT,
+        };
       }
     });
     return exportMap;
@@ -142,41 +160,65 @@ export function DefaultDeclaration(
         const functionName = functionDeclarationName(context, id, declaration);
         if (functionName !== null) {
           return {
-            [functionName]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            [functionName]: {
+              alias: null,
+              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            },
           };
         } else {
           return {
-            [defaultExportName]: ExportClosureMapping.DEFAULT_FUNCTION,
+            [defaultExportName]: {
+              alias: null,
+              type: ExportClosureMapping.DEFAULT_FUNCTION,
+            },
           };
         }
       case 'ClassDeclaration':
         const className = classDeclarationName(context, id, declaration);
         if (className !== null) {
           return {
-            [className]: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+            [className]: {
+              alias: null,
+              type: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+            },
           };
         }
         return {
-          [defaultExportName]: ExportClosureMapping.DEFAULT_CLASS,
+          [defaultExportName]: {
+            alias: null,
+            type: ExportClosureMapping.DEFAULT_CLASS,
+          },
         };
       case 'Identifier':
         if (declaration.declaration.name) {
           return {
-            [declaration.declaration.name]: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            [declaration.declaration.name]: {
+              alias: null,
+              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            },
           };
         }
         break;
       case 'Literal':
         return {
-          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
+          [defaultExportName]: {
+            alias: null,
+            type: ExportClosureMapping.DEFAULT_VALUE,
+          },
         };
       case 'ObjectExpression':
         return {
-          [defaultExportName]: ExportClosureMapping.DEFAULT_OBJECT,
+          [defaultExportName]: {
+            alias: null,
+            type: ExportClosureMapping.DEFAULT_OBJECT,
+          },
         };
       case 'ArrayExpression':
         return {
-          [defaultExportName]: ExportClosureMapping.DEFAULT_VALUE,
+          [defaultExportName]: {
+            alias: null,
+            type: ExportClosureMapping.DEFAULT_VALUE,
+          },
         };
     }
   }

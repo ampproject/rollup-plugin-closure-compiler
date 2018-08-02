@@ -1,2 +1,2 @@
 const a = 1;
-export {a as bar};
+export{a as bar};
