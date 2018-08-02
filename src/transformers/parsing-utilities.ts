@@ -198,6 +198,21 @@ export function DefaultDeclaration(
             },
           };
         }
+        return {
+          [defaultExportName]: {
+            alias: null,
+            type: ExportClosureMapping.DEFAULT_CLASS,
+          },
+        };
+      case 'Identifier':
+        if (declaration.declaration.name) {
+          return {
+            [declaration.declaration.name]: {
+              alias: null,
+              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            },
+          };
+        }
         break;
       case 'Literal':
         return {
@@ -239,9 +254,3 @@ export function literalName(context: PluginContext, id: string, literal: Literal
   const literalValue = (literal as SimpleLiteral).value;
   return typeof literalValue === 'string' ? literalValue : '';
 }
-
-// export function ImportDeclaration(
-//   context: PluginContext,
-//   id: string,
-//   declaration: ImportDeclaration,
-// ):
