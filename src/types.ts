@@ -54,7 +54,10 @@ export enum ExportClosureMapping {
   DEFAULT_OBJECT = 9,
 }
 export interface ExportNameToClosureMapping {
-  [key: string]: ExportClosureMapping;
+  [key: string]: {
+    alias: string | null;
+    type: ExportClosureMapping;
+  };
 }
 
 export type TransformMethod = (

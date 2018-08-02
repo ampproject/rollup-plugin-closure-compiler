@@ -1,1 +1,1 @@
-var foo=1;export {foo};
+var foo=1;export{foo};
