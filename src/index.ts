@@ -78,8 +78,9 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         transformsDefined = true;
       }
     },
-    transform: async (code: string, id: string) => deriveFromInputSource(code, id, transforms),
-    transformChunk: async (code: string, outputOptions: OutputOptions, chunk: any) =>
-      await transformChunk(transforms, requestedCompileOptions, code, chunk, outputOptions),
+    transformChunk: async (code: string, outputOptions: OutputOptions, chunk: any) => {
+      await deriveFromInputSource(code, chunk.id, transforms);
+      return await transformChunk(transforms, requestedCompileOptions, code, chunk, outputOptions);
+    },
   };
 }

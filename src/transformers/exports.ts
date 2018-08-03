@@ -52,34 +52,34 @@ export default class ExportTransform extends Transform implements TransformInter
    * @param id Rollup id reference to the source
    */
   public async deriveFromInputSource(code: string, id: string): Promise<void> {
-    if (this.isEntryPoint(id)) {
-      const context = this.context;
-      let originalExports: ExportNameToClosureMapping = {};
-      const program = context.parse(code, { ranges: true });
+    const context = this.context;
+    let originalExports: ExportNameToClosureMapping = {};
+    const program = context.parse(code, { ranges: true });
 
-      walk.simple(program, {
-        ExportNamedDeclaration(node: ExportNamedDeclaration) {
-          const namedDeclarationValues = NamedDeclaration(context, id, node);
-          if (namedDeclarationValues !== null) {
-            originalExports = { ...originalExports, ...namedDeclarationValues };
-          }
-        },
-        ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-          const defaultDeclarationValue = DefaultDeclaration(context, id, node);
-          if (defaultDeclarationValue !== null) {
-            originalExports = { ...originalExports, ...defaultDeclarationValue };
-          }
-        },
-        ExportAllDeclaration(node: ExportAllDeclaration) {
-          // TODO(KB): This case `export * from "./import"` is not currently supported.
-          context.error(
-            new Error(`Rollup Plugin Closure Compiler does not support export all syntax.`),
-          );
-        },
-      });
+    walk.simple(program, {
+      ExportNamedDeclaration(node: ExportNamedDeclaration) {
+        const namedDeclarationValues = NamedDeclaration(context, id, node);
+        if (namedDeclarationValues !== null) {
+          originalExports = { ...originalExports, ...namedDeclarationValues };
+        }
+      },
+      ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
+        const defaultDeclarationValue = DefaultDeclaration(context, id, node);
+        if (defaultDeclarationValue !== null) {
+          originalExports = { ...originalExports, ...defaultDeclarationValue };
+        }
+      },
+      ExportAllDeclaration(node: ExportAllDeclaration) {
+        // TODO(KB): This case `export * from "./import"` is not currently supported.
+        context.error(
+          new Error(
+            `Rollup Plugin Closure Compiler does not support export all syntax for externals.`,
+          ),
+        );
+      },
+    });
 
-      this.originalExports = originalExports;
-    }
+    this.originalExports = originalExports;
 
     return void 0;
   }
