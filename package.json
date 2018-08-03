@@ -23,6 +23,9 @@
     "postbuild": "rollup --config rollup.config.js",
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
+  "peerDependencies": {
+    "rollup": ">= 0.63.5"
+  },
   "dependencies": {
     "acorn": "5.7.1",
     "google-closure-compiler": "20180716.0.1",
