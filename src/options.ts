@@ -80,23 +80,26 @@ export default function(
   transforms: Array<Transform> | null,
 ): [CompileOptions, string] {
   const mapFile = sync('');
-  const externs = (compileOptions: CompileOptions): Array<string> => {
-    if ('externs' in compileOptions) {
-      switch (typeof compileOptions.externs) {
-        case 'boolean':
-          return [];
-        case 'string':
-          return [compileOptions.externs as string];
-        default:
-          return compileOptions.externs as Array<string>;
-      }
+  let externs: Array<string> = [];
+
+  if ('externs' in compileOptions) {
+    switch (typeof compileOptions.externs) {
+      case 'boolean':
+        externs = [];
+        break;
+      case 'string':
+        externs = [compileOptions.externs as string];
+        break;
+      default:
+        externs = compileOptions.externs as Array<string>;
+        break;
     }
 
-    return [];
-  };
+    delete compileOptions.externs;
+  }
 
   const options = {
-    ...defaults(outputOptions, externs(compileOptions), transforms),
+    ...defaults(outputOptions, externs, transforms),
     ...compileOptions,
     js: sync(code),
     create_source_map: mapFile,
