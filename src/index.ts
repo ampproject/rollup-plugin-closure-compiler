@@ -84,15 +84,3 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     },
   };
 }
-
-/*
-export type TransformChunkHook = (
-	this: PluginContext,
-	code: string,
-	options: OutputOptions
-) =>
-	| Promise<{ code: string; map: RawSourceMap } | void>
-	| { code: string; map: RawSourceMap }
-	| void
-  | null;
-*/
