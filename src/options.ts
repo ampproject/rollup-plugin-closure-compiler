@@ -50,7 +50,13 @@ export const defaults = (
   // mangle the name of the iife wrapper.
 
   const externs = transformers
-    ? transformers.map(transform => sync(transform.extern(options))).concat(providedExterns)
+    ? transformers
+        .map(transform => {
+          const extern = transform.extern(options);
+          return extern !== '' ? sync(extern) : false;
+        })
+        .filter(Boolean)
+        .concat(providedExterns)
     : providedExterns.length > 0
       ? providedExterns
       : '';
