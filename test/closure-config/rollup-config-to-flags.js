@@ -16,6 +16,9 @@
 
 import test from 'ava';
 import { defaults } from '../../transpile/options';
+import path from 'path';
+
+const EXTERNS = path.resolve('test', 'closure-config', 'fixtures', 'externs.js');
 
 test.beforeEach(t => {
   t.context = {
@@ -23,6 +26,7 @@ test.beforeEach(t => {
     esOutput: defaults({
       format: 'es',
     }, [], null),
+    externs: defaults({}, [EXTERNS], null),
   };
 });
 
@@ -44,4 +48,8 @@ test('with no rollup configuration, module_resolution is NODE', t => {
 
 test('when rollup configuration specifies format es, assume_function_wrapper is true', t => {
   t.is(t.context.esOutput.assume_function_wrapper, true);
+});
+
+test('when rollup configuration specifies externs, extern is leveraged', t => {
+  t.deepEqual(t.context.externs.externs, [EXTERNS]);
 });
