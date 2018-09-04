@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
-import {generator} from '../generator';
+import {generator, ESM_OUTPUT} from '../generator';
 
-generator('error-reporting', 'warnings');
+generator('error-reporting', 'warnings', [ESM_OUTPUT], {
+  default: {
+    warning_level: 'VERBOSE',
+  },
+  advanced: {
+    warning_level: 'VERBOSE',
+    compilation_level: 'ADVANCED_OPTIMIZATIONS',
+    language_out: 'ECMASCRIPT_2015',
+  }
+});

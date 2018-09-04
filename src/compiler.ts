@@ -55,6 +55,7 @@ export default function(
     }
 
     instance.run(async (exitCode: number, code: string, stdErr: string) => {
+      console.log(compileOptions, exitCode, stdErr);
       if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
