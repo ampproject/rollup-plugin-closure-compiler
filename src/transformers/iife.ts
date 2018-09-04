@@ -32,12 +32,10 @@ const HEADER = `/**
  */
 export default class IifeTransform extends Transform {
   public extern(options: OutputOptions): string {
-    let content = HEADER;
-
     if (options.format === 'iife' && options.name) {
-      content += `function ${options.name}(){};\n`;
+      return HEADER + `function ${options.name}(){};\n`;
     }
 
-    return content;
+    return '';
   }
 }
