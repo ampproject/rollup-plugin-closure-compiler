@@ -14,15 +14,50 @@
  * limitations under the License.
  */
 
-import {generator, ESM_OUTPUT} from '../generator';
+import test from 'ava';
+import compiler from '../../transpile';
+import * as rollup from 'rollup';
+import * as fs from 'fs';
+import { join } from 'path';
+import { promisify } from 'util';
 
-generator('error-reporting', 'warnings', [ESM_OUTPUT], {
+const readFile = promisify(fs.readFile);
+const closureFlags = {
   default: {
     warning_level: 'VERBOSE',
+    language_out: 'ECMASCRIPT5_STRICT',
   },
   advanced: {
     warning_level: 'VERBOSE',
     compilation_level: 'ADVANCED_OPTIMIZATIONS',
-    language_out: 'ECMASCRIPT_2015',
-  }
+    language_out: 'ECMASCRIPT5_STRICT',
+  },
+};
+
+async function compile(name, option) {
+  const bundle = await rollup.rollup({
+    input: `test/${name}/fixtures/warnings.js`,
+    plugins: [
+      compiler(closureFlags[option]),
+    ],
+  });
+
+  return {
+    minified: await readFile(join(`test/${name}/fixtures/warnings.esm.${option}.js`), 'utf8'),
+    code: (await bundle.generate({
+      format: 'es',
+      sourcemap: true,
+    })).code,
+  };
+}
+
+Object.keys(closureFlags).forEach(option => {
+  test(`provides warnings – es, ${option}`, async t => {
+    try {
+      await compile('error-reporting', option);
+      t.fail('successfully built files without warning about input');
+    } catch(e) {
+      t.pass();
+    }
+  });
 });

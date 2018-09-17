@@ -19,6 +19,11 @@ import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
 
+export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
+  'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
+export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID =
+  'Providing the warning_level=VERBOSE and language_out=NO_TRANSPILE compile option will remove warnings.';
+
 /**
  * Checks if output format is ESM
  * @param format
@@ -27,6 +32,20 @@ import { sync } from 'temp-write';
 export const isESMFormat = (format?: ModuleFormat | 'esm'): boolean => {
   // TODO: remove `| 'esm'` when rollup upgrades its typings
   return format === 'esm' || format === 'es';
+};
+
+/**
+ * Throw Errors if compile options will result in unexpected behaviour.
+ * @param compileOptions
+ */
+const validateCompileOptions = (compileOptions: CompileOptions): void => {
+  if ('warning_level' in compileOptions && compileOptions.warning_level === 'VERBOSE') {
+    if (!('language_out' in compileOptions)) {
+      throw new Error(ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED);
+    } else if ('language_out' in compileOptions && compileOptions.language_out === 'NO_TRANSPILE') {
+      throw new Error(ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID);
+    }
+  }
 };
 
 /**
@@ -88,6 +107,7 @@ export default function(
   const mapFile = sync('');
   let externs: Array<string> = [];
 
+  validateCompileOptions(compileOptions);
   if ('externs' in compileOptions) {
     switch (typeof compileOptions.externs) {
       case 'boolean':
