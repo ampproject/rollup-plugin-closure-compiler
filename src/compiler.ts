@@ -55,7 +55,13 @@ export default function(
     }
 
     instance.run(async (exitCode: number, code: string, stdErr: string) => {
-      if (exitCode !== 0) {
+      if (
+        'warning_level' in compileOptions &&
+        compileOptions.warning_level === 'VERBOSE' &&
+        stdErr !== ''
+      ) {
+        reject(new Error(`Google Closure Compiler ${stdErr}`));
+      } else if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
         resolve(await postCompilation(code, chunk, transforms));
