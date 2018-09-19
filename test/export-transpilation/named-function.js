@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-import {generator, ESM_OUTPUT} from '../generator';
-const path = require('path');
+import {generator} from '../generator';
 
-const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js');
-
-generator('provided-externs', 'class', [ESM_OUTPUT], {
-  default: {
-    externs: EXTERNS,
-  },
-  advanced: {
-    externs: EXTERNS,
-    compilation_level: 'ADVANCED_OPTIMIZATIONS',
-    language_out: 'ECMASCRIPT_2015',
-  },
-  es5: {
-    externs: EXTERNS,
-    language_out: 'ECMASCRIPT5_STRICT',
-  }
-});
+generator('export-transpilation', 'named-function');

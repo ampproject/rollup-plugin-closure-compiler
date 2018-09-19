@@ -76,6 +76,10 @@ export function NamedDeclaration(
       [functionName]: {
         alias: null,
         type: ExportClosureMapping.NAMED_FUNCTION,
+        range: [
+          declaration.range ? declaration.range[0] : 0,
+          declaration.range ? declaration.range[1] : 0,
+        ],
       },
     };
   } else if (className !== null) {
@@ -83,6 +87,10 @@ export function NamedDeclaration(
       [className]: {
         alias: null,
         type: ExportClosureMapping.NAMED_CLASS,
+        range: [
+          declaration.range ? declaration.range[0] : 0,
+          declaration.range ? declaration.range[1] : 0,
+        ],
       },
     };
   } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
@@ -94,6 +102,10 @@ export function NamedDeclaration(
         exportMap[variableDeclarator.id.name] = {
           alias: null,
           type: ExportClosureMapping.NAMED_CONSTANT,
+          range: [
+            declaration.range ? declaration.range[0] : 0,
+            declaration.range ? declaration.range[1] : 0,
+          ],
         };
       }
     });
@@ -107,6 +119,10 @@ export function NamedDeclaration(
         exportMap[exportSpecifier.local.name] = {
           alias: null,
           type: ExportClosureMapping.DEFAULT,
+          range: [
+            declaration.range ? declaration.range[0] : 0,
+            declaration.range ? declaration.range[1] : 0,
+          ],
         };
       } else {
         exportMap[exportSpecifier.local.name] = {
@@ -115,6 +131,10 @@ export function NamedDeclaration(
               ? exportSpecifier.exported.name
               : null,
           type: ExportClosureMapping.NAMED_CONSTANT,
+          range: [
+            declaration.range ? declaration.range[0] : 0,
+            declaration.range ? declaration.range[1] : 0,
+          ],
         };
       }
     });
@@ -137,6 +157,10 @@ export function DefaultDeclaration(
             [functionName]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              range: [
+                declaration.range ? declaration.range[0] : 0,
+                declaration.range ? declaration.range[1] : 0,
+              ],
             },
           };
         }
@@ -148,6 +172,10 @@ export function DefaultDeclaration(
             [className]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+              range: [
+                declaration.range ? declaration.range[0] : 0,
+                declaration.range ? declaration.range[1] : 0,
+              ],
             },
           };
         }
@@ -158,6 +186,10 @@ export function DefaultDeclaration(
             [declaration.declaration.name]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              range: [
+                declaration.range ? declaration.range[0] : 0,
+                declaration.range ? declaration.range[1] : 0,
+              ],
             },
           };
         }
@@ -168,6 +200,10 @@ export function DefaultDeclaration(
             [declaration.declaration.name]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              range: [
+                declaration.range ? declaration.range[0] : 0,
+                declaration.range ? declaration.range[1] : 0,
+              ],
             },
           };
         }

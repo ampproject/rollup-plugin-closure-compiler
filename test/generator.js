@@ -30,9 +30,15 @@ const ADVANCED_CLOSURE_OPTIONS = {
     language_out: 'ECMASCRIPT_2015',
   },
 };
+const ES5_STRICT_CLOSURE_OPTIONS = { 
+  es5: {
+    language_out: 'ECMASCRIPT5_STRICT',
+  },
+};
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
   ...ADVANCED_CLOSURE_OPTIONS,
+  ...ES5_STRICT_CLOSURE_OPTIONS,
 };
 
 const ES_OUTPUT = 'es';

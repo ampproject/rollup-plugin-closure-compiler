@@ -58,6 +58,7 @@ export interface ExportNameToClosureMapping {
   [key: string]: {
     alias: string | null;
     type: ExportClosureMapping;
+    range: [number, number];
   };
 }
 
