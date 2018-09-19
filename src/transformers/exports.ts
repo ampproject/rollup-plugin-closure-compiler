@@ -22,7 +22,7 @@ import {
   Node,
   ClassDeclaration,
 } from 'estree';
-import { TransformSourceDescription, OutputChunk } from 'rollup';
+import { TransformSourceDescription, RenderedChunk } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
@@ -49,22 +49,22 @@ export default class ExportTransform extends Transform implements TransformInter
    * Before Closure Compiler is given a chance to look at the code, we need to
    * find and store all export statements with their correct type
    * @param code source to parse
-   * @param id Rollup id reference to the source
+   * @param chunk Rollup chunk reference to the source
    */
-  public async deriveFromInputSource(code: string, id: string): Promise<void> {
+  public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
     const context = this.context;
     let originalExports: ExportNameToClosureMapping = {};
     const program = context.parse(code, { ranges: true });
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        const namedDeclarationValues = NamedDeclaration(context, id, node);
+        const namedDeclarationValues = NamedDeclaration(context, node);
         if (namedDeclarationValues !== null) {
           originalExports = { ...originalExports, ...namedDeclarationValues };
         }
       },
       ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-        const defaultDeclarationValue = DefaultDeclaration(context, id, node);
+        const defaultDeclarationValue = DefaultDeclaration(context, node);
         if (defaultDeclarationValue !== null) {
           originalExports = { ...originalExports, ...defaultDeclarationValue };
         }
@@ -92,11 +92,7 @@ export default class ExportTransform extends Transform implements TransformInter
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async preCompilation(
-    code: string,
-    chunk: any,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async preCompilation(code: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
@@ -127,11 +123,7 @@ export default class ExportTransform extends Transform implements TransformInter
    * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(
-    code: string,
-    chunk: OutputChunk,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async postCompilation(code: string): Promise<TransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',

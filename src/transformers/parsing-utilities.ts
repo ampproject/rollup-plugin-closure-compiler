@@ -14,36 +14,14 @@
  * limitations under the License.
  */
 
-import {
-  ExportSpecifier,
-  ExportNamedDeclaration,
-  ExportDefaultDeclaration,
-  Literal,
-  SimpleLiteral,
-} from 'estree';
-import * as path from 'path';
+import { ExportNamedDeclaration, ExportDefaultDeclaration, Literal, SimpleLiteral } from 'estree';
 import { PluginContext } from 'rollup';
 import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
-export const exportSpecifierName = (exportSpecifier: ExportSpecifier): string =>
-  exportSpecifier.exported.name;
-
-const camelcase = (input: string): string =>
-  input
-    .replace(/^[_.\- ]+/, '')
-    .toLowerCase()
-    .replace(/[_.\- ]+(\w|$)/g, (m, p1) => p1.toUpperCase());
-
-// When Rollup encounters a default export that is unnamed,
-// it uses camelCase(filename) of the id to name the function.
-// THIS IS NOT INTUITIVE!
-export const defaultUnamedExportName = (id: string) => camelcase(path.basename(id, '.js'));
-
-export function functionDeclarationName(
+function functionDeclarationName(
   context: PluginContext,
-  id: string,
   declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
@@ -62,9 +40,8 @@ export function functionDeclarationName(
   return null;
 }
 
-export function classDeclarationName(
+function classDeclarationName(
   context: PluginContext,
-  id: string,
   declaration: ExportDeclarationsWithFunctions,
 ): string | null {
   // For the Declaration passed, there can be a function declaration.
@@ -86,11 +63,10 @@ export function classDeclarationName(
 
 export function NamedDeclaration(
   context: PluginContext,
-  id: string,
   declaration: ExportNamedDeclaration,
 ): ExportNameToClosureMapping | null {
-  const functionName = functionDeclarationName(context, id, declaration);
-  const className = classDeclarationName(context, id, declaration);
+  const functionName = functionDeclarationName(context, declaration);
+  const className = classDeclarationName(context, declaration);
 
   // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
   // var Foo=function(){}export{Foo as default} => default export function
@@ -150,14 +126,12 @@ export function NamedDeclaration(
 
 export function DefaultDeclaration(
   context: PluginContext,
-  id: string,
   declaration: ExportDefaultDeclaration,
 ): ExportNameToClosureMapping | null {
   if (declaration.declaration) {
-    const defaultExportName = defaultUnamedExportName(id);
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
-        const functionName = functionDeclarationName(context, id, declaration);
+        const functionName = functionDeclarationName(context, declaration);
         if (functionName !== null) {
           return {
             [functionName]: {
@@ -165,16 +139,10 @@ export function DefaultDeclaration(
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
             },
           };
-        } else {
-          return {
-            [defaultExportName]: {
-              alias: null,
-              type: ExportClosureMapping.DEFAULT_FUNCTION,
-            },
-          };
         }
+        break;
       case 'ClassDeclaration':
-        const className = classDeclarationName(context, id, declaration);
+        const className = classDeclarationName(context, declaration);
         if (className !== null) {
           return {
             [className]: {
@@ -183,27 +151,7 @@ export function DefaultDeclaration(
             },
           };
         }
-        return {
-          [defaultExportName]: {
-            alias: null,
-            type: ExportClosureMapping.DEFAULT_CLASS,
-          },
-        };
-      case 'Identifier':
-        if (declaration.declaration.name) {
-          return {
-            [declaration.declaration.name]: {
-              alias: null,
-              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
-            },
-          };
-        }
-        return {
-          [defaultExportName]: {
-            alias: null,
-            type: ExportClosureMapping.DEFAULT_CLASS,
-          },
-        };
+        break;
       case 'Identifier':
         if (declaration.declaration.name) {
           return {
@@ -214,34 +162,23 @@ export function DefaultDeclaration(
           };
         }
         break;
-      case 'Literal':
-        return {
-          [defaultExportName]: {
-            alias: null,
-            type: ExportClosureMapping.DEFAULT_VALUE,
-          },
-        };
-      case 'ObjectExpression':
-        return {
-          [defaultExportName]: {
-            alias: null,
-            type: ExportClosureMapping.DEFAULT_OBJECT,
-          },
-        };
-      case 'ArrayExpression':
-        return {
-          [defaultExportName]: {
-            alias: null,
-            type: ExportClosureMapping.DEFAULT_VALUE,
-          },
-        };
+      case 'Identifier':
+        if (declaration.declaration.name) {
+          return {
+            [declaration.declaration.name]: {
+              alias: null,
+              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+            },
+          };
+        }
+        break;
     }
   }
 
   return null;
 }
 
-export function literalName(context: PluginContext, id: string, literal: Literal): string {
+export function literalName(context: PluginContext, literal: Literal): string {
   // Literal can either be a SimpleLiteral, or RegExpLiteral
   if ('regex' in literal) {
     // This is a RegExpLiteral
