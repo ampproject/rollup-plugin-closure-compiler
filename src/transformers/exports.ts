@@ -23,7 +23,7 @@ import {
   ClassDeclaration,
 } from 'estree';
 import { TransformSourceDescription, OutputChunk } from 'rollup';
-import { NamedDeclaration, DefaultDeclaration, defaultUnamedExportName } from './parsing-utilities';
+import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
   ExportNameToClosureMapping,
@@ -85,36 +85,6 @@ export default class ExportTransform extends Transform implements TransformInter
   }
 
   /**
-   * Rollup's naming scheme for default exports can sometimes clash with reserved
-   * words.
-   *
-   * Rollup protects output by renaming the values with it's own algorithm, so we need to
-   * ensure that when it changes the name of a default export this transform is aware of its
-   * new name in the output.
-   *
-   * i.e. default class {} => window._class = class {} => default class {}.
-   * @param chunk OutputChunk from Rollup for this code.
-   * @param id Rollup id reference to the source
-   */
-  private repairExportMapping(chunk: any, id: string): void {
-    const defaultExportName = defaultUnamedExportName(id);
-    if (
-      chunk.exportNames &&
-      chunk.exportNames.default &&
-      chunk.exportNames.default.safeName &&
-      defaultExportName !== chunk.exportNames.default.safeName &&
-      this.originalExports[defaultExportName]
-    ) {
-      // If there was a detected default export, we need to ensure Rollup
-      // did not rename the export.
-      this.originalExports[chunk.exportNames.default.safeName] = this.originalExports[
-        defaultExportName
-      ];
-      delete this.originalExports[defaultExportName];
-    }
-  }
-
-  /**
    * Before Closure Compiler modifies the source, we need to ensure it has window scoped
    * references to the named exports. This prevents Closure from mangling their names.
    * @param code source to parse, and modify
@@ -132,8 +102,6 @@ export default class ExportTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
-      this.repairExportMapping(chunk, id);
-
       const source = new MagicString(code);
       // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       Object.keys(this.originalExports).forEach(key => {
