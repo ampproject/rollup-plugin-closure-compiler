@@ -99,8 +99,12 @@ export default class ExportTransform extends Transform implements TransformInter
       );
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
-      // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       Object.keys(this.originalExports).forEach(key => {
+        // Remove export statements before Closure Compiler sees the code
+        // This prevents CC from transpiling `export` statements when the language_out is set to a value
+        // where exports were not part of the language.
+        source.remove(this.originalExports[key].range[0], this.originalExports[key].range[1]);
+        // Window scoped references for each key are required to ensure Closure Compilre retains the code.
         source.append(`\nwindow['${key}'] = ${key}`);
       });
 

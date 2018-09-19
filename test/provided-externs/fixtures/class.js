@@ -1,4 +1,7 @@
-export class Exported {
+/**
+ * @implements {Exported}
+ */
+export class ExportThis {
   /** 
    * @param {!string} name 
    */
