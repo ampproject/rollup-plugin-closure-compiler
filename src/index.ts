@@ -41,7 +41,7 @@ const readFile = promisify(fs.readFile);
  * @param outputOptions Rollup Output Options.
  * @return Closure Compiled form of the Rollup Chunk
  */
-const transformChunk = async (
+const renderChunk = async (
   transforms: Array<Transform>,
   requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
@@ -86,7 +86,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       await deriveFromInputSource(code, chunk, transforms);
-      return await transformChunk(transforms, requestedCompileOptions, code, outputOptions);
+      return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
     },
   };
 }
