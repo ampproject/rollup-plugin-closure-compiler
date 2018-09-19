@@ -17,7 +17,14 @@
 import { CompileOptions } from 'google-closure-compiler';
 import * as fs from 'fs';
 import { promisify } from 'util';
-import { OutputOptions, RawSourceMap, Plugin, InputOptions, PluginContext } from 'rollup';
+import {
+  OutputOptions,
+  RawSourceMap,
+  Plugin,
+  InputOptions,
+  PluginContext,
+  RenderedChunk,
+} from 'rollup';
 import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
@@ -38,10 +45,9 @@ const transformChunk = async (
   transforms: Array<Transform>,
   requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
-  chunk: any,
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: RawSourceMap } | void> => {
-  const code = await preCompilation(sourceCode, outputOptions, chunk, transforms);
+  const code = await preCompilation(sourceCode, outputOptions, transforms);
   logSource('transform', sourceCode, code);
   const [compileOptions, mapFile] = options(
     requestedCompileOptions,
@@ -50,7 +56,7 @@ const transformChunk = async (
     transforms,
   );
 
-  return compiler(compileOptions, chunk, transforms).then(
+  return compiler(compileOptions, transforms).then(
     async code => {
       return { code, map: JSON.parse(await readFile(mapFile, 'utf8')) };
     },
@@ -78,9 +84,9 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         transformsDefined = true;
       }
     },
-    transformChunk: async (code: string, outputOptions: OutputOptions, chunk: any) => {
-      await deriveFromInputSource(code, chunk.id, transforms);
-      return await transformChunk(transforms, requestedCompileOptions, code, chunk, outputOptions);
+    renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
+      await deriveFromInputSource(code, chunk, transforms);
+      return await transformChunk(transforms, requestedCompileOptions, code, outputOptions);
     },
   };
 }

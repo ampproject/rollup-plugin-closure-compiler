@@ -37,20 +37,20 @@ export default class ImportTransform extends Transform {
    * These are items that will not be bundled with the resulting code, but instead are expected
    * to already be available via `import` or other means.
    * @param source parsed from import statements, this is the source of a particular import statement.
-   * @param parent parent id requesting the import.
    * @return Promise<boolean> if the import is listed in the external list.
    */
-  private async isExternalImport(source: string, parent: string): Promise<boolean> {
+  private async isExternalImport(source: string): Promise<boolean> {
     if (this.inputOptions.external === undefined) {
       return false;
     }
     if (Array.isArray(this.inputOptions.external)) {
       return this.inputOptions.external.includes(source);
     }
-    if (typeof this.inputOptions.external === 'function') {
-      const configDrivenExternal = await this.inputOptions.external(source, parent, true);
-      return configDrivenExternal !== undefined && configDrivenExternal === true;
-    }
+    // TODO(KB): Restore if needed.
+    // if (typeof this.inputOptions.external === 'function') {
+    //   const configDrivenExternal = await this.inputOptions.external(source, parent, true);
+    //   return configDrivenExternal !== undefined && configDrivenExternal === true;
+    // }
 
     return false;
   }
@@ -63,11 +63,7 @@ export default class ImportTransform extends Transform {
    * @param id Rollup id reference to the source
    * @return modified input source with external imports removed.
    */
-  public async preCompilation(
-    code: string,
-    chunk: any,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async preCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = this.context.parse(code, { ranges: true });
     const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
@@ -75,8 +71,8 @@ export default class ImportTransform extends Transform {
     for (const node of importNodes) {
       switch (node.type) {
         case IMPORT_DECLARATION:
-          const name = literalName(this.context, id, node.source);
-          if (await this.isExternalImport(name, id)) {
+          const name = literalName(this.context, node.source);
+          if (await this.isExternalImport(name)) {
             const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
             this.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
             source.remove(range[0], range[1]);
@@ -96,15 +92,9 @@ export default class ImportTransform extends Transform {
   /**
    * After Closure Compiler has modified the source, we need to re-add the external imports
    * @param code source post Closure Compiler Compilation
-   * @param chunk OutputChunk from Rollup for this code.
-   * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(
-    code: string,
-    chunk: any,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async postCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
       source.prepend(importedExternalSyntax),

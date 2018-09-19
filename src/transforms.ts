@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext, InputOptions } from 'rollup';
+import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
 import LiteralComputedKeys from './transformers/literal-computed-keys';
@@ -52,7 +52,6 @@ export const createTransforms = (
 export async function preCompilation(
   code: string,
   outputOptions: OutputOptions,
-  chunk: any,
   transforms: Array<Transform>,
 ): Promise<string> {
   // Each transform has a 'preCompilation' step that must complete before passing
@@ -60,7 +59,7 @@ export async function preCompilation(
   logSource('before preCompilation handlers', code);
   for (const transform of transforms) {
     transform.outputOptions = outputOptions;
-    const result = await transform.preCompilation(code, chunk, chunk.id);
+    const result = await transform.preCompilation(code);
     if (result && result.code) {
       code = result.code;
     }
@@ -76,16 +75,12 @@ export async function preCompilation(
  * @param transforms Transforms to execute.
  * @return source code following `postCompilation`
  */
-export async function postCompilation(
-  code: string,
-  chunk: any,
-  transforms: Array<Transform>,
-): Promise<string> {
+export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
   logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
-    const result = await transform.postCompilation(code, chunk, chunk.id);
+    const result = await transform.postCompilation(code);
     if (result && result.code) {
       code = result.code;
     }
@@ -103,10 +98,10 @@ export async function postCompilation(
  */
 export async function deriveFromInputSource(
   code: string,
-  id: string,
+  chunk: RenderedChunk,
   transforms: Array<Transform>,
 ): Promise<void> {
-  await Promise.all(transforms.map(transform => transform.deriveFromInputSource(code, id))).then(
+  await Promise.all(transforms.map(transform => transform.deriveFromInputSource(code, chunk))).then(
     _ => void 0,
   );
 }

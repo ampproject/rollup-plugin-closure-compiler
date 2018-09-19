@@ -21,6 +21,7 @@ import {
   PluginContext,
   InputOptions,
   InputOption,
+  RenderedChunk,
 } from 'rollup';
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
@@ -60,14 +61,10 @@ export interface ExportNameToClosureMapping {
   };
 }
 
-export type TransformMethod = (
-  code: string,
-  chunk: any,
-  id: string,
-) => Promise<TransformSourceDescription>;
+export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   extern: (options: OutputOptions) => string;
-  deriveFromInputSource: (code: string, id: string) => Promise<void>;
+  deriveFromInputSource: (code: string, chunk: RenderedChunk) => Promise<void>;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
 }
@@ -85,24 +82,16 @@ export class Transform implements TransformInterface {
     return '';
   }
 
-  public async deriveFromInputSource(code: string, id: string): Promise<void> {
+  public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
     return void 0;
   }
 
-  public async preCompilation(
-    code: string,
-    chunk: any,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async preCompilation(code: string): Promise<TransformSourceDescription> {
     return {
       code,
     };
   }
-  public async postCompilation(
-    code: string,
-    chunk: any,
-    id: string,
-  ): Promise<TransformSourceDescription> {
+  public async postCompilation(code: string): Promise<TransformSourceDescription> {
     return {
       code,
     };
@@ -110,12 +99,12 @@ export class Transform implements TransformInterface {
 
   protected isEntryPoint(id: string) {
     const inputs = (input: InputOption): Array<string> => {
-      if (typeof this.inputOptions.input === 'string') {
-        return [this.inputOptions.input];
-      } else if (typeof this.inputOptions.input === 'object') {
-        return Object.values(this.inputOptions.input);
+      if (typeof input === 'string') {
+        return [input];
+      } else if (typeof input === 'object') {
+        return Object.values(input);
       } else {
-        return this.inputOptions.input;
+        return input;
       }
     };
 

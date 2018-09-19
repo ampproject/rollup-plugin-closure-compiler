@@ -27,3 +27,6 @@ export const logSource = (preamble: string, source: string, code?: string) => {
     }
   }
 };
+
+export const log = (preamble: string, message: string) =>
+  DEBUG_ENABLED ? console.log(preamble) && console.log(message) : null;
