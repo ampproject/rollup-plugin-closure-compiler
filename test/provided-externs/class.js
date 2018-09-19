@@ -21,11 +21,15 @@ const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.exte
 
 generator('provided-externs', 'class', [ESM_OUTPUT], {
   default: {
-    externs: EXTERNS
+    externs: EXTERNS,
   },
   advanced: {
     externs: EXTERNS,
     compilation_level: 'ADVANCED_OPTIMIZATIONS',
     language_out: 'ECMASCRIPT_2015',
+  },
+  es5: {
+    externs: EXTERNS,
+    language_out: 'ECMASCRIPT5_STRICT',
   }
 });

@@ -31,6 +31,9 @@ const closureFlags = {
     compilation_level: 'ADVANCED_OPTIMIZATIONS',
     language_out: 'ECMASCRIPT_2015',
   },
+  es5: {
+    language_out: 'ECMASCRIPT5_STRICT',
+  }
 };
 
 test('generate extern for iife name', async t => {
