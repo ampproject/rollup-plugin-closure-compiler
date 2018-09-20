@@ -99,12 +99,13 @@ export const defaults = (
  * @param transforms
  */
 export default function(
-  compileOptions: CompileOptions,
+  incomingCompileOptions: CompileOptions,
   outputOptions: OutputOptions,
   code: string,
   transforms: Array<Transform> | null,
 ): [CompileOptions, string] {
-  const mapFile = sync('');
+  const mapFile: string = sync('');
+  const compileOptions: CompileOptions = { ...incomingCompileOptions };
   let externs: Array<string> = [];
 
   validateCompileOptions(compileOptions);
