@@ -1,6 +1,6 @@
 {
   "name": "@ampproject/rollup-plugin-closure-compiler",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Rollup + Google Closure Compiler",
   "main": "dist/index.js",
   "jsnext:main": "dist/index.mjs",
@@ -24,7 +24,7 @@
     "lint": "tslint -c tslint.json -p tsconfig.json"
   },
   "peerDependencies": {
-    "rollup": ">= 0.63.5"
+    "rollup": ">= 0.66.1"
   },
   "dependencies": {
     "acorn": "5.7.3",
