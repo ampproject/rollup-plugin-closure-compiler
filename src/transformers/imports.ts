@@ -18,6 +18,7 @@ import { Transform, ALL_IMPORT_DECLARATIONS, IMPORT_DECLARATION } from '../types
 import { literalName } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
+import { Program } from 'estree';
 
 // TODO(KB): Need to generate externs for external members if we do not have an extern passed in.
 // Otherwise, advanced mode compilation will fail.
@@ -65,8 +66,10 @@ export default class ImportTransform extends Transform {
    */
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
-    const program = this.context.parse(code, { ranges: true });
+    const program: Program = this.context.parse(code, { ranges: true });
     const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
+
+    console.log('importNodes', importNodes);
 
     for (const node of importNodes) {
       switch (node.type) {

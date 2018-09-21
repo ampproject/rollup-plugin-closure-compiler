@@ -21,6 +21,7 @@ import {
   Identifier,
   Node,
   ClassDeclaration,
+  Program,
 } from 'estree';
 import { TransformSourceDescription, RenderedChunk } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
@@ -32,7 +33,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-const walk = require('acorn/dist/walk');
+const walk = require('acorn-dynamic-import/lib/walk').default;
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -54,7 +55,7 @@ export default class ExportTransform extends Transform implements TransformInter
   public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
     const context = this.context;
     let originalExports: ExportNameToClosureMapping = {};
-    const program = context.parse(code, { ranges: true });
+    const program: Program = this.context.parse(code, { ranges: true });
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {

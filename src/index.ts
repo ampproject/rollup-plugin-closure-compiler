@@ -56,9 +56,11 @@ const renderChunk = async (
     transforms,
   );
 
+  console.log('will compile', code);
+
   return compiler(compileOptions, transforms).then(
-    async code => {
-      return { code, map: JSON.parse(await readFile(mapFile, 'utf8')) };
+    async compiledCode => {
+      return { code: compiledCode, map: JSON.parse(await readFile(mapFile, 'utf8')) };
     },
     (error: Error) => {
       throw error;

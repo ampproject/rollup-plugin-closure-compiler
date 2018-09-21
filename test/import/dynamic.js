@@ -14,19 +14,6 @@
  * limitations under the License.
  */
 
-import { sync } from 'temp-write';
+import {generator} from '../generator';
 
-const DEBUG_ENABLED = true;
-
-export const logSource = (preamble: string, source: string, code?: string) => {
-  if (DEBUG_ENABLED) {
-    console.log(preamble);
-    console.log(sync(source));
-    if (code) {
-      console.log(sync(code));
-    }
-  }
-};
-
-export const log = (preamble: string, message: string) =>
-  DEBUG_ENABLED ? console.log(preamble) && console.log(message) : null;
+generator('import', 'dynamic');

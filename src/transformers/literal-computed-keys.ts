@@ -17,8 +17,8 @@
 import { Transform } from '../types';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { ObjectExpression } from 'estree';
-const walk = require('acorn/dist/walk');
+import { ObjectExpression, Program } from 'estree';
+const walk = require('acorn-dynamic-import/lib/walk').default;
 
 /**
  * Closure Compiler will not transform computed keys with literal values back to the literal value.
@@ -34,7 +34,7 @@ export default class LiteralComputedKeys extends Transform {
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
-    const program = this.context.parse(code, { ranges: true });
+    const program: Program = this.context.parse(code, { ranges: true });
 
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {
