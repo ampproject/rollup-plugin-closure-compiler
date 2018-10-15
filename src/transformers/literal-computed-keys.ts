@@ -18,7 +18,9 @@ import { Transform } from '../types';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
-const walk = require('acorn/dist/walk');
+const acornWalk = require('acorn-walk');
+const inject = require('acorn-dynamic-import/lib/walk').default;
+const walk = inject(acornWalk);
 
 /**
  * Closure Compiler will not transform computed keys with literal values back to the literal value.
