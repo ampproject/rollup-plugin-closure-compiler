@@ -32,7 +32,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-const walk = require('acorn/dist/walk');
+const walk = require('acorn-walk');
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
