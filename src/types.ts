@@ -26,10 +26,11 @@ import {
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
 export const IMPORT_DECLARATION = 'ImportDeclaration';
+export const DYNAMIC_IMPORT_DECLARATION = 'Import';
 export const IMPORT_SPECIFIER = 'ImportSpecifier';
 export const IMPORT_DEFAULT_SPECIFIER = 'ImportDefaultSpecifier';
 export const IMPORT_NAMESPACE_SPECIFIER = 'ImportNamespaceSpecifier';
-export const ALL_IMPORT_DECLARATIONS = [IMPORT_DECLARATION];
+export const ALL_IMPORT_DECLARATIONS = [IMPORT_DECLARATION, DYNAMIC_IMPORT_DECLARATION];
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#exports
 export const EXPORT_NAMED_DECLARATION = 'ExportNamedDeclaration';

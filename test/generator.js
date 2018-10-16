@@ -64,6 +64,7 @@ function generate(
       const bundle = await rollup.rollup({
         input: fixtureLocation(category, name, format, optionKey, false),
         plugins: [compiler(closureFlags[optionKey])],
+        external: ['lodash'],
       });
 
       return {

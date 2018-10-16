@@ -32,9 +32,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-const acornWalk = require('acorn-walk');
-const inject = require('acorn-dynamic-import/lib/walk').default;
-const walk = inject(acornWalk);
+const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -143,6 +141,7 @@ export default class ExportTransform extends Transform implements TransformInter
       const originalExportIdentifiers = Object.keys(originalExports);
 
       source.trimEnd();
+
       walk.ancestor(program, {
         // We inserted window scoped assignments for all the export statements during `preCompilation`
         // window['exportName'] = exportName;

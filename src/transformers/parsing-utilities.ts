@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
-import { ExportNamedDeclaration, ExportDefaultDeclaration, Literal, SimpleLiteral } from 'estree';
+import {
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  Literal,
+  SimpleLiteral,
+  ImportDeclaration,
+} from 'estree';
 import { PluginContext } from 'rollup';
-import { ExportNameToClosureMapping, ExportClosureMapping } from '../types';
+import {
+  ExportNameToClosureMapping,
+  ExportClosureMapping,
+  IMPORT_SPECIFIER,
+  IMPORT_NAMESPACE_SPECIFIER,
+  IMPORT_DEFAULT_SPECIFIER,
+} from '../types';
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
@@ -226,4 +238,27 @@ export function literalName(context: PluginContext, literal: Literal): string {
 
   const literalValue = (literal as SimpleLiteral).value;
   return typeof literalValue === 'string' ? literalValue : '';
+}
+
+export function importLocalNames(
+  context: PluginContext,
+  declaration: ImportDeclaration,
+): Array<string> {
+  const returnableSpecifiers: Array<string> = [];
+
+  if (declaration.specifiers) {
+    declaration.specifiers.forEach(specifier => {
+      switch (specifier.type) {
+        case IMPORT_SPECIFIER:
+        case IMPORT_NAMESPACE_SPECIFIER:
+        case IMPORT_DEFAULT_SPECIFIER:
+          returnableSpecifiers.push(specifier.local.name);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  return returnableSpecifiers;
 }

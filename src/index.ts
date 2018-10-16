@@ -29,7 +29,6 @@ import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
 import { Transform } from './types';
-import { logSource } from './debug';
 
 const readFile = promisify(fs.readFile);
 
@@ -48,7 +47,6 @@ const renderChunk = async (
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: RawSourceMap } | void> => {
   const code = await preCompilation(sourceCode, outputOptions, transforms);
-  logSource('transform', sourceCode, code);
   const [compileOptions, mapFile] = options(
     requestedCompileOptions,
     outputOptions,
