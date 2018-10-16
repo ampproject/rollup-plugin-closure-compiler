@@ -32,7 +32,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
+import * as walk from '../walk';
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.

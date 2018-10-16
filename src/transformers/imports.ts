@@ -19,7 +19,7 @@ import { literalName, importLocalNames } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ImportDeclaration } from 'estree';
-const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
+import * as walk from '../walk';
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
