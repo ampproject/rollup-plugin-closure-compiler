@@ -37,8 +37,8 @@ const ES5_STRICT_CLOSURE_OPTIONS = {
 };
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
-  ...ADVANCED_CLOSURE_OPTIONS,
-  ...ES5_STRICT_CLOSURE_OPTIONS,
+  //...ADVANCED_CLOSURE_OPTIONS,
+  //...ES5_STRICT_CLOSURE_OPTIONS,
 };
 
 const ES_OUTPUT = 'es';
@@ -64,6 +64,8 @@ function generate(
       const bundle = await rollup.rollup({
         input: fixtureLocation(category, name, format, optionKey, false),
         plugins: [compiler(closureFlags[optionKey])],
+        external: ['lodash'],
+        experimentalCodeSplitting: true,
       });
 
       return {

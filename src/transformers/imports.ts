@@ -14,45 +14,58 @@
  * limitations under the License.
  */
 
-import { Transform, ALL_IMPORT_DECLARATIONS, IMPORT_DECLARATION } from '../types';
-import { literalName } from './parsing-utilities';
+import { Transform } from '../types';
+import { literalName, importLocalNames } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
+import { ImportDeclaration } from 'estree';
+const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
 
-// TODO(KB): Need to generate externs for external members if we do not have an extern passed in.
-// Otherwise, advanced mode compilation will fail.
-// Likely this means moving scanning for external imports from `preCompilation` to the `derive` phase.
-// const HEADER = `/**
-// * @fileoverview Externs built via derived configuration from Rollup or input code.
-// * This extern contains the external import names, to prevent compilation failures.
-// * @externs
-// */
-// `;
+const HEADER = `/**
+* @fileoverview Externs built via derived configuration from Rollup or input code.
+* This extern contains the external import names, to prevent compilation failures.
+* @externs
+*/
+`;
 
 export default class ImportTransform extends Transform {
   private importedExternalsSyntax: { [key: string]: string } = {};
+  private importedExternalsLocalNames: Array<string> = [];
 
   /**
    * Rollup allows configuration for 'external' imports.
    * These are items that will not be bundled with the resulting code, but instead are expected
    * to already be available via `import` or other means.
    * @param source parsed from import statements, this is the source of a particular import statement.
-   * @return Promise<boolean> if the import is listed in the external list.
+   * @return boolean if the import is listed in the external list.
    */
-  private async isExternalImport(source: string): Promise<boolean> {
+  private isExternalImport(source: string): boolean {
     if (this.inputOptions.external === undefined) {
       return false;
     }
     if (Array.isArray(this.inputOptions.external)) {
       return this.inputOptions.external.includes(source);
     }
-    // TODO(KB): Restore if needed.
-    // if (typeof this.inputOptions.external === 'function') {
-    //   const configDrivenExternal = await this.inputOptions.external(source, parent, true);
-    //   return configDrivenExternal !== undefined && configDrivenExternal === true;
-    // }
 
     return false;
+  }
+
+  /**
+   * Generate externs for local names of external imports.
+   * Otherwise, advanced mode compilation will fail since the reference is unknown.
+   * @return string representing content of generated extern.
+   */
+  public extern(): string {
+    if (this.importedExternalsLocalNames.length > 0) {
+      let extern = HEADER;
+      this.importedExternalsLocalNames.forEach(name => {
+        extern += `function ${name}(){};\n`;
+      });
+
+      return extern;
+    }
+
+    return '';
   }
 
   /**
@@ -64,24 +77,25 @@ export default class ImportTransform extends Transform {
    * @return modified input source with external imports removed.
    */
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
+    const self = this;
     const source = new MagicString(code);
-    const program = this.context.parse(code, { ranges: true });
-    const importNodes = program.body.filter(node => ALL_IMPORT_DECLARATIONS.includes(node.type));
+    const program = self.context.parse(code, { ranges: true });
 
-    for (const node of importNodes) {
-      switch (node.type) {
-        case IMPORT_DECLARATION:
-          const name = literalName(this.context, node.source);
-          if (await this.isExternalImport(name)) {
-            const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
-            this.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
-            source.remove(range[0], range[1]);
-          }
-          break;
-        default:
-          break;
-      }
-    }
+    walk.simple(program, {
+      async ImportDeclaration(node: ImportDeclaration) {
+        const name = literalName(self.context, node.source);
+
+        if (self.isExternalImport(name)) {
+          const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+          self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
+          source.remove(range[0], range[1]);
+
+          self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
+            importLocalNames(self.context, node),
+          );
+        }
+      },
+    });
 
     return {
       code: source.toString(),

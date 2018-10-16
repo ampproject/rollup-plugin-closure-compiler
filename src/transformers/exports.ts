@@ -32,7 +32,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-const walk = require('acorn-walk');
+const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -141,132 +141,140 @@ export default class ExportTransform extends Transform implements TransformInter
       const originalExportIdentifiers = Object.keys(originalExports);
 
       source.trimEnd();
-      walk.ancestor(program, {
-        // We inserted window scoped assignments for all the export statements during `preCompilation`
-        // window['exportName'] = exportName;
-        // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
-        // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
-        Identifier(node: Identifier, ancestors: Array<Node>) {
-          if (node.name === 'window') {
-            ancestors.forEach((ancestor: Node) => {
-              if (
-                ancestor.type === 'ExpressionStatement' &&
-                ancestor.expression.type === 'AssignmentExpression' &&
-                ancestor.expression.left.type === 'MemberExpression' &&
-                ancestor.expression.left.object.type === 'Identifier' &&
-                ancestor.expression.left.object.name === 'window' &&
-                ancestor.expression.left.property.type === 'Identifier' &&
-                originalExportIdentifiers.includes(ancestor.expression.left.property.name)
-              ) {
-                const exportName = ancestor.expression.left.property.name;
-                switch (originalExports[exportName].type) {
-                  case ExportClosureMapping.DEFAULT_FUNCTION:
-                  case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-                  case ExportClosureMapping.DEFAULT:
-                    if (ancestor.expression.left.range) {
-                      source.overwrite(
-                        ancestor.expression.left.range[0],
-                        ancestor.expression.left.range[1] + ancestor.expression.operator.length,
-                        `export default `,
-                      );
-                    }
-                    break;
-                  case ExportClosureMapping.NAMED_FUNCTION:
-                    if (
-                      ancestor.expression.right.type === 'FunctionExpression' &&
-                      ancestor.expression.right.params.length > 0
-                    ) {
-                      const firstParameter = ancestor.expression.right.params[0];
-                      if (ancestor.expression.range && firstParameter.range) {
-                        source.overwrite(
-                          ancestor.expression.range[0],
-                          firstParameter.range[0] - 1,
-                          `export function ${ancestor.expression.left.property.name}`,
-                        );
-                      }
-                    }
-                    break;
-                  case ExportClosureMapping.DEFAULT_CLASS:
-                  case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-                    if (ancestor.expression.right.type === 'Identifier') {
-                      const mangledName = ancestor.expression.right.name;
 
-                      walk.simple(program, {
-                        ClassDeclaration(node: ClassDeclaration) {
-                          if (
-                            node.id &&
-                            node.id.name === mangledName &&
-                            node.range &&
-                            node.body.range &&
-                            ancestor.range
-                          ) {
-                            if (node.superClass && node.superClass.type === 'Identifier') {
-                              source.overwrite(
-                                node.range[0],
-                                node.body.range[0],
-                                `export default class extends ${node.superClass.name}`,
-                              );
-                            } else {
-                              source.overwrite(
-                                node.range[0],
-                                node.body.range[0],
-                                `export default class`,
-                              );
-                            }
-                            source.remove(ancestor.range[0], ancestor.range[1]);
-                          }
-                        },
-                      });
-                    }
-                    break;
-                  case ExportClosureMapping.NAMED_CONSTANT:
-                    if (ancestor.expression.left.object.range) {
-                      source.overwrite(
-                        ancestor.expression.left.object.range[0],
-                        ancestor.expression.left.object.range[1] + 1,
-                        'var ',
-                      );
-                    }
+      console.log('exports', walk.base['Import']);
 
-                    if (originalExports[exportName].alias !== null) {
-                      collectedExportsToAppend.push(
-                        `${ancestor.expression.left.property.name} as ${
-                          originalExports[exportName].alias
-                        }`,
-                      );
-                    } else {
-                      collectedExportsToAppend.push(ancestor.expression.left.property.name);
-                    }
-                    break;
-                  case ExportClosureMapping.DEFAULT_VALUE:
-                  case ExportClosureMapping.DEFAULT_OBJECT:
-                    if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
-                      source.overwrite(
-                        ancestor.expression.left.object.range[0],
-                        ancestor.expression.right.range[0],
-                        'export default ',
-                      );
-                    }
-                    break;
-                  default:
-                    if (ancestor.range) {
-                      source.remove(ancestor.range[0], ancestor.range[1]);
-                    }
+      // walk.ancestor(program, {
+      //   // We inserted window scoped assignments for all the export statements during `preCompilation`
+      //   // window['exportName'] = exportName;
+      //   // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
+      //   // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
+      //   Identifier(node: Identifier, ancestors: Array<Node>) {
+      //     if (node.name === 'window') {
+      //       ancestors.forEach((ancestor: Node) => {
+      //         if (
+      //           ancestor.type === 'ExpressionStatement' &&
+      //           ancestor.expression.type === 'AssignmentExpression' &&
+      //           ancestor.expression.left.type === 'MemberExpression' &&
+      //           ancestor.expression.left.object.type === 'Identifier' &&
+      //           ancestor.expression.left.object.name === 'window' &&
+      //           ancestor.expression.left.property.type === 'Identifier' &&
+      //           originalExportIdentifiers.includes(ancestor.expression.left.property.name)
+      //         ) {
+      //           const exportName = ancestor.expression.left.property.name;
+      //           switch (originalExports[exportName].type) {
+      //             case ExportClosureMapping.DEFAULT_FUNCTION:
+      //             case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
+      //             case ExportClosureMapping.DEFAULT:
+      //               if (ancestor.expression.left.range) {
+      //                 source.overwrite(
+      //                   ancestor.expression.left.range[0],
+      //                   ancestor.expression.left.range[1] + ancestor.expression.operator.length,
+      //                   `export default `,
+      //                 );
+      //               }
+      //               break;
+      //             case ExportClosureMapping.NAMED_FUNCTION:
+      //               if (
+      //                 ancestor.expression.right.type === 'FunctionExpression' &&
+      //                 ancestor.expression.right.params.length > 0
+      //               ) {
+      //                 const firstParameter = ancestor.expression.right.params[0];
+      //                 if (ancestor.expression.range && firstParameter.range) {
+      //                   source.overwrite(
+      //                     ancestor.expression.range[0],
+      //                     firstParameter.range[0] - 1,
+      //                     `export function ${ancestor.expression.left.property.name}`,
+      //                   );
+      //                 }
+      //               }
+      //               break;
+      //             case ExportClosureMapping.DEFAULT_CLASS:
+      //             case ExportClosureMapping.NAMED_DEFAULT_CLASS:
+      //               if (ancestor.expression.right.type === 'Identifier') {
+      //                 const mangledName = ancestor.expression.right.name;
 
-                    if (ancestor.expression.right.type === 'Identifier') {
-                      collectedExportsToAppend.push(
-                        `${ancestor.expression.right.name} as ${
-                          ancestor.expression.left.property.name
-                        }`,
-                      );
-                    }
-                    break;
-                }
-              }
-            });
-          }
-        },
-      });
+      //                 console.log('exports', walk.base['Import']);
+
+      //                 walk.simple(program, {
+      //                   ClassDeclaration(node: ClassDeclaration) {
+      //                     if (
+      //                       node.id &&
+      //                       node.id.name === mangledName &&
+      //                       node.range &&
+      //                       node.body.range &&
+      //                       ancestor.range
+      //                     ) {
+      //                       if (node.superClass && node.superClass.type === 'Identifier') {
+      //                         source.overwrite(
+      //                           node.range[0],
+      //                           node.body.range[0],
+      //                           `export default class extends ${node.superClass.name}`,
+      //                         );
+      //                       } else {
+      //                         source.overwrite(
+      //                           node.range[0],
+      //                           node.body.range[0],
+      //                           `export default class`,
+      //                         );
+      //                       }
+      //                       source.remove(ancestor.range[0], ancestor.range[1]);
+      //                     }
+      //                   },
+      //                   'Import': async function(node: any) {
+      //                     console.log('import?', node);
+      //                   },
+      //                 });
+      //               }
+      //               break;
+      //             case ExportClosureMapping.NAMED_CONSTANT:
+      //               if (ancestor.expression.left.object.range) {
+      //                 source.overwrite(
+      //                   ancestor.expression.left.object.range[0],
+      //                   ancestor.expression.left.object.range[1] + 1,
+      //                   'var ',
+      //                 );
+      //               }
+
+      //               if (originalExports[exportName].alias !== null) {
+      //                 collectedExportsToAppend.push(
+      //                   `${ancestor.expression.left.property.name} as ${
+      //                     originalExports[exportName].alias
+      //                   }`,
+      //                 );
+      //               } else {
+      //                 collectedExportsToAppend.push(ancestor.expression.left.property.name);
+      //               }
+      //               break;
+      //             case ExportClosureMapping.DEFAULT_VALUE:
+      //             case ExportClosureMapping.DEFAULT_OBJECT:
+      //               if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
+      //                 source.overwrite(
+      //                   ancestor.expression.left.object.range[0],
+      //                   ancestor.expression.right.range[0],
+      //                   'export default ',
+      //                 );
+      //               }
+      //               break;
+      //             default:
+      //               if (ancestor.range) {
+      //                 source.remove(ancestor.range[0], ancestor.range[1]);
+      //               }
+
+      //               if (ancestor.expression.right.type === 'Identifier') {
+      //                 collectedExportsToAppend.push(
+      //                   `${ancestor.expression.right.name} as ${
+      //                     ancestor.expression.left.property.name
+      //                   }`,
+      //                 );
+      //               }
+      //               break;
+      //           }
+      //         }
+      //       });
+      //     }
+      //   },
+      // });
 
       if (collectedExportsToAppend.length > 0) {
         source.append(`export{${collectedExportsToAppend.join(',')}};`);
