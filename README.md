@@ -50,6 +50,27 @@ export default {
 }
 ```
 
+### Code Splitting via Dynamic Imports
+
+This plugin supports code splitting with Rollup's `experimentalCodeSplitting` feature. Enable code splitting in your rollup configuration and each output bundle will be minified by Closure Compiler.
+
+```js
+// rollup.config.js
+import compiler from '@ampproject/rollup-plugin-closure-compiler';
+
+export default {
+  input: 'main.js',
+  output: {
+    dir: 'public/module',
+    format: 'es',
+  },
+  experimentalCodeSplitting: true,
+  plugins: [
+    compiler(),
+  ],
+}
+```
+
 ### Automatic Closure Configuration
 
 This plugin will modify the enable the `assume_function_wrapper` output option for Closure Compiler when `es` format is specifed to Rollup. **Note**: This is overrideable via passed flags and options.
