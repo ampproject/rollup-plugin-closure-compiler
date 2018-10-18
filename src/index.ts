@@ -16,6 +16,7 @@
 
 import { CompileOptions } from 'google-closure-compiler';
 import * as fs from 'fs';
+import * as path from 'path';
 import { promisify } from 'util';
 import {
   OutputOptions,
@@ -65,26 +66,36 @@ const renderChunk = async (
 };
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+  const transforms: { [key: string]: Array<Transform> } = {};
   let inputOptions: InputOptions;
   let context: PluginContext;
-  let transforms: Array<Transform>;
-  let transformsDefined: boolean = false;
 
   return {
     name: 'closure-compiler',
     options: options => (inputOptions = options),
     buildStart() {
       context = this;
-    },
-    load() {
-      if (!transformsDefined) {
-        transforms = createTransforms(context, inputOptions);
-        transformsDefined = true;
+      if (
+        'compilation_level' in requestedCompileOptions &&
+        requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
+        inputOptions.experimentalCodeSplitting
+      ) {
+        context.warn(
+          'Rollup experimentalCodeSplitting with Closure Compiler ADVANCED_OPTIMIZATIONS is not currently supported.',
+        );
       }
     },
+    load(id: string) {
+      transforms[path.parse(id).base] = createTransforms(context, inputOptions);
+    },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      await deriveFromInputSource(code, chunk, transforms);
-      return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
+      await deriveFromInputSource(code, chunk, transforms[chunk.fileName]);
+      return await renderChunk(
+        transforms[chunk.fileName],
+        requestedCompileOptions,
+        code,
+        outputOptions,
+      );
     },
   };
 }

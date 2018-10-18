@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-import {generator, ESM_OUTPUT} from '../generator';
-const path = require('path');
+import {generator, DEFAULT_CLOSURE_OPTIONS, ES5_STRICT_CLOSURE_OPTIONS} from '../generator';
 
-const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js');
-
-generator('provided-externs', 'class', false, [ESM_OUTPUT], {
-  default: {
-    externs: EXTERNS,
-  },
-  advanced: {
-    externs: EXTERNS,
-    compilation_level: 'ADVANCED_OPTIMIZATIONS',
-    language_out: 'ECMASCRIPT_2015',
-  },
-  es5: {
-    externs: EXTERNS,
-    language_out: 'ECMASCRIPT5_STRICT',
-  }
+generator('import', 'dynamic', true, undefined, {
+  ...DEFAULT_CLOSURE_OPTIONS,
+  ...ES5_STRICT_CLOSURE_OPTIONS,
 });
+

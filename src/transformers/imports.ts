@@ -18,8 +18,11 @@ import { Transform } from '../types';
 import { literalName, importLocalNames } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { ImportDeclaration } from 'estree';
-const walk = require('acorn-dynamic-import/lib/walk').default(require('acorn-walk'));
+import { ImportDeclaration, Identifier } from 'estree';
+import { parse, walk } from '../acorn';
+
+const DYNAMIC_IMPORT_KEYWORD = 'import';
+const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -28,9 +31,15 @@ const HEADER = `/**
 */
 `;
 
+interface RangedImport {
+  type: string;
+  range: [number, number];
+}
+
 export default class ImportTransform extends Transform {
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
+  private dynamicImportPresent: boolean = false;
 
   /**
    * Rollup allows configuration for 'external' imports.
@@ -56,16 +65,24 @@ export default class ImportTransform extends Transform {
    * @return string representing content of generated extern.
    */
   public extern(): string {
+    let extern = HEADER;
     if (this.importedExternalsLocalNames.length > 0) {
-      let extern = HEADER;
       this.importedExternalsLocalNames.forEach(name => {
         extern += `function ${name}(){};\n`;
       });
-
-      return extern;
     }
 
-    return '';
+    if (this.dynamicImportPresent) {
+      extern += `
+/**
+ * @param {string} path
+ * @return {!Promise<?>}
+ */
+function ${DYNAMIC_IMPORT_REPLACEMENT}(path) { return Promise.resolve(path) };
+window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
+    }
+
+    return extern;
   }
 
   /**
@@ -79,7 +96,7 @@ export default class ImportTransform extends Transform {
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
     const self = this;
     const source = new MagicString(code);
-    const program = self.context.parse(code, { ranges: true });
+    const program = parse(code);
 
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
@@ -94,6 +111,18 @@ export default class ImportTransform extends Transform {
             importLocalNames(self.context, node),
           );
         }
+      },
+      Import(node: RangedImport) {
+        self.dynamicImportPresent = true;
+        // Rename the `import` method to something we can put in externs.
+        // CC doesn't understand dynamic import yet.
+        source.overwrite(
+          node.range[0],
+          node.range[1],
+          code
+            .substring(node.range[0], node.range[1])
+            .replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
+        );
       },
     });
 
@@ -110,9 +139,20 @@ export default class ImportTransform extends Transform {
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
+    const program = parse(code);
+
     Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
       source.prepend(importedExternalSyntax),
     );
+
+    walk.simple(program, {
+      Identifier(node: Identifier) {
+        if (node.name === DYNAMIC_IMPORT_REPLACEMENT) {
+          const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+          source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
+        }
+      },
+    });
 
     return {
       code: source.toString(),

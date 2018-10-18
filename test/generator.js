@@ -53,6 +53,7 @@ function generate(
   shouldFail,
   category,
   name,
+  codeSplit,
   formats,
   closureFlags,
 ) {
@@ -65,26 +66,37 @@ function generate(
         input: fixtureLocation(category, name, format, optionKey, false),
         plugins: [compiler(closureFlags[optionKey])],
         external: ['lodash'],
+        experimentalCodeSplitting: codeSplit,
       });
 
-      return {
-        minified: await readFile(
-          path.join(fixtureLocation(category, name, format, optionKey, true)),
-          'utf8',
-        ),
-        code: (await bundle.generate({
-          format,
-          sourcemap: true,
-        })).code,
-      };
+      const bundles = await bundle.generate({
+        format,
+        sourcemap: true,
+      });
+
+      const output = [];
+      for (file in bundles.output) {
+        output.push({
+          minified: await readFile(
+            path.join(fixtureLocation(category, path.parse(bundles.output[file].fileName).name, format, optionKey, true)),
+            'utf8',
+          ),
+          code: bundles.output[file].code
+        });
+      }
+
+      return output;
     }
 
     Object.keys(closureFlags).forEach(optionKey => {
       const method = shouldFail ? test.failing : test;
       method(`${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`, async t => {
-        const { minified, code } = await compile(optionKey);
+        const output = await compile(optionKey);
 
-        t.is(code, minified);
+        t.plan(output.length);
+        output.forEach(result => {
+          t.is(result.code, result.minified);
+        })
       });
     });
   });
@@ -93,24 +105,27 @@ function generate(
 function failureGenerator(
   category,
   name,
+  codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
 ) {
-  generate(true, category, name, formats, closureFlags);
+  generate(true, category, name, codeSplit, formats, closureFlags);
 }
 
 function generator(
   category,
   name,
+  codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
 ) {
-  generate(false, category, name, formats, closureFlags);
+  generate(false, category, name, codeSplit, formats, closureFlags);
 }
 
 module.exports = {
   DEFAULT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
+  ES5_STRICT_CLOSURE_OPTIONS,
   ES_OUTPUT,
   ESM_OUTPUT,
   generator,
