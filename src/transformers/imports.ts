@@ -98,7 +98,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     const source = new MagicString(code);
     const program = parse(code);
 
-    walk.ancestor(program, {
+    walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
 
