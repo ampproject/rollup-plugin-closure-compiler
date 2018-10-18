@@ -22,14 +22,13 @@ import { ImportDeclaration, Identifier } from 'estree';
 import { parse, walk } from '../acorn';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
-const DYNAMIC_IMPORT_REPLACEMENT = `import${new Date().getMilliseconds()}`;
+const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
 * This extern contains the external import names, to prevent compilation failures.
 * @externs
 */
-window['${DYNAMIC_IMPORT_REPLACEMENT}'] = function(path){ return Promise.resolve(path) };
 `;
 
 interface RangedImport {
@@ -40,6 +39,7 @@ interface RangedImport {
 export default class ImportTransform extends Transform {
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
+  private dynamicImportPresent: boolean = false;
 
   /**
    * Rollup allows configuration for 'external' imports.
@@ -70,6 +70,16 @@ export default class ImportTransform extends Transform {
       this.importedExternalsLocalNames.forEach(name => {
         extern += `function ${name}(){};\n`;
       });
+    }
+
+    if (this.dynamicImportPresent) {
+      extern += `
+/**
+ * @param {string} path
+ * @return {!Promise<?>}
+ */
+function ${DYNAMIC_IMPORT_REPLACEMENT}(path) { return Promise.resolve(path) };
+window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     }
 
     return extern;
@@ -103,6 +113,7 @@ export default class ImportTransform extends Transform {
         }
       },
       Import(node: RangedImport) {
+        self.dynamicImportPresent = true;
         // Rename the `import` method to something we can put in externs.
         // CC doesn't understand dynamic import yet.
         source.overwrite(
