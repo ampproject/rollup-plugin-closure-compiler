@@ -16,7 +16,7 @@
 
 import {generator, DEFAULT_CLOSURE_OPTIONS, ES5_STRICT_CLOSURE_OPTIONS} from '../generator';
 
-generator('import', 'dynamic', undefined, {
+generator('import', 'dynamic', true, undefined, {
   ...DEFAULT_CLOSURE_OPTIONS,
   ...ES5_STRICT_CLOSURE_OPTIONS,
 });

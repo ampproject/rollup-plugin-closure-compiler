@@ -19,7 +19,7 @@ const path = require('path');
 
 const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js');
 
-generator('provided-externs', 'class', [ESM_OUTPUT], {
+generator('provided-externs', 'class', false, [ESM_OUTPUT], {
   default: {
     externs: EXTERNS,
   },

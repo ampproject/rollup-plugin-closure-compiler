@@ -53,6 +53,7 @@ function generate(
   shouldFail,
   category,
   name,
+  codeSplit,
   formats,
   closureFlags,
 ) {
@@ -65,7 +66,7 @@ function generate(
         input: fixtureLocation(category, name, format, optionKey, false),
         plugins: [compiler(closureFlags[optionKey])],
         external: ['lodash'],
-        experimentalCodeSplitting: true,
+        experimentalCodeSplitting: codeSplit,
       });
 
       const bundles = await bundle.generate({
@@ -104,19 +105,21 @@ function generate(
 function failureGenerator(
   category,
   name,
+  codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
 ) {
-  generate(true, category, name, formats, closureFlags);
+  generate(true, category, name, codeSplit, formats, closureFlags);
 }
 
 function generator(
   category,
   name,
+  codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
 ) {
-  generate(false, category, name, formats, closureFlags);
+  generate(false, category, name, codeSplit, formats, closureFlags);
 }
 
 module.exports = {
