@@ -32,7 +32,7 @@ import {
   ExportClosureMapping,
 } from '../types';
 import MagicString from 'magic-string';
-import * as walk from '../walk';
+import { parse, walk } from '../acorn';
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -54,7 +54,7 @@ export default class ExportTransform extends Transform implements TransformInter
   public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
     const context = this.context;
     let originalExports: ExportNameToClosureMapping = {};
-    const program = context.parse(code, { ranges: true });
+    const program = parse(code);
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
@@ -105,7 +105,7 @@ export default class ExportTransform extends Transform implements TransformInter
         // where exports were not part of the language.
         source.remove(this.originalExports[key].range[0], this.originalExports[key].range[1]);
         // Window scoped references for each key are required to ensure Closure Compilre retains the code.
-        source.append(`\nwindow['${key}'] = ${key}`);
+        source.append(`\nwindow['${key}'] = ${key};`);
       });
 
       return {
@@ -134,7 +134,7 @@ export default class ExportTransform extends Transform implements TransformInter
       );
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
-      const program = this.context.parse(code, { ranges: true });
+      const program = parse(code);
       const collectedExportsToAppend: Array<string> = [];
 
       const originalExports = this.originalExports;

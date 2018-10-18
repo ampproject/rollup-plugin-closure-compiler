@@ -15,17 +15,31 @@
  */
 
 import { Program } from 'estree';
+import { DYNAMIC_IMPORT_DECLARATION } from './types';
+const acorn = require('acorn');
 const acornWalk = require('acorn-walk');
-const { DynamicImportKey } = require('acorn-dynamic-import');
+const dynamicImport = require('acorn-dynamic-import');
 
 const DYNAMIC_IMPORT_BASEVISITOR = Object.assign({}, acornWalk.base, {
-  [DynamicImportKey]: () => {},
+  [DYNAMIC_IMPORT_DECLARATION]: () => {},
 });
 
-export function simple(node: Program, visitors: any): void {
-  acornWalk.simple(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
-}
+export const walk = {
+  simple(node: Program, visitors: any): void {
+    acornWalk.simple(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
+  },
+  ancestor(node: Program, visitors: any): void {
+    acornWalk.ancestor(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
+  },
+};
 
-export function ancestor(node: Program, visitors: any): void {
-  acornWalk.ancestor(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
+const DEFAULT_ACORN_OPTIONS = {
+  ecmaVersion: 2019,
+  sourceType: 'module',
+  preserveParens: false,
+  ranges: true,
+};
+
+export function parse(source: string): Program {
+  return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
 }
