@@ -96,8 +96,6 @@ function generate(
         output.forEach(result => {
           t.is(result.code, result.minified);
         })
-        // console.log(code);
-        // t.is(code, minified);
       });
     });
   });
@@ -124,6 +122,7 @@ function generator(
 module.exports = {
   DEFAULT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
+  ES5_STRICT_CLOSURE_OPTIONS,
   ES_OUTPUT,
   ESM_OUTPUT,
   generator,

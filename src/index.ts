@@ -75,6 +75,15 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     options: options => (inputOptions = options),
     buildStart() {
       context = this;
+      if (
+        'compilation_level' in requestedCompileOptions &&
+        requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
+        inputOptions.experimentalCodeSplitting
+      ) {
+        context.warn(
+          'Rollup experimentalCodeSplitting with Closure Compiler ADVANCED_OPTIMIZATIONS is not currently supported.',
+        );
+      }
     },
     load(id: string) {
       transforms[path.parse(id).base] = createTransforms(context, inputOptions);
