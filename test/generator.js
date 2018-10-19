@@ -76,11 +76,12 @@ function generate(
 
       const output = [];
       for (file in bundles.output) {
+        const minified = await readFile(
+          path.join(fixtureLocation(category, path.parse(bundles.output[file].fileName).name, format, optionKey, true)),
+          'utf8',
+        );
         output.push({
-          minified: await readFile(
-            path.join(fixtureLocation(category, path.parse(bundles.output[file].fileName).name, format, optionKey, true)),
-            'utf8',
-          ),
+          minified,
           code: bundles.output[file].code
         });
       }
