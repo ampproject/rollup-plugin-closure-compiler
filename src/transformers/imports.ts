@@ -42,24 +42,6 @@ export default class ImportTransform extends Transform {
   private dynamicImportPresent: boolean = false;
 
   /**
-   * Rollup allows configuration for 'external' imports.
-   * These are items that will not be bundled with the resulting code, but instead are expected
-   * to already be available via `import` or other means.
-   * @param source parsed from import statements, this is the source of a particular import statement.
-   * @return boolean if the import is listed in the external list.
-   */
-  private isExternalImport(source: string): boolean {
-    if (this.inputOptions.external === undefined) {
-      return false;
-    }
-    if (Array.isArray(this.inputOptions.external)) {
-      return this.inputOptions.external.includes(source);
-    }
-
-    return false;
-  }
-
-  /**
    * Generate externs for local names of external imports.
    * Otherwise, advanced mode compilation will fail since the reference is unknown.
    * @return string representing content of generated extern.
@@ -101,16 +83,13 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
+        const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+        self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
+        source.remove(range[0], range[1]);
 
-        if (self.isExternalImport(name)) {
-          const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
-          self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
-          source.remove(range[0], range[1]);
-
-          self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
-            importLocalNames(self.context, node),
-          );
-        }
+        self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
+          importLocalNames(self.context, node),
+        );
       },
       Import(node: RangedImport) {
         self.dynamicImportPresent = true;

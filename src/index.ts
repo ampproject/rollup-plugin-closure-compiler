@@ -66,7 +66,6 @@ const renderChunk = async (
 };
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
-  const transforms: { [key: string]: Array<Transform> } = {};
   let inputOptions: InputOptions;
   let context: PluginContext;
 
@@ -85,17 +84,10 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         );
       }
     },
-    load(id: string) {
-      transforms[path.parse(id).base] = createTransforms(context, inputOptions);
-    },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      await deriveFromInputSource(code, chunk, transforms[chunk.fileName]);
-      return await renderChunk(
-        transforms[chunk.fileName],
-        requestedCompileOptions,
-        code,
-        outputOptions,
-      );
+      const transforms = createTransforms(context, inputOptions);
+      await deriveFromInputSource(code, chunk, transforms);
+      return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
     },
   };
 }
