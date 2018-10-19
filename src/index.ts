@@ -16,7 +16,6 @@
 
 import { CompileOptions } from 'google-closure-compiler';
 import * as fs from 'fs';
-import * as path from 'path';
 import { promisify } from 'util';
 import {
   OutputOptions,
