@@ -27,7 +27,7 @@ import {
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { preCompilation, createTransforms, deriveFromInputSource } from './transforms';
+import { preCompilation, createTransforms } from './transforms';
 import { Transform } from './types';
 
 const readFile = promisify(fs.readFile);
@@ -85,7 +85,6 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       const transforms = createTransforms(context, inputOptions);
-      await deriveFromInputSource(code, chunk, transforms);
       return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
     },
   };
