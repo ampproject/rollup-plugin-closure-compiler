@@ -7,7 +7,7 @@ Generally Closure Compiler will produce superior minification than other project
 ## Installation
 
 ```bash
-yarn add @ampproject/rollup-plugin-closure-compiler --dev
+npm install @ampproject/rollup-plugin-closure-compiler --save-dev
 ```
 
 ## Usage
