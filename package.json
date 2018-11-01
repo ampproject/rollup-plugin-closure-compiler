@@ -41,7 +41,7 @@
     "ava": "1.0.0-rc.1",
     "builtins": "2.0.0",
     "husky": "1.1.2",
-    "lint-staged": "7.3.0",
+    "lint-staged": "8.0.4",
     "prettier": "1.14.3",
     "rimraf": "2.6.2",
     "rollup": "0.66.6",
