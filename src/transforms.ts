@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
+import { OutputOptions, PluginContext, InputOptions } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
 import LiteralComputedKeys from './transformers/literal-computed-keys';
@@ -88,20 +88,4 @@ export async function postCompilation(code: string, transforms: Array<Transform>
 
   logSource('after postCompilation handlers', code);
   return code;
-}
-
-/**
- * Run each transform's `deriveFromInputSource` phase in parallel.
- * @param code source code to derive information from, pre Closure Compiler minification.
- * @param id Rollup identifier for this input source.
- * @param transforms Transforms to execute.
- */
-export async function deriveFromInputSource(
-  code: string,
-  chunk: RenderedChunk,
-  transforms: Array<Transform>,
-): Promise<void> {
-  await Promise.all(transforms.map(transform => transform.deriveFromInputSource(code, chunk))).then(
-    _ => void 0,
-  );
 }
