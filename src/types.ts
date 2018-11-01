@@ -21,7 +21,6 @@ import {
   PluginContext,
   InputOptions,
   InputOption,
-  RenderedChunk,
 } from 'rollup';
 const dynamicImport = require('acorn-dynamic-import');
 
@@ -66,7 +65,6 @@ export interface ExportNameToClosureMapping {
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   extern: (options: OutputOptions) => string;
-  deriveFromInputSource: (code: string, chunk: RenderedChunk) => Promise<void>;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
 }
@@ -82,10 +80,6 @@ export class Transform implements TransformInterface {
 
   public extern(options: OutputOptions): string {
     return '';
-  }
-
-  public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
-    return void 0;
   }
 
   public async preCompilation(code: string): Promise<TransformSourceDescription> {

@@ -22,7 +22,7 @@ import {
   Node,
   ClassDeclaration,
 } from 'estree';
-import { TransformSourceDescription, RenderedChunk } from 'rollup';
+import { TransformSourceDescription } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
@@ -45,13 +45,7 @@ import { parse, walk } from '../acorn';
 export default class ExportTransform extends Transform implements TransformInterface {
   private originalExports: ExportNameToClosureMapping = {};
 
-  /**
-   * Before Closure Compiler is given a chance to look at the code, we need to
-   * find and store all export statements with their correct type
-   * @param code source to parse
-   * @param chunk Rollup chunk reference to the source
-   */
-  public async deriveFromInputSource(code: string, chunk: RenderedChunk): Promise<void> {
+  private async deriveExports(code: string): Promise<ExportNameToClosureMapping> {
     const context = this.context;
     let originalExports: ExportNameToClosureMapping = {};
     const program = parse(code);
@@ -79,9 +73,7 @@ export default class ExportTransform extends Transform implements TransformInter
       },
     });
 
-    this.originalExports = originalExports;
-
-    return void 0;
+    return originalExports;
   }
 
   /**
@@ -99,6 +91,8 @@ export default class ExportTransform extends Transform implements TransformInter
       );
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
+      this.originalExports = await this.deriveExports(code);
+
       Object.keys(this.originalExports).forEach(key => {
         // Remove export statements before Closure Compiler sees the code
         // This prevents CC from transpiling `export` statements when the language_out is set to a value
