@@ -27,9 +27,9 @@ export default {
   ],
   plugins: [
     copy({
-      "transpile/index.d.ts": "dist/index.d.ts",
-      verbose: true
-    })
+      './transpile/index.d.ts': './dist/index.d.ts',
+      verbose: true,
+    }),
   ],
   output: [
     {
@@ -41,4 +41,4 @@ export default {
       format: 'cjs',
     },
   ],
-}
+};
