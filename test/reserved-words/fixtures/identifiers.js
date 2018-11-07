@@ -1,7 +1,7 @@
 import {Storage} from 'storage';
 
 export class Plugin extends Storage {
-	constructor(val) {
+  constructor(val) {
     super(val);
   }
 }
