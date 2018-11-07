@@ -95,7 +95,6 @@ export abstract class Transform implements TransformInterface {
           }
           break;
       }
-      console.log('change applied', [type, range, content], source.toString());
     });
 
     return source;

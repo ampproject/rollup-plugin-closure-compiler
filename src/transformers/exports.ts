@@ -33,7 +33,6 @@ import {
   DiscoveredExport,
   CodeTransform,
 } from '../types';
-import MagicString from 'magic-string';
 import { parse, walk, range } from '../acorn';
 import { Transform } from './transform';
 import { exportDefaultParser } from '../parsers/ExportDefaultDeclaration';
@@ -169,10 +168,8 @@ export default class ExportTransform extends Transform implements TransformInter
     if (isESMFormat(this.outputOptions.format)) {
       const program = parse(code);
       const discoverCompiledExport = this.discoverCompiledExport.bind(this);
-      const moduleMangledWords: MangledWords = new MangledWords();
+      const mangledExportWords: MangledWords = new MangledWords();
       const changes: Array<CodeTransform> = [];
-
-      moduleMangledWords.merge(mangled);
 
       // Alright, here's the plan.
       // 1. Collect source transformations.
@@ -191,12 +188,9 @@ export default class ExportTransform extends Transform implements TransformInter
               local: mangled.getInitial(discoveredExport.local) || discoveredExport.local,
               exported: mangled.getInitial(discoveredExport.exported) || discoveredExport.exported,
             });
-            let exportDiscovered: boolean = false;
-
-            console.log('right type', right.type, right.type === 'Identifier' ? right.name : '');
+            let exportLocationDiscovered: boolean = false;
 
             if (right.type === 'Identifier') {
-              console.log('export', renewedExport, mangled.final);
               changes.push({
                 type: 'remove',
                 range: statementRange,
@@ -206,11 +200,8 @@ export default class ExportTransform extends Transform implements TransformInter
                 VariableDeclaration(variableDeclaration: VariableDeclaration) {
                   const variableDeclarationRange = range(variableDeclaration);
                   variableDeclaration.declarations.forEach(declarator => {
-                    if (
-                      declarator.id.type === 'Identifier' &&
-                      declarator.id.name === renewedExport.local
-                    ) {
-                      exportDiscovered = true;
+                    if (declarator.id.type === 'Identifier' && declarator.id.name === right.name) {
+                      exportLocationDiscovered = true;
                       changes.push({
                         type: 'appendLeft',
                         range: [variableDeclarationRange[0], 0],
@@ -218,7 +209,7 @@ export default class ExportTransform extends Transform implements TransformInter
                       });
 
                       if (!discoveredExport.default) {
-                        moduleMangledWords.store(renewedExport.local, declarator.id.name);
+                        mangledExportWords.store(renewedExport.local, declarator.id.name);
                       }
                     }
                   });
@@ -230,7 +221,7 @@ export default class ExportTransform extends Transform implements TransformInter
                     classDeclaration.id.type === 'Identifier' &&
                     classDeclaration.id.name === right.name
                   ) {
-                    exportDiscovered = true;
+                    exportLocationDiscovered = true;
                     changes.push({
                       type: 'appendLeft',
                       range: [classDeclarationRange[0], 0],
@@ -238,13 +229,14 @@ export default class ExportTransform extends Transform implements TransformInter
                     });
 
                     if (!discoveredExport.default) {
-                      moduleMangledWords.store(renewedExport.local, classDeclaration.id.name);
+                      mangledExportWords.store(renewedExport.local, classDeclaration.id.name);
                     }
+                    // console.log('class export location', right.name, renewedExport.local, classDeclaration.id.name);
                   }
                 },
               });
 
-              if (!exportDiscovered && discoveredExport.default) {
+              if (!exportLocationDiscovered && discoveredExport.default) {
                 changes.push({
                   type: 'append',
                   content: `export default ${renewedExport.exported};`,
@@ -407,12 +399,10 @@ export default class ExportTransform extends Transform implements TransformInter
       //   source.appendRight(source.length(), `export{${otherExports.join(',')}};`)
       // }
 
-      // changes.push(...(await remedy(program, moduleMangledWords)));
       let source = await this.applyChanges(changes, code);
       const updatedCode = source.toString();
-      console.log('parsing', updatedCode);
       source = await this.applyChanges(
-        await remedy(parse(updatedCode), moduleMangledWords),
+        await remedy(parse(updatedCode), mangledExportWords),
         updatedCode,
       );
 

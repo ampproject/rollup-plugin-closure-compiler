@@ -17,7 +17,7 @@
 import MagicString from 'magic-string';
 import { SourceRange, MangledWords, CodeTransform } from './types';
 import { walk, range } from './acorn';
-import { Program, ClassDeclaration, Identifier } from 'estree';
+import { Program, ClassDeclaration, Identifier, VariableDeclaration } from 'estree';
 
 export function mangleWord(
   source: MagicString,
@@ -28,11 +28,7 @@ export function mangleWord(
   const mangleName = mangled.getFinal(name);
   if (mangleName) {
     source.overwrite(range[0], range[1], mangleName);
-
-    if (!mangled.initial.includes(name)) {
-      mangled.initial.push(name);
-      mangled.final.push(mangleName);
-    }
+    mangled.store(name, mangleName);
   }
 }
 
@@ -52,24 +48,25 @@ export async function remedy(
   program: Program,
   mangled: MangledWords,
 ): Promise<Array<CodeTransform>> {
-  const changes: Array<CodeTransform> = [];
+  const changes: Array<CodeTransform | null> = [];
 
   walk.simple(program, {
     ClassDeclaration(node: ClassDeclaration) {
       if (node.id !== null) {
-        const change: CodeTransform | null = remedyWord(node.id.name, range(node.id), mangled);
-        if (change) {
-          changes.push(change);
-        }
+        changes.push(remedyWord(node.id.name, range(node.id), mangled));
       }
     },
     Identifier(node: Identifier) {
-      const change: CodeTransform | null = remedyWord(node.name, range(node), mangled);
-      if (change) {
-        changes.push(change);
-      }
+      changes.push(remedyWord(node.name, range(node), mangled));
+    },
+    VariableDeclaration(node: VariableDeclaration) {
+      node.declarations.forEach(declarator => {
+        if (declarator.id.type === 'Identifier') {
+          changes.push(remedyWord(declarator.id.name, range(declarator.id), mangled));
+        }
+      });
     },
   });
 
-  return changes;
+  return changes.filter(Boolean) as Array<CodeTransform>;
 }
