@@ -17,7 +17,13 @@
 import MagicString from 'magic-string';
 import { SourceRange, MangledWords, CodeTransform } from './types';
 import { walk, range } from './acorn';
-import { Program, ClassDeclaration, Identifier, VariableDeclaration } from 'estree';
+import {
+  Program,
+  ClassDeclaration,
+  Identifier,
+  VariableDeclaration,
+  FunctionDeclaration,
+} from 'estree';
 
 export function mangleWord(
   source: MagicString,
@@ -65,6 +71,11 @@ export async function remedy(
           changes.push(remedyWord(declarator.id.name, range(declarator.id), mangled));
         }
       });
+    },
+    FunctionDeclaration(node: FunctionDeclaration) {
+      if (node.id) {
+        changes.push(remedyWord(node.id.name, range(node.id), mangled));
+      }
     },
   });
 

@@ -23,6 +23,7 @@ import {
   VariableDeclaration,
   ClassDeclaration,
   AssignmentExpression,
+  FunctionDeclaration,
 } from 'estree';
 import { RenderedChunk } from 'rollup';
 import { isESMFormat } from '../options';
@@ -234,6 +235,21 @@ export default class ExportTransform extends Transform implements TransformInter
                     // console.log('class export location', right.name, renewedExport.local, classDeclaration.id.name);
                   }
                 },
+                FunctionDeclaration(functionDeclaration: FunctionDeclaration) {
+                  const functionDeclarationRange = range(functionDeclaration);
+                  if (functionDeclaration.id && functionDeclaration.id.name === right.name) {
+                    exportLocationDiscovered = true;
+                    changes.push({
+                      type: 'appendLeft',
+                      range: [functionDeclarationRange[0], 0],
+                      content: discoveredExport.default ? 'export default ' : 'export ',
+                    });
+
+                    if (!discoveredExport.default) {
+                      mangledExportWords.store(renewedExport.local, functionDeclaration.id.name);
+                    }
+                  }
+                },
               });
 
               if (!exportLocationDiscovered && discoveredExport.default) {
@@ -251,6 +267,7 @@ export default class ExportTransform extends Transform implements TransformInter
                   : `export var ${renewedExport.exported}=${right.value};`,
               });
             } else {
+              console.log(right.type, right.type === 'FunctionExpression' ? right.id : '');
               if (right.type === 'FunctionExpression' && right.id === null) {
                 // Function without an id, e.g `window.foo=function(a){};`
                 const existingFunction = code.substring(rightRange[0], rightRange[1]);
