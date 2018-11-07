@@ -18,27 +18,35 @@ import pkg from './package.json';
 import builtins from 'builtins';
 import copy from 'rollup-plugin-copy';
 
-export default {
-  input: './transpile/index.js',
-  external: [
-    ...builtins(),
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-  ],
-  plugins: [
-    copy({
-      './transpile/index.d.ts': './dist/index.d.ts',
-      verbose: true,
-    }),
-  ],
-  output: [
-    {
+const input = './transpile/index.js';
+const external = [
+  ...builtins(),
+  ...Object.keys(pkg.dependencies || {}),
+  ...Object.keys(pkg.peerDependencies || {}),
+];
+
+export default [
+  {
+    input,
+    external,
+    plugins: [
+      copy({
+        './transpile/index.d.ts': './dist/index.d.ts',
+        './src/types.ts': './dist/types.ts',
+        verbose: true,
+      }),
+    ],
+    output: {
       file: './dist/index.mjs',
       format: 'es',
     },
-    {
+  },
+  {
+    input,
+    external,
+    output: {
       file: './dist/index.js',
       format: 'cjs',
     },
-  ],
-};
+  }
+]
