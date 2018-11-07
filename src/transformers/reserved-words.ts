@@ -23,7 +23,6 @@ import {
   MangledTransformSourceDescription,
   CodeTransform,
 } from '../types';
-import MagicString from 'magic-string';
 import {
   Identifier,
   ClassDeclaration,
