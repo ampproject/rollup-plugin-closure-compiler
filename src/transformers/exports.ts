@@ -160,6 +160,87 @@ export default class ExportTransform extends Transform implements TransformInter
     return null;
   }
 
+  private static renewVariableDeclarationExport(
+    variableDeclaration: VariableDeclaration,
+    renewedExport: DiscoveredExport,
+    expressionRightName: string,
+    changes: Array<CodeTransform>,
+    mangledExportWords: MangledWords,
+  ): boolean {
+    const variableDeclarationRange = range(variableDeclaration);
+    variableDeclaration.declarations.forEach(declarator => {
+      if (declarator.id.type === 'Identifier' && declarator.id.name === expressionRightName) {
+        changes.push({
+          type: 'appendLeft',
+          range: [variableDeclarationRange[0], 0],
+          content: renewedExport.default ? 'export default ' : 'export ',
+        });
+
+        if (!renewedExport.default) {
+          mangledExportWords.store(renewedExport.local, declarator.id.name);
+        }
+
+        return true;
+      }
+    });
+
+    return false;
+  }
+
+  private static renewClassDeclarationExport(
+    classDeclaration: ClassDeclaration,
+    renewedExport: DiscoveredExport,
+    expressionRightName: string,
+    changes: Array<CodeTransform>,
+    mangledExportWords: MangledWords,
+  ): boolean {
+    const classDeclarationRange = range(classDeclaration);
+    if (
+      classDeclaration.id &&
+      classDeclaration.id.type === 'Identifier' &&
+      classDeclaration.id.name === expressionRightName
+    ) {
+      changes.push({
+        type: 'appendLeft',
+        range: [classDeclarationRange[0], 0],
+        content: renewedExport.default ? 'export default ' : 'export ',
+      });
+
+      if (!renewedExport.default) {
+        mangledExportWords.store(renewedExport.local, classDeclaration.id.name);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private static renewFunctionDeclarationExport(
+    functionDeclaration: FunctionDeclaration,
+    renewedExport: DiscoveredExport,
+    expressionRightName: string,
+    changes: Array<CodeTransform>,
+    mangledExportWords: MangledWords,
+  ): boolean {
+    const functionDeclarationRange = range(functionDeclaration);
+    if (functionDeclaration.id && functionDeclaration.id.name === expressionRightName) {
+      changes.push({
+        type: 'appendLeft',
+        range: [functionDeclarationRange[0], 0],
+        content: renewedExport.default ? 'export default ' : 'export ',
+      });
+
+      if (!renewedExport.default) {
+        mangledExportWords.store(renewedExport.local, functionDeclaration.id.name);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
   /**
    *
    * @param code
@@ -177,20 +258,16 @@ export default class ExportTransform extends Transform implements TransformInter
       const mangledExportWords: MangledWords = new MangledWords();
       const changes: Array<CodeTransform> = [];
 
-      // Alright, here's the plan.
-      // 1. Collect source transformations.
-      // 2. Apply source transformations.
-
       walk.simple(program, {
         ExpressionStatement(statement: ExpressionStatement) {
-          const statementRange = range(statement);
           const discoveredExport = ExportTransform.discoverCompiledExport(statement, self.exports);
 
           if (discoveredExport !== null) {
             const right = (statement.expression as AssignmentExpression).right;
             const rightRange = range(right);
+            const statementRange = range(statement);
 
-            const renewedExport = {
+            const renewedExport: DiscoveredExport = {
               ...discoveredExport,
               local: mangled.getInitial(discoveredExport.local) || discoveredExport.local,
               exported: mangled.getInitial(discoveredExport.exported) || discoveredExport.exported,
@@ -205,59 +282,35 @@ export default class ExportTransform extends Transform implements TransformInter
 
               walk.simple(program, {
                 VariableDeclaration(variableDeclaration: VariableDeclaration) {
-                  const variableDeclarationRange = range(variableDeclaration);
-                  variableDeclaration.declarations.forEach(declarator => {
-                    if (declarator.id.type === 'Identifier' && declarator.id.name === right.name) {
-                      exportLocationDiscovered = true;
-                      changes.push({
-                        type: 'appendLeft',
-                        range: [variableDeclarationRange[0], 0],
-                        content: discoveredExport.default ? 'export default ' : 'export ',
-                      });
-
-                      if (!discoveredExport.default) {
-                        mangledExportWords.store(renewedExport.local, declarator.id.name);
-                      }
-                    }
-                  });
+                  exportLocationDiscovered = ExportTransform.renewVariableDeclarationExport(
+                    variableDeclaration,
+                    renewedExport,
+                    right.name,
+                    changes,
+                    mangledExportWords,
+                  );
                 },
                 ClassDeclaration(classDeclaration: ClassDeclaration) {
-                  const classDeclarationRange = range(classDeclaration);
-                  if (
-                    classDeclaration.id &&
-                    classDeclaration.id.type === 'Identifier' &&
-                    classDeclaration.id.name === right.name
-                  ) {
-                    exportLocationDiscovered = true;
-                    changes.push({
-                      type: 'appendLeft',
-                      range: [classDeclarationRange[0], 0],
-                      content: discoveredExport.default ? 'export default ' : 'export ',
-                    });
-
-                    if (!discoveredExport.default) {
-                      mangledExportWords.store(renewedExport.local, classDeclaration.id.name);
-                    }
-                  }
+                  exportLocationDiscovered = ExportTransform.renewClassDeclarationExport(
+                    classDeclaration,
+                    renewedExport,
+                    right.name,
+                    changes,
+                    mangledExportWords,
+                  );
                 },
                 FunctionDeclaration(functionDeclaration: FunctionDeclaration) {
-                  const functionDeclarationRange = range(functionDeclaration);
-                  if (functionDeclaration.id && functionDeclaration.id.name === right.name) {
-                    exportLocationDiscovered = true;
-                    changes.push({
-                      type: 'appendLeft',
-                      range: [functionDeclarationRange[0], 0],
-                      content: discoveredExport.default ? 'export default ' : 'export ',
-                    });
-
-                    if (!discoveredExport.default) {
-                      mangledExportWords.store(renewedExport.local, functionDeclaration.id.name);
-                    }
-                  }
+                  exportLocationDiscovered = ExportTransform.renewFunctionDeclarationExport(
+                    functionDeclaration,
+                    renewedExport,
+                    right.name,
+                    changes,
+                    mangledExportWords,
+                  );
                 },
               });
 
-              if (!exportLocationDiscovered && discoveredExport.default) {
+              if (!exportLocationDiscovered && renewedExport.default) {
                 changes.push({
                   type: 'append',
                   content: `export default ${renewedExport.exported};`,
@@ -267,7 +320,7 @@ export default class ExportTransform extends Transform implements TransformInter
               changes.push({
                 type: 'overwrite',
                 range: statementRange,
-                content: discoveredExport.default
+                content: renewedExport.default
                   ? `export default ${right.value};`
                   : `export var ${renewedExport.exported}=${right.value};`,
               });
@@ -279,10 +332,10 @@ export default class ExportTransform extends Transform implements TransformInter
                   type: 'overwrite',
                   range: [statementRange[0], rightRange[1]],
                   content: `export ${
-                    discoveredExport.default ? 'default ' : ''
+                    renewedExport.default ? 'default ' : ''
                   }${existingFunction.replace(
                     'function(',
-                    `function${discoveredExport.default ? '' : ` ${renewedExport.local}`}(`,
+                    `function${renewedExport.default ? '' : ` ${renewedExport.local}`}(`,
                   )}`,
                 });
               } else if (right.type === 'ArrowFunctionExpression') {
@@ -290,7 +343,7 @@ export default class ExportTransform extends Transform implements TransformInter
                 changes.push({
                   type: 'overwrite',
                   range: [statementRange[0], rightRange[1]],
-                  content: `export ${discoveredExport.default ? 'default ' : ''}var ${
+                  content: `export ${renewedExport.default ? 'default ' : ''}var ${
                     renewedExport.local
                   }=${existingFunction}`,
                 });
@@ -298,7 +351,7 @@ export default class ExportTransform extends Transform implements TransformInter
                 changes.push({
                   type: 'overwrite',
                   range: [statementRange[0], rightRange[0]],
-                  content: discoveredExport.default ? 'export default ' : 'export ',
+                  content: renewedExport.default ? 'export default ' : 'export ',
                 });
               }
             }
