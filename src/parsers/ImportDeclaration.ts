@@ -14,27 +14,15 @@
  * limitations under the License.
  */
 
-import { Literal, SimpleLiteral, ImportDeclaration } from 'estree';
-import { PluginContext } from 'rollup';
+import { ImportDeclaration } from 'estree';
 
-export function literalName(context: PluginContext, literal: Literal): string {
-  // Literal can either be a SimpleLiteral, or RegExpLiteral
-  if ('regex' in literal) {
-    // This is a RegExpLiteral
-    context.warn(
-      'Rollup Plugin Closure Compiler found a Regex Literal Named Import. `import foo from "*/.hbs"`',
-    );
-    return '';
-  }
-
-  const literalValue = (literal as SimpleLiteral).value;
-  return typeof literalValue === 'string' ? literalValue : '';
-}
-
-export function importLocalNames(
-  context: PluginContext,
-  declaration: ImportDeclaration,
-): Array<string> {
+/**
+ * Find all local name specifiers in an ImportDeclaration
+ * @param context
+ * @param declaration
+ * @return specifier local names in an ImportDeclaration
+ */
+export function importLocalNames(declaration: ImportDeclaration): Array<string> {
   const returnableSpecifiers: Array<string> = [];
 
   if (declaration.specifiers) {

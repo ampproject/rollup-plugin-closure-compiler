@@ -25,7 +25,7 @@ import {
   AssignmentExpression,
   FunctionDeclaration,
 } from 'estree';
-import { RenderedChunk } from 'rollup';
+import { RenderedChunk, PluginContext } from 'rollup';
 import { isESMFormat } from '../options';
 import {
   TransformInterface,
@@ -52,8 +52,10 @@ export default class ExportTransform extends Transform implements TransformInter
   public name: string = 'ExportTransform';
   private exports: Array<DiscoveredExport> = [];
 
-  private async deriveExports(code: string): Promise<Array<DiscoveredExport>> {
-    const context = this.context;
+  private static async deriveExports(
+    code: string,
+    context: PluginContext,
+  ): Promise<Array<DiscoveredExport>> {
     const originalExports: Array<DiscoveredExport> = [];
     const program = parse(code);
 
@@ -102,7 +104,7 @@ export default class ExportTransform extends Transform implements TransformInter
       );
     } else if (isESMFormat(this.outputOptions.format)) {
       const changes: Array<CodeTransform> = [];
-      this.exports = await this.deriveExports(code);
+      this.exports = await ExportTransform.deriveExports(code, this.context);
 
       this.exports.forEach(discoveredExport => {
         // Remove export statements before Closure Compiler sees the code
@@ -133,7 +135,10 @@ export default class ExportTransform extends Transform implements TransformInter
     };
   }
 
-  private discoverCompiledExport(statement: ExpressionStatement): DiscoveredExport | null {
+  private static discoverCompiledExport(
+    statement: ExpressionStatement,
+    exportArray: Array<DiscoveredExport>,
+  ): DiscoveredExport | null {
     if (statement.expression.type === 'AssignmentExpression') {
       const left = statement.expression.left;
 
@@ -143,7 +148,7 @@ export default class ExportTransform extends Transform implements TransformInter
         left.property.type === 'Identifier' &&
         left.object.name === 'window'
       ) {
-        for (const exported of this.exports) {
+        for (const exported of exportArray) {
           if (exported.local === (left.property as Identifier).name) {
             return exported;
           }
@@ -167,8 +172,8 @@ export default class ExportTransform extends Transform implements TransformInter
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
     if (isESMFormat(this.outputOptions.format)) {
+      const self = this;
       const program = parse(code);
-      const discoverCompiledExport = this.discoverCompiledExport.bind(this);
       const mangledExportWords: MangledWords = new MangledWords();
       const changes: Array<CodeTransform> = [];
 
@@ -179,16 +184,17 @@ export default class ExportTransform extends Transform implements TransformInter
       walk.simple(program, {
         ExpressionStatement(statement: ExpressionStatement) {
           const statementRange = range(statement);
-          const discoveredExport: DiscoveredExport | null = discoverCompiledExport(statement);
+          const discoveredExport = ExportTransform.discoverCompiledExport(statement, self.exports);
 
           if (discoveredExport !== null) {
             const right = (statement.expression as AssignmentExpression).right;
             const rightRange = range(right);
 
-            const renewedExport = Object.assign({}, discoveredExport, {
+            const renewedExport = {
+              ...discoveredExport,
               local: mangled.getInitial(discoveredExport.local) || discoveredExport.local,
               exported: mangled.getInitial(discoveredExport.exported) || discoveredExport.exported,
-            });
+            };
             let exportLocationDiscovered: boolean = false;
 
             if (right.type === 'Identifier') {

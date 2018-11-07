@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { literalName, importLocalNames } from './parsing-utilities';
 import { RenderedChunk } from 'rollup';
 import { ImportDeclaration, Identifier } from 'estree';
 import { parse, walk, range } from '../acorn';
@@ -26,6 +25,8 @@ import {
   RangedImport,
   CodeTransform,
 } from '../types';
+import { literalName } from '../parsers/Literal';
+import { importLocalNames } from '../parsers/ImportDeclaration';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import$${new Date().getMilliseconds()}`;
@@ -88,26 +89,35 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
 
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
-        const name = literalName(self.context, node.source);
         const nodeRange = range(node);
-        let importSource = code.slice(nodeRange[0], nodeRange[1]);
-        // Since these words may have been mangled, remedy all mangled values with the original words.
-        mangled.initial.forEach((initialName, index) => {
-          importSource = importSource.replace(
-            new RegExp(mangled.final[index].replace('$', '\\$'), 'g'),
-            initialName,
+        const name = literalName(node.source);
+        if (name !== null) {
+          let importSource = code.slice(nodeRange[0], nodeRange[1]);
+          // Since these words may have been mangled, remedy all mangled values with the original words.
+          mangled.initial.forEach((initialName, index) => {
+            importSource = importSource.replace(
+              new RegExp(mangled.final[index].replace('$', '\\$'), 'g'),
+              initialName,
+            );
+          });
+
+          self.importedExternalsSyntax[name] = importSource;
+          changes.push({
+            type: 'remove',
+            range: nodeRange,
+          });
+
+          self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
+            importLocalNames(node),
           );
-        });
-
-        self.importedExternalsSyntax[name] = importSource;
-        changes.push({
-          type: 'remove',
-          range: nodeRange,
-        });
-
-        self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
-          importLocalNames(self.context, node),
-        );
+        } else {
+          self.context.warn(
+            `Rollup Plugin Closure Compiler found an unhandled Literal Named Import. ${code.substring(
+              nodeRange[0],
+              nodeRange[1],
+            )}`,
+          );
+        }
       },
       Import(node: RangedImport) {
         self.dynamicImportPresent = true;

@@ -62,70 +62,71 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
   const targetLength = longest(formats);
   const optionLength = longest(Object.keys(closureFlags));
 
-  formats.forEach(format => {
-    async function compile(optionKey) {
-      const bundle = await rollup.rollup({
-        input: fixtureLocation(category, name, format, optionKey, false),
-        plugins: [compiler(closureFlags[optionKey], TRANSFORM_OPTIONS)],
-        external: ['lodash'],
-        experimentalCodeSplitting: codeSplit,
-        onwarn: _ => null,
-      });
+  async function compile(optionKey, format) {
+    const bundle = await rollup.rollup({
+      input: fixtureLocation(category, name, format, optionKey, false),
+      plugins: [compiler(closureFlags[optionKey], TRANSFORM_OPTIONS)],
+      external: ['lodash'],
+      experimentalCodeSplitting: codeSplit,
+      onwarn: _ => null,
+    });
 
-      const bundles = await bundle.generate({
-        format,
-        sourcemap: true,
-      });
+    const bundles = await bundle.generate({
+      format,
+      sourcemap: true,
+    });
 
-      const output = [];
-      if (bundles.output) {
-        for (file in bundles.output) {
-          const minified = await readFile(
-            path.join(
-              fixtureLocation(
-                category,
-                path.parse(bundles.output[file].fileName).name,
-                format,
-                optionKey,
-                true,
-              ),
-            ),
-            'utf8',
-          );
-          output.push({
-            minified,
-            code: bundles.output[file].code,
-          });
-        }
-      } else {
+    const output = [];
+    if (bundles.output) {
+      //console.log('bundles', bundles.output);
+      for (file in bundles.output) {
         const minified = await readFile(
           path.join(
-            fixtureLocation(category, path.parse(bundles.fileName).name, format, optionKey, true),
+            fixtureLocation(
+              category,
+              path.parse(bundles.output[file].fileName).name,
+              format,
+              optionKey,
+              true,
+            ),
           ),
           'utf8',
         );
         output.push({
           minified,
-          code: bundles.code,
+          code: bundles.output[file].code,
         });
       }
-
-      return output;
+    } else {
+      const minified = await readFile(
+        path.join(
+          fixtureLocation(category, path.parse(bundles.fileName).name, format, optionKey, true),
+        ),
+        'utf8',
+      );
+      output.push({
+        minified,
+        code: bundles.code,
+      });
     }
 
-    Object.keys(closureFlags).forEach(optionKey => {
-      const method = shouldFail ? test.failing : test;
+    return output;
+  }
+
+  for (format of formats) {
+    for(optionKey of Object.keys(closureFlags)) {
+      const method = shouldFail ? test.failing.serial : test.serial;
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
         async t => {
-          const output = await compile(optionKey);
+          const output = await compile(optionKey, format);
 
           t.plan(output.length);
           output.forEach(result => t.is(result.code, result.minified));
         },
       );
-    });
-  });
+    }
+  }
 }
 
 function failureGenerator(
