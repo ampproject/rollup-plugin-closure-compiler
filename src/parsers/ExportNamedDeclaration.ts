@@ -18,26 +18,12 @@ import { ExportNamedDeclaration } from 'estree';
 import { DiscoveredExport } from '../types';
 import { range } from '../acorn';
 
-/* 
-Note: We are only concerned with understanding the output of Rollup in ESM mode.
-This means many of the possible output scenarios are unnecessary to resolve.
-
-All of these exports will be covered by this Rollup feature.
-//export class Exported {}
-//export function standard(s) {}
-//export function* generator() {}
-//export const x = 1;
-//export class {}
-//class Exported {}
-//export const x = new Exported();
-
-Rollup will always pull the named exports out into a singular statement.
-class Exported {}
-
-export { Exported };
-*/
-
-export function exportNamedParser(node: ExportNamedDeclaration): Array<DiscoveredExport> | null {
+/**
+ * Find all Named Exports in a ExportNamedDeclaration
+ * @param node ExportNamedDeclaration
+ * @return usable information about exports discovered
+ */
+export function exportNamedParser(node: ExportNamedDeclaration): Array<DiscoveredExport> {
   const specifiers = node.specifiers;
   const discoveredExports: Array<DiscoveredExport> = [];
   specifiers.forEach(specifier =>
