@@ -63,7 +63,7 @@ export default class StrictTransform extends Transform implements TransformInter
       const source = await this.applyChanges(changes, code);
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
         mangledWords: mangled,
       };
     }

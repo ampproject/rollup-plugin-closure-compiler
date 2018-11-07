@@ -126,7 +126,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
       mangledWords: mangled,
     };
   }
@@ -170,7 +170,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
       mangledWords: mangled,
     };
   }

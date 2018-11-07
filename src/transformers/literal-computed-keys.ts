@@ -72,7 +72,7 @@ export default class LiteralComputedKeys extends Transform implements TransformI
     const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
       mangledWords: mangled,
     };
   }

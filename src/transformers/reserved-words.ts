@@ -137,7 +137,7 @@ export default class ReservedWords extends Transform implements TransformInterfa
 
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
       mangledWords: mangled,
     };
   }
@@ -160,7 +160,7 @@ export default class ReservedWords extends Transform implements TransformInterfa
     const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
       mangledWords: mangled,
     };
   }

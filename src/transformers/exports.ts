@@ -122,7 +122,7 @@ export default class ExportTransform extends Transform implements TransformInter
       const source = await this.applyChanges(changes, code);
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
         mangledWords: mangled,
       };
     }
@@ -309,7 +309,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
         mangledWords: mangled,
       };
     }
