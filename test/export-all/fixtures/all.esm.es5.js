@@ -1,1 +1,1 @@
-var export1=1;var export2=function(){return 2};export{export1,export2};
+export var export1=1;export function export2(){return 2};

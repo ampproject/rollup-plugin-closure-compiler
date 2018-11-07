@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
 import { literalName, importLocalNames } from './parsing-utilities';
-import { TransformSourceDescription } from 'rollup';
+import { RenderedChunk } from 'rollup';
 import MagicString from 'magic-string';
 import { ImportDeclaration, Identifier } from 'estree';
 import { parse, walk } from '../acorn';
+import { Transform } from './transform';
+import {
+  TransformInterface,
+  MangledTransformSourceDescription,
+  MangledWords,
+  SourceRange,
+  RangedImport,
+} from 'src/types';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
-const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
+const DYNAMIC_IMPORT_REPLACEMENT = `import$${new Date().getMilliseconds()}`;
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -31,12 +38,8 @@ const HEADER = `/**
 */
 `;
 
-interface RangedImport {
-  type: string;
-  range: [number, number];
-}
-
-export default class ImportTransform extends Transform {
+export default class ImportTransform extends Transform implements TransformInterface {
+  public name: string = 'ImportTransform';
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
   private dynamicImportPresent: boolean = false;
@@ -75,7 +78,11 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param id Rollup id reference to the source
    * @return modified input source with external imports removed.
    */
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
+  public async preCompilation(
+    code: string,
+    chunk: RenderedChunk,
+    mangled: MangledWords,
+  ): Promise<MangledTransformSourceDescription> {
     const self = this;
     const source = new MagicString(code);
     const program = parse(code);
@@ -83,8 +90,17 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
-        const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
-        self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
+        const range: SourceRange = node.range ? [node.range[0], node.range[1]] : [0, 0];
+        let importSource = code.slice(range[0], range[1]);
+        // Since these words may have been mangled, remedy all mangled values with the original words.
+        mangled.initial.forEach((initialName, index) => {
+          importSource = importSource.replace(
+            new RegExp(mangled.final[index].replace('$', '\\$'), 'g'),
+            initialName,
+          );
+        });
+
+        self.importedExternalsSyntax[name] = importSource;
         source.remove(range[0], range[1]);
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
@@ -108,6 +124,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     return {
       code: source.toString(),
       map: source.generateMap(),
+      mangledWords: mangled,
     };
   }
 
@@ -116,7 +133,11 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: RenderedChunk,
+    mangled: MangledWords,
+  ): Promise<MangledTransformSourceDescription> {
     const source = new MagicString(code);
     const program = parse(code);
 
@@ -127,7 +148,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       Identifier(node: Identifier) {
         if (node.name === DYNAMIC_IMPORT_REPLACEMENT) {
-          const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+          const range: SourceRange = node.range ? [node.range[0], node.range[1]] : [0, 0];
           source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
         }
       },
@@ -136,6 +157,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     return {
       code: source.toString(),
       map: source.generateMap(),
+      mangledWords: mangled,
     };
   }
 }

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
 import { OutputOptions } from 'rollup';
+import { Transform } from './transform';
+import { TransformInterface } from 'src/types';
 
 const HEADER = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -30,7 +31,9 @@ const HEADER = `/**
  * In order to preserve the name of the iife output, derive an extern definition for Closure Compiler.
  * This preserves the name after compilation since Closure now believes it to be a well known global.
  */
-export default class IifeTransform extends Transform {
+export default class IifeTransform extends Transform implements TransformInterface {
+  public name: string = 'IifeTransform';
+
   public extern(options: OutputOptions): string {
     if (options.format === 'iife' && options.name) {
       return HEADER + `function ${options.name}(){};\n`;

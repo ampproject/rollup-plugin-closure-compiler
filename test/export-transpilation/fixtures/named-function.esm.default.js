@@ -1,1 +1,1 @@
-var b=Symbol.for("smth");var isSmth=function(a){return a&&!!a[b]};export{isSmth};
+var b=Symbol.for("smth");export function isSmth(a){return a&&!!a[b]};

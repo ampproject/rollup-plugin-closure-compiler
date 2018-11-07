@@ -14,41 +14,55 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
 import { isESMFormat } from '../options';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
+import { Transform } from './transform';
+import { TransformInterface, MangledTransformSourceDescription, MangledWords } from '../types';
+import { RenderedChunk } from 'rollup';
+import { parse, walk, range } from '../acorn';
+import { ExpressionStatement } from 'estree';
 
-const STRICT_MODE_DECLARATION = `'use strict';`;
-const STRICT_MODE_DECLARATION_LENGTH = STRICT_MODE_DECLARATION.length;
+export default class StrictTransform extends Transform implements TransformInterface {
+  public name: string = 'StrictTransform';
 
-export default class StrictTransform extends Transform {
   /**
    * When outputting an es module, runtimes automatically apply strict mode conventions.
    * This means we can safely strip the 'use strict'; declaration from the top of the file.
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async postCompilation(
+    code: string,
+    chunk: RenderedChunk,
+    mangled: MangledWords,
+  ): Promise<MangledTransformSourceDescription> {
     if (this.outputOptions === null) {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
-    } else if (isESMFormat(this.outputOptions.format) && code.startsWith(STRICT_MODE_DECLARATION)) {
+    } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
+      const program = parse(code);
 
-      // This will only remove the top level 'use strict' directive since we cannot
-      // be certain source does not contain strings with the intended content.
-      source.remove(0, STRICT_MODE_DECLARATION_LENGTH);
+      walk.simple(program, {
+        ExpressionStatement(node: ExpressionStatement) {
+          if (node.expression.type === 'Literal' && node.expression.value === 'use strict') {
+            const expressionRange = range(node);
+            source.remove(expressionRange[0], expressionRange[1]);
+          }
+        },
+      });
 
       return {
         code: source.toString(),
         map: source.generateMap(),
+        mangledWords: mangled,
       };
     }
 
     return {
       code,
+      mangledWords: mangled,
     };
   }
 }

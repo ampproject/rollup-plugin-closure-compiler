@@ -1,0 +1,1 @@
+import PluginDefault from 'plugin-default';import * as PluginValues from 'plugin-values';import { Plugin } from 'plugin';import { Original } from 'storage-two';import { Storage } from 'storage';console.log(Storage);console.log(Original);console.log(Plugin);console.log(PluginValues);console.log(PluginDefault);

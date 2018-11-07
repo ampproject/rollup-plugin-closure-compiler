@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext, InputOptions } from 'rollup';
-import { Transform } from './types';
+import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
 import IifeTransform from './transformers/iife';
 import LiteralComputedKeys from './transformers/literal-computed-keys';
 import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
+import ReservedWords from './transformers/reserved-words';
 import { logSource } from './debug';
+import { Transform } from './transformers/transform';
+import { TransformOptions, MangledWords } from './types';
 
 /**
  * Instantiate transform class instances for the plugin invocation.
@@ -31,14 +33,17 @@ import { logSource } from './debug';
  */
 export const createTransforms = (
   context: PluginContext,
-  options: InputOptions,
+  inputOptions: InputOptions,
+  outputOptions: OutputOptions,
+  transformOptions: TransformOptions,
 ): Array<Transform> => {
   return [
-    new IifeTransform(context, options),
-    new LiteralComputedKeys(context, options),
-    new StrictTransform(context, options),
-    new ExportTransform(context, options),
-    new ImportTransform(context, options),
+    new ReservedWords(context, inputOptions, outputOptions, transformOptions),
+    new IifeTransform(context, inputOptions, outputOptions, transformOptions),
+    new LiteralComputedKeys(context, inputOptions, outputOptions, transformOptions),
+    new StrictTransform(context, inputOptions, outputOptions, transformOptions),
+    new ExportTransform(context, inputOptions, outputOptions, transformOptions),
+    new ImportTransform(context, inputOptions, outputOptions, transformOptions),
   ];
 };
 
@@ -51,36 +56,59 @@ export const createTransforms = (
  */
 export async function preCompilation(
   code: string,
-  outputOptions: OutputOptions,
+  chunk: RenderedChunk,
   transforms: Array<Transform>,
-): Promise<string> {
+  globallyMangledWords: MangledWords,
+): Promise<{
+  code: string;
+  moduleMangledWords: MangledWords;
+}> {
   // Each transform has a 'preCompilation' step that must complete before passing
   // the resulting code to Closure Compiler.
+  const moduleMangledWords: MangledWords = new MangledWords();
+  moduleMangledWords.merge(globallyMangledWords);
+
   logSource('before preCompilation handlers', code);
   for (const transform of transforms) {
-    transform.outputOptions = outputOptions;
-    const result = await transform.preCompilation(code);
-    if (result && result.code) {
-      code = result.code;
+    logSource(`before ${transform.name} preCompilation`, code);
+    const result = await transform.preCompilation(code, chunk, moduleMangledWords);
+
+    if (result) {
+      if (result.code) {
+        code = result.code;
+      }
+      moduleMangledWords.merge(result.mangledWords);
     }
+
+    logSource(`after ${transform.name} preCompilation`, code);
   }
 
   logSource('after preCompilation handlers', code);
-  return code;
+  return {
+    code,
+    moduleMangledWords,
+  };
 }
 
 /**
  * Run each transform's `postCompilation` phase.
  * @param code source code to modify with `postCompilation` after Closure Compiler has finished.
+ * @param chunk
  * @param transforms Transforms to execute.
+ * @param moduleMangledWords
  * @return source code following `postCompilation`
  */
-export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
+export async function postCompilation(
+  code: string,
+  chunk: RenderedChunk,
+  transforms: Array<Transform>,
+  moduleMangledWords: MangledWords,
+): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
   logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
-    const result = await transform.postCompilation(code);
+    const result = await transform.postCompilation(code, chunk, moduleMangledWords);
     if (result && result.code) {
       code = result.code;
     }

@@ -1,1 +1,1 @@
-var handleImport=function(){return 2};export{handleImport};
+export function handleImport(){return 2};

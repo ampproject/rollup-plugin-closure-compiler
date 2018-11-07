@@ -28,7 +28,8 @@ import {
 import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms } from './transforms';
-import { Transform } from './types';
+import { Transform } from './transformers/transform';
+import { TransformOptions, MangledWords } from './types';
 
 const readFile = promisify(fs.readFile);
 
@@ -40,21 +41,23 @@ const readFile = promisify(fs.readFile);
  * @param outputOptions Rollup Output Options.
  * @return Closure Compiled form of the Rollup Chunk
  */
-const renderChunk = async (
+async function renderChunk(
   transforms: Array<Transform>,
   requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
+  chunk: RenderedChunk,
   outputOptions: OutputOptions,
-): Promise<{ code: string; map: RawSourceMap } | void> => {
-  const code = await preCompilation(sourceCode, outputOptions, transforms);
+  globallyMangledWords: MangledWords,
+): Promise<{ code: string; map: RawSourceMap } | void> {
+  const preCompiled = await preCompilation(sourceCode, chunk, transforms, globallyMangledWords);
   const [compileOptions, mapFile] = options(
     requestedCompileOptions,
     outputOptions,
-    code,
+    preCompiled.code,
     transforms,
   );
 
-  return compiler(compileOptions, transforms).then(
+  return compiler(compileOptions, chunk, transforms, preCompiled.moduleMangledWords).then(
     async code => {
       return { code, map: JSON.parse(await readFile(mapFile, 'utf8')) };
     },
@@ -62,11 +65,15 @@ const renderChunk = async (
       throw error;
     },
   );
-};
+}
 
-export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+export default function closureCompiler(
+  requestedCompileOptions: CompileOptions = {},
+  transformOptions: TransformOptions = {},
+): Plugin {
   let inputOptions: InputOptions;
   let context: PluginContext;
+  const globallyMangledWords: MangledWords = new MangledWords(transformOptions.mangleReservedWords);
 
   return {
     name: 'closure-compiler',
@@ -84,8 +91,15 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       }
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const transforms = createTransforms(context, inputOptions);
-      return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
+      const transforms = createTransforms(context, inputOptions, outputOptions, transformOptions);
+      return await renderChunk(
+        transforms,
+        requestedCompileOptions,
+        code,
+        chunk,
+        outputOptions,
+        globallyMangledWords,
+      );
     },
   };
 }

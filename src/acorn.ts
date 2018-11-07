@@ -15,7 +15,7 @@
  */
 
 import { Program } from 'estree';
-import { DYNAMIC_IMPORT_DECLARATION } from './types';
+import { DYNAMIC_IMPORT_DECLARATION, SourceRange } from './types';
 const acorn = require('acorn');
 const acornWalk = require('acorn-walk');
 const dynamicImport = require('acorn-dynamic-import');
@@ -38,8 +38,13 @@ const DEFAULT_ACORN_OPTIONS = {
   sourceType: 'module',
   preserveParens: false,
   ranges: true,
+  locations: true,
 };
 
 export function parse(source: string): Program {
   return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
+}
+
+export function range(node: any): SourceRange {
+  return node.range ? [node.range[0], node.range[1]] : [0, 0];
 }

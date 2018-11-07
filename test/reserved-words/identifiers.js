@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-import MagicString from 'magic-string';
+import {generator} from '../generator';
 
-export function replace(from: string, to: string, code: string, source: MagicString): void {
-  const start = code.indexOf(from);
-  if (start >= 0) {
-    // If the from value is not part of the source, there is no need to remove it.
-    source.overwrite(start, start + from.length, to);
-  } else {
-    console.log('cannot remove', from, start);
-  }
-  // Should there be a warning?
-}
+generator('reserved-words', 'identifiers');

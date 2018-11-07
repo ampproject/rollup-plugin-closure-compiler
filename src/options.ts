@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { Transform } from './types';
 import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
 import { logSource } from './debug';
+import { Transform } from './transformers/transform';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';

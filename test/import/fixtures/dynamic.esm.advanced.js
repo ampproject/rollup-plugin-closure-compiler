@@ -1,1 +1,1 @@
-var exported=function(){import("./dynamic-imported.js").then((a)=>a.handleImport())};export{exported};
+export function exported(){import("./dynamic-imported.js").then((a)=>a.handleImport())};

@@ -16,9 +16,9 @@
 
 import { sync } from 'temp-write';
 
-const DEBUG_ENABLED = false;
+const DEBUG_ENABLED: boolean = true;
 
-export const logSource = (preamble: string, source: string, code?: string) => {
+export const logSource = (preamble: string, source: string, code?: string): void => {
   if (DEBUG_ENABLED) {
     console.log(preamble);
     console.log(sync(source));
@@ -28,7 +28,7 @@ export const logSource = (preamble: string, source: string, code?: string) => {
   }
 };
 
-export const log = (preamble: string, message: string): void | null => {
+export const log = (preamble: string, message: string): void => {
   if (DEBUG_ENABLED) {
     console.log(preamble);
     console.log(message);

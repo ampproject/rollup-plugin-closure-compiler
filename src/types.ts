@@ -14,14 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-import {
-  OutputOptions,
-  TransformSourceDescription,
-  PluginContext,
-  InputOptions,
-  InputOption,
-} from 'rollup';
+import { TransformSourceDescription, OutputOptions, RenderedChunk } from 'rollup';
 const dynamicImport = require('acorn-dynamic-import');
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
@@ -42,70 +35,94 @@ export const ALL_EXPORT_DECLARATIONS = [
   EXPORT_ALL_DECLARATION,
 ];
 
-export enum ExportClosureMapping {
-  NAMED_FUNCTION = 0,
-  NAMED_CLASS = 1,
-  NAMED_DEFAULT_FUNCTION = 2,
-  DEFAULT_FUNCTION = 3,
-  NAMED_DEFAULT_CLASS = 4,
-  DEFAULT_CLASS = 5,
-  NAMED_CONSTANT = 6,
-  DEFAULT = 7,
-  DEFAULT_VALUE = 8,
-  DEFAULT_OBJECT = 9,
-}
-export interface ExportNameToClosureMapping {
-  [key: string]: {
-    alias: string | null;
-    type: ExportClosureMapping;
-    range: [number, number];
-  };
+export interface DiscoveredExport {
+  local: string;
+  exported: string;
+  default: boolean;
+  range: SourceRange;
 }
 
-export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
+export type SourceRange = [number, number];
+export interface RangedImport {
+  type: string;
+  range: SourceRange;
+}
+
+export type TransformMethod = (
+  code: string,
+  chunk: RenderedChunk,
+  mangled: MangledWords,
+) => Promise<MangledTransformSourceDescription>;
 export interface TransformInterface {
   extern: (options: OutputOptions) => string;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
 }
-export class Transform implements TransformInterface {
-  protected context: PluginContext;
-  protected inputOptions: InputOptions;
-  public outputOptions: OutputOptions | null;
+export interface TransformOptions {
+  mangleReservedWords?: Array<string>;
+  mangleSuffix?: string;
+}
 
-  constructor(context: PluginContext, inputOptions: InputOptions) {
-    this.context = context;
-    this.inputOptions = inputOptions;
+export interface CodeTransform {
+  type: 'remove' | 'append' | 'appendLeft' | 'overwrite';
+  range?: SourceRange;
+  content?: string;
+}
+
+export interface MangledTransformSourceDescription extends TransformSourceDescription {
+  mangledWords: MangledWords;
+}
+
+export class MangledWords {
+  private _initial: Array<string> = [];
+  private _final: Array<string> = [];
+  private _mangleSuffix: string = `$${new Date().getUTCMilliseconds()}`;
+
+  constructor(words: Array<string> = [], overrideSuffix?: string) {
+    if (overrideSuffix != null) {
+      this._mangleSuffix = overrideSuffix;
+    }
+
+    words.forEach(word => {
+      this.store(word, `${word}${this._mangleSuffix}`);
+    });
   }
 
-  public extern(options: OutputOptions): string {
-    return '';
+  get initial(): Array<string> {
+    return this._initial;
+  }
+  get final(): Array<string> {
+    return this._final;
   }
 
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
+  public merge(other: MangledWords) {
+    other.initial.forEach((initial, index) => {
+      this.store(initial, other.final[index]);
+    });
   }
 
-  protected isEntryPoint(id: string) {
-    const inputs = (input: InputOption): Array<string> => {
-      if (typeof input === 'string') {
-        return [input];
-      } else if (typeof input === 'object') {
-        return Object.values(input);
-      } else {
-        return input;
-      }
-    };
+  public store(initial: string, final: string) {
+    if (!this._initial.includes(initial)) {
+      this._initial.push(initial);
+      this._final.push(final);
+    }
+  }
 
-    return inputs(this.inputOptions.input)
-      .map(input => path.resolve(input))
-      .includes(id);
+  public getFinal(initial: string): string | null {
+    const index = this._initial.indexOf(initial);
+
+    if (index >= 0) {
+      return this.final[index];
+    }
+    return null;
+  }
+
+  public getInitial(final: string): string | null {
+    const index = this._final.indexOf(final);
+
+    if (index >= 0) {
+      return this._initial[index];
+    }
+    return null;
   }
 }
