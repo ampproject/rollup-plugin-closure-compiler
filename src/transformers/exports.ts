@@ -191,10 +191,12 @@ export default class ExportTransform extends Transform implements TransformInter
               local: mangled.getInitial(discoveredExport.local) || discoveredExport.local,
               exported: mangled.getInitial(discoveredExport.exported) || discoveredExport.exported,
             });
+            let exportDiscovered: boolean = false;
 
-            console.log('right type', right.type);
+            console.log('right type', right.type, right.type === 'Identifier' ? right.name : '');
 
             if (right.type === 'Identifier') {
+              console.log('export', renewedExport, mangled.final);
               changes.push({
                 type: 'remove',
                 range: statementRange,
@@ -208,6 +210,7 @@ export default class ExportTransform extends Transform implements TransformInter
                       declarator.id.type === 'Identifier' &&
                       declarator.id.name === renewedExport.local
                     ) {
+                      exportDiscovered = true;
                       changes.push({
                         type: 'appendLeft',
                         range: [variableDeclarationRange[0], 0],
@@ -227,6 +230,7 @@ export default class ExportTransform extends Transform implements TransformInter
                     classDeclaration.id.type === 'Identifier' &&
                     classDeclaration.id.name === right.name
                   ) {
+                    exportDiscovered = true;
                     changes.push({
                       type: 'appendLeft',
                       range: [classDeclarationRange[0], 0],
@@ -239,6 +243,13 @@ export default class ExportTransform extends Transform implements TransformInter
                   }
                 },
               });
+
+              if (!exportDiscovered && discoveredExport.default) {
+                changes.push({
+                  type: 'append',
+                  content: `export default ${renewedExport.exported};`,
+                });
+              }
             } else if (right.type === 'Literal') {
               changes.push({
                 type: 'overwrite',

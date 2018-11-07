@@ -90,6 +90,7 @@ export abstract class Transform implements TransformInterface {
           break;
         case 'append':
           if (content) {
+            source.trim();
             source.append(content);
           }
           break;
