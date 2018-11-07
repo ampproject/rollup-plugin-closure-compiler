@@ -76,7 +76,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
         format,
         sourcemap: true,
       });
-      
+
       const output = [];
       if (bundles.output) {
         for (file in bundles.output) {
@@ -100,13 +100,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
       } else {
         const minified = await readFile(
           path.join(
-            fixtureLocation(
-              category,
-              path.parse(bundles.fileName).name,
-              format,
-              optionKey,
-              true,
-            ),
+            fixtureLocation(category, path.parse(bundles.fileName).name, format, optionKey, true),
           ),
           'utf8',
         );
