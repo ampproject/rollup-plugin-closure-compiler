@@ -110,6 +110,28 @@ export default {
 }
 ```
 
+### Additional Mangle Protection
+
+If your source uses reserved words for identifiers or declarations, you can supply the list of words you would like to ensure are mangled before compilation, and renewed if they are used in an import or export statement.
+
+```js
+// rollup.config.js
+import compiler from '@ampproject/rollup-plugin-closure-compiler';
+
+export default {
+  input: 'main.js',
+  output: {
+    file: 'bundle.js',
+    format: 'es',
+  },
+  plugins: [
+    compiler({}, {
+      mangleReservedWords: ['Plugin', 'Storage'],
+    }),
+  ],
+}
+```
+
 ## Security disclosures
 
 The AMP Project accepts responsible security disclosures through the [Google Application Security program](https://www.google.com/about/appsecurity/).
