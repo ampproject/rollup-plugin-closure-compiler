@@ -63,11 +63,11 @@ export interface TransformOptions {
   mangleSuffix?: string;
 }
 
-export interface CodeTransform {
-  type: 'remove' | 'append' | 'appendLeft' | 'overwrite';
+export type CodeTransform = {
+  type: 'remove' | 'prepend' | 'append' | 'appendLeft' | 'overwrite';
   range?: SourceRange;
   content?: string;
-}
+} | null;
 
 export interface MangledTransformSourceDescription extends TransformSourceDescription {
   mangledWords: MangledWords;

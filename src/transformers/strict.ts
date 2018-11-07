@@ -15,9 +15,13 @@
  */
 
 import { isESMFormat } from '../options';
-import MagicString from 'magic-string';
 import { Transform } from './transform';
-import { TransformInterface, MangledTransformSourceDescription, MangledWords } from '../types';
+import {
+  TransformInterface,
+  MangledTransformSourceDescription,
+  MangledWords,
+  CodeTransform,
+} from '../types';
 import { RenderedChunk } from 'rollup';
 import { parse, walk, range } from '../acorn';
 import { ExpressionStatement } from 'estree';
@@ -41,18 +45,22 @@ export default class StrictTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
-      const source = new MagicString(code);
+      const changes: Array<CodeTransform> = [];
       const program = parse(code);
 
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {
           if (node.expression.type === 'Literal' && node.expression.value === 'use strict') {
             const expressionRange = range(node);
-            source.remove(expressionRange[0], expressionRange[1]);
+            changes.push({
+              type: 'remove',
+              range: expressionRange,
+            });
           }
         },
       });
 
+      const source = await this.applyChanges(changes, code);
       return {
         code: source.toString(),
         map: source.generateMap(),

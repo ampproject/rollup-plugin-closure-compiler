@@ -15,11 +15,15 @@
  */
 
 import { RenderedChunk } from 'rollup';
-import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
 import { parse, walk } from '../acorn';
 import { Transform } from './transform';
-import { TransformInterface, MangledTransformSourceDescription, MangledWords } from 'src/types';
+import {
+  TransformInterface,
+  MangledTransformSourceDescription,
+  MangledWords,
+  CodeTransform,
+} from 'src/types';
 
 /**
  * Closure Compiler will not transform computed keys with literal values back to the literal value.
@@ -40,7 +44,7 @@ export default class LiteralComputedKeys extends Transform implements TransformI
     chunk: RenderedChunk,
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
-    const source = new MagicString(code);
+    const changes: Array<CodeTransform> = [];
     const program = parse(code);
 
     walk.simple(program, {
@@ -53,16 +57,19 @@ export default class LiteralComputedKeys extends Transform implements TransformI
             property.range &&
             property.value.range
           ) {
-            source.overwrite(
-              property.range[0],
-              property.value.range[0],
-              `${property.key.value}${property.value.type !== 'FunctionExpression' ? ':' : ''}`,
-            );
+            changes.push({
+              type: 'overwrite',
+              range: [property.range[0], property.value.range[0]],
+              content: `${property.key.value}${
+                property.value.type !== 'FunctionExpression' ? ':' : ''
+              }`,
+            });
           }
         });
       },
     });
 
+    const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
       map: source.generateMap(),

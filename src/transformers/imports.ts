@@ -16,17 +16,16 @@
 
 import { literalName, importLocalNames } from './parsing-utilities';
 import { RenderedChunk } from 'rollup';
-import MagicString from 'magic-string';
 import { ImportDeclaration, Identifier } from 'estree';
-import { parse, walk } from '../acorn';
+import { parse, walk, range } from '../acorn';
 import { Transform } from './transform';
 import {
   TransformInterface,
   MangledTransformSourceDescription,
   MangledWords,
-  SourceRange,
   RangedImport,
-} from 'src/types';
+  CodeTransform,
+} from '../types';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import$${new Date().getMilliseconds()}`;
@@ -84,14 +83,14 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
     const self = this;
-    const source = new MagicString(code);
     const program = parse(code);
+    const changes: Array<CodeTransform> = [];
 
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
-        const range: SourceRange = node.range ? [node.range[0], node.range[1]] : [0, 0];
-        let importSource = code.slice(range[0], range[1]);
+        const nodeRange = range(node);
+        let importSource = code.slice(nodeRange[0], nodeRange[1]);
         // Since these words may have been mangled, remedy all mangled values with the original words.
         mangled.initial.forEach((initialName, index) => {
           importSource = importSource.replace(
@@ -101,7 +100,10 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
         });
 
         self.importedExternalsSyntax[name] = importSource;
-        source.remove(range[0], range[1]);
+        changes.push({
+          type: 'remove',
+          range: nodeRange,
+        });
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
           importLocalNames(self.context, node),
@@ -111,16 +113,17 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
         self.dynamicImportPresent = true;
         // Rename the `import` method to something we can put in externs.
         // CC doesn't understand dynamic import yet.
-        source.overwrite(
-          node.range[0],
-          node.range[1],
-          code
+        changes.push({
+          type: 'overwrite',
+          range: node.range,
+          content: code
             .substring(node.range[0], node.range[1])
             .replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
-        );
+        });
       },
     });
 
+    const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
       map: source.generateMap(),
@@ -138,22 +141,33 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     chunk: RenderedChunk,
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
-    const source = new MagicString(code);
+    // const source = new MagicString(code);
     const program = parse(code);
+    const changes: Array<CodeTransform> = [];
 
-    Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
-      source.prepend(importedExternalSyntax),
-    );
+    Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax => {
+      changes.push({
+        type: 'prepend',
+        content: importedExternalSyntax,
+      });
+      // source.prepend(importedExternalSyntax),
+    });
 
     walk.simple(program, {
       Identifier(node: Identifier) {
         if (node.name === DYNAMIC_IMPORT_REPLACEMENT) {
-          const range: SourceRange = node.range ? [node.range[0], node.range[1]] : [0, 0];
-          source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
+          changes.push({
+            type: 'overwrite',
+            range: range(node),
+            content: DYNAMIC_IMPORT_KEYWORD,
+          });
+          // const range: SourceRange = node.range ? [node.range[0], node.range[1]] : [0, 0];
+          // source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
         }
       },
     });
 
+    const source = await this.applyChanges(changes, code);
     return {
       code: source.toString(),
       map: source.generateMap(),

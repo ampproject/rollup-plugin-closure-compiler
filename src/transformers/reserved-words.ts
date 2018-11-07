@@ -42,8 +42,8 @@ export default class ReservedWords extends Transform implements TransformInterfa
   private async mangleImportDeclarations(
     program: Program,
     mangled: MangledWords,
-  ): Promise<Array<CodeTransform | null>> {
-    const changes: Array<CodeTransform | null> = [];
+  ): Promise<Array<CodeTransform>> {
+    const changes: Array<CodeTransform> = [];
 
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
@@ -72,8 +72,8 @@ export default class ReservedWords extends Transform implements TransformInterfa
   private async mangleExportDeclarations(
     program: Program,
     mangled: MangledWords,
-  ): Promise<Array<CodeTransform | null>> {
-    const changes: Array<CodeTransform | null> = [];
+  ): Promise<Array<CodeTransform>> {
+    const changes: Array<CodeTransform> = [];
     const context = this.context;
 
     walk.simple(program, {
@@ -117,7 +117,7 @@ export default class ReservedWords extends Transform implements TransformInterfa
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
     const program = parse(code);
-    const changes: Array<CodeTransform | null> = [];
+    const changes: Array<CodeTransform> = [];
 
     changes.push(...(await this.mangleImportDeclarations(program, mangled)));
     changes.push(...(await this.mangleExportDeclarations(program, mangled)));
@@ -133,7 +133,7 @@ export default class ReservedWords extends Transform implements TransformInterfa
       },
     });
 
-    const source = await this.applyChanges(changes.filter(Boolean) as Array<CodeTransform>, code);
+    const source = await this.applyChanges(changes, code);
 
     return {
       code: source.toString(),

@@ -71,8 +71,18 @@ export abstract class Transform implements TransformInterface {
   protected async applyChanges(changes: Array<CodeTransform>, code: string): Promise<MagicString> {
     const source = new MagicString(code);
 
-    changes.forEach(({ type, range, content }) => {
+    changes.forEach(change => {
+      if (change === null) {
+        return;
+      }
+
+      const { type, range, content } = change;
       switch (type) {
+        case 'prepend':
+          if (content) {
+            source.prepend(content);
+          }
+          break;
         case 'remove':
           if (range) {
             source.remove(range[0], range[1]);

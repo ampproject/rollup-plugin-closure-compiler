@@ -24,11 +24,7 @@ import {
   FunctionDeclaration,
 } from 'estree';
 
-export function mangleWord(
-  name: string,
-  range: SourceRange,
-  mangled: MangledWords,
-): CodeTransform | null {
+export function mangleWord(name: string, range: SourceRange, mangled: MangledWords): CodeTransform {
   const mangleName = mangled.getFinal(name);
   if (mangleName) {
     mangled.store(name, mangleName);
@@ -42,7 +38,7 @@ export function mangleWord(
   return null;
 }
 
-function remedyWord(name: string, range: SourceRange, mangled: MangledWords): CodeTransform | null {
+function remedyWord(name: string, range: SourceRange, mangled: MangledWords): CodeTransform {
   const remedyWord = mangled.getInitial(name);
   if (remedyWord) {
     return {
@@ -58,7 +54,7 @@ export async function remedy(
   program: Program,
   mangled: MangledWords,
 ): Promise<Array<CodeTransform>> {
-  const changes: Array<CodeTransform | null> = [];
+  const changes: Array<CodeTransform> = [];
 
   walk.simple(program, {
     ClassDeclaration(node: ClassDeclaration) {
@@ -83,5 +79,5 @@ export async function remedy(
     },
   });
 
-  return changes.filter(Boolean) as Array<CodeTransform>;
+  return changes;
 }
