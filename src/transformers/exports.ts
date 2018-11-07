@@ -302,6 +302,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
       let source = await this.applyChanges(changes, code);
       const updatedCode = source.toString();
+      console.log('parse', updatedCode);
       source = await this.applyChanges(
         await remedy(parse(updatedCode), mangledExportWords),
         updatedCode,
