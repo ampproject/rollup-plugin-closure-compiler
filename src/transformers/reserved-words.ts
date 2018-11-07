@@ -72,7 +72,6 @@ export default class ReservedWords extends Transform implements TransformInterfa
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
         node.specifiers.forEach((specifier: ExportSpecifier) => {
-          // console.log('export', specifier.local.name, specifier.exported.name);
           const localRange = range(specifier.local);
           const exportedRange = range(specifier.exported);
           if (localRange[0] === exportedRange[0] && localRange[1] === exportedRange[1]) {
