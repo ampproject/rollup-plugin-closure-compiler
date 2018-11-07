@@ -279,6 +279,15 @@ export default class ExportTransform extends Transform implements TransformInter
                     `function${discoveredExport.default ? '' : ` ${renewedExport.local}`}(`,
                   )}`,
                 });
+              } else if (right.type === 'ArrowFunctionExpression') {
+                const existingFunction = code.substring(rightRange[0], rightRange[1]);
+                changes.push({
+                  type: 'overwrite',
+                  range: [statementRange[0], rightRange[1]],
+                  content: `export ${discoveredExport.default ? 'default ' : ''}var ${
+                    renewedExport.local
+                  }=${existingFunction}`,
+                });
               } else {
                 changes.push({
                   type: 'overwrite',
@@ -287,22 +296,12 @@ export default class ExportTransform extends Transform implements TransformInter
                 });
               }
             }
-            // else {
-            //   let rightRange = range(right);
-            //   if ()
-            //   changes.push({
-            //     type: 'overwrite',
-            //     range: [statementRange[0], rightRange[0]],
-            //     content: discoveredExport.default ? 'export default ' : 'export ',
-            //   });
-            // }
           }
         },
       });
 
       let source = await this.applyChanges(changes, code);
       const updatedCode = source.toString();
-      console.log('parse', updatedCode);
       source = await this.applyChanges(
         await remedy(parse(updatedCode), mangledExportWords),
         updatedCode,

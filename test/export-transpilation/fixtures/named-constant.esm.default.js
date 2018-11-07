@@ -1,1 +1,1 @@
-var b=Symbol.for("smth");var isSmth=(a)=>a&&!!a[b];export{isSmth};
+var b=Symbol.for("smth");export var isSmth=(a)=>a&&!!a[b];
