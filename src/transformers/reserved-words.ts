@@ -17,7 +17,12 @@
 import { RenderedChunk } from 'rollup';
 import { parse, walk, range } from '../acorn';
 import { Transform } from './transform';
-import { TransformInterface, MangledWords, MangledTransformSourceDescription } from '../types';
+import {
+  TransformInterface,
+  MangledWords,
+  MangledTransformSourceDescription,
+  CodeTransform,
+} from '../types';
 import MagicString from 'magic-string';
 import {
   Identifier,
@@ -37,9 +42,10 @@ export default class ReservedWords extends Transform implements TransformInterfa
 
   private async mangleImportDeclarations(
     program: Program,
-    source: MagicString,
     mangled: MangledWords,
-  ): Promise<void> {
+  ): Promise<Array<CodeTransform | null>> {
+    const changes: Array<CodeTransform | null> = [];
+
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         node.specifiers.forEach(
@@ -55,18 +61,20 @@ export default class ReservedWords extends Transform implements TransformInterfa
 
             // Where 'plugin-values' is not resolved by Rollup, and 'PluginValues' is a word to mangle.
 
-            mangleWord(source, specifier.local.name, range(specifier.local), mangled);
+            changes.push(mangleWord(specifier.local.name, range(specifier.local), mangled));
           },
         );
       },
     });
+
+    return changes;
   }
 
   private async mangleExportDeclarations(
     program: Program,
-    source: MagicString,
     mangled: MangledWords,
-  ): Promise<void> {
+  ): Promise<Array<CodeTransform | null>> {
+    const changes: Array<CodeTransform | null> = [];
     const context = this.context;
 
     walk.simple(program, {
@@ -77,10 +85,10 @@ export default class ReservedWords extends Transform implements TransformInterfa
           if (localRange[0] === exportedRange[0] && localRange[1] === exportedRange[1]) {
             // The two ranges start and end at the same locations, this export has a single shared local and exported name.
             // i.e. `export {Plugin};`
-            mangleWord(source, specifier.local.name, localRange, mangled);
+            changes.push(mangleWord(specifier.local.name, localRange, mangled));
           } else {
-            mangleWord(source, specifier.local.name, localRange, mangled);
-            mangleWord(source, specifier.exported.name, exportedRange, mangled);
+            changes.push(mangleWord(specifier.local.name, localRange, mangled));
+            changes.push(mangleWord(specifier.exported.name, exportedRange, mangled));
           }
         });
       },
@@ -93,6 +101,8 @@ export default class ReservedWords extends Transform implements TransformInterfa
         );
       },
     });
+
+    return changes;
   }
 
   /**
@@ -107,22 +117,24 @@ export default class ReservedWords extends Transform implements TransformInterfa
     chunk: RenderedChunk,
     mangled: MangledWords,
   ): Promise<MangledTransformSourceDescription> {
-    const source = new MagicString(code);
     const program = parse(code);
+    const changes: Array<CodeTransform | null> = [];
 
-    await this.mangleImportDeclarations(program, source, mangled);
-    await this.mangleExportDeclarations(program, source, mangled);
+    changes.push(...(await this.mangleImportDeclarations(program, mangled)));
+    changes.push(...(await this.mangleExportDeclarations(program, mangled)));
 
     walk.simple(program, {
       ClassDeclaration(node: ClassDeclaration) {
         if (node.id !== null) {
-          mangleWord(source, node.id.name, range(node.id), mangled);
+          changes.push(mangleWord(node.id.name, range(node.id), mangled));
         }
       },
       Identifier(node: Identifier) {
-        mangleWord(source, node.name, range(node), mangled);
+        changes.push(mangleWord(node.name, range(node), mangled));
       },
     });
+
+    const source = await this.applyChanges(changes.filter(Boolean) as Array<CodeTransform>, code);
 
     return {
       code: source.toString(),

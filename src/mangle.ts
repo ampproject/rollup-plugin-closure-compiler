@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import MagicString from 'magic-string';
 import { SourceRange, MangledWords, CodeTransform } from './types';
 import { walk, range } from './acorn';
 import {
@@ -26,16 +25,21 @@ import {
 } from 'estree';
 
 export function mangleWord(
-  source: MagicString,
   name: string,
   range: SourceRange,
   mangled: MangledWords,
-): void {
+): CodeTransform | null {
   const mangleName = mangled.getFinal(name);
   if (mangleName) {
-    source.overwrite(range[0], range[1], mangleName);
     mangled.store(name, mangleName);
+    return {
+      type: 'overwrite',
+      range,
+      content: mangleName,
+    };
   }
+
+  return null;
 }
 
 function remedyWord(name: string, range: SourceRange, mangled: MangledWords): CodeTransform | null {
