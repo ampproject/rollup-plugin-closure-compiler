@@ -78,7 +78,6 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
 
     const output = [];
     if (bundles.output) {
-      //console.log('bundles', bundles.output);
       for (file in bundles.output) {
         const minified = await readFile(
           path.join(
@@ -113,8 +112,8 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
     return output;
   }
 
-  for (format of formats) {
-    for(optionKey of Object.keys(closureFlags)) {
+  for (const format of formats) {
+    for(const optionKey of Object.keys(closureFlags)) {
       const method = shouldFail ? test.failing.serial : test.serial;
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
