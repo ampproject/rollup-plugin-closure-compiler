@@ -168,7 +168,7 @@ export default class ExportTransform extends Transform implements TransformInter
     mangledExportWords: MangledWords,
   ): boolean {
     const variableDeclarationRange = range(variableDeclaration);
-    variableDeclaration.declarations.forEach(declarator => {
+    for (const declarator of variableDeclaration.declarations) {
       if (declarator.id.type === 'Identifier' && declarator.id.name === expressionRightName) {
         changes.push({
           type: 'appendLeft',
@@ -182,7 +182,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
         return true;
       }
-    });
+    }
 
     return false;
   }
