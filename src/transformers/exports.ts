@@ -24,6 +24,7 @@ import {
   ClassDeclaration,
   AssignmentExpression,
   FunctionDeclaration,
+  VariableDeclarator,
 } from 'estree';
 import { RenderedChunk, PluginContext } from 'rollup';
 import { isESMFormat } from '../options';
@@ -164,20 +165,39 @@ export default class ExportTransform extends Transform implements TransformInter
     variableDeclaration: VariableDeclaration,
     renewedExport: DiscoveredExport,
     expressionRightName: string,
+    exportVariables: Array<string>,
     changes: Array<CodeTransform>,
     mangledExportWords: MangledWords,
   ): boolean {
     const variableDeclarationRange = range(variableDeclaration);
-    for (const declarator of variableDeclaration.declarations) {
-      if (declarator.id.type === 'Identifier' && declarator.id.name === expressionRightName) {
-        changes.push({
-          type: 'appendLeft',
-          range: [variableDeclarationRange[0], 0],
-          content: renewedExport.default ? 'export default ' : 'export ',
-        });
+    const firstDeclarator = variableDeclaration.declarations[0];
+    const declaratorMatch = (declarator: VariableDeclarator): boolean =>
+      declarator.id.type === 'Identifier' && declarator.id.name === expressionRightName;
 
-        if (!renewedExport.default) {
-          mangledExportWords.store(renewedExport.local, declarator.id.name);
+    if (variableDeclaration.declarations.length === 1 && declaratorMatch(firstDeclarator)) {
+      changes.push({
+        type: 'appendLeft',
+        range: [variableDeclarationRange[0], 0],
+        content: renewedExport.default ? 'export default ' : 'export ',
+      });
+
+      if (!renewedExport.default) {
+        mangledExportWords.store(renewedExport.local, (firstDeclarator.id as Identifier).name);
+      }
+
+      return true;
+    }
+
+    for (const declarator of variableDeclaration.declarations) {
+      if (declaratorMatch(declarator)) {
+        if (renewedExport.default) {
+          changes.push({
+            type: 'append',
+            content: `export default ${renewedExport.local};`,
+          });
+        } else {
+          exportVariables.push(renewedExport.local);
+          mangledExportWords.store(renewedExport.local, (declarator.id as Identifier).name);
         }
 
         return true;
@@ -256,6 +276,7 @@ export default class ExportTransform extends Transform implements TransformInter
       const self = this;
       const program = parse(code);
       const mangledExportWords: MangledWords = new MangledWords();
+      const exportVariables: Array<string> = [];
       const changes: Array<CodeTransform> = [];
 
       walk.simple(program, {
@@ -286,6 +307,7 @@ export default class ExportTransform extends Transform implements TransformInter
                     variableDeclaration,
                     renewedExport,
                     right.name,
+                    exportVariables,
                     changes,
                     mangledExportWords,
                   );
@@ -358,6 +380,13 @@ export default class ExportTransform extends Transform implements TransformInter
           }
         },
       });
+
+      if (exportVariables.length > 0) {
+        changes.push({
+          type: 'append',
+          content: `export {${exportVariables.join(',')}};`,
+        });
+      }
 
       let source = await this.applyChanges(changes, code);
       const updatedCode = source.toString();

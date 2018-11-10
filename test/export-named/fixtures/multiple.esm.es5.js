@@ -1,1 +1,1 @@
-export var foo=1;export function bar(){console.log(1)};
+var foo={},bar={};export function baz(c,d){foo.ziz=c;bar.zaz=d;console.log(foo,bar)};export {foo,bar};

@@ -1,5 +1,7 @@
-const foo = 1;
-const bar = function() {
-  console.log(foo);
+export const foo = {};
+export const bar = {};
+export const baz = function(ziz, zaz) {
+  foo.ziz = ziz;
+  bar.zaz = zaz;
+  console.log(foo, bar);
 }
-export{foo, bar};
