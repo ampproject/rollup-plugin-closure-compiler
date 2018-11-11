@@ -346,36 +346,49 @@ export default class ExportTransform extends Transform implements TransformInter
                   ? `export default ${right.value};`
                   : `export var ${renewedExport.exported}=${right.value};`,
               });
-            } else {
-              if (right.type === 'FunctionExpression' && right.id === null) {
-                // Function without an id, e.g `window.foo=function(a){};`
-                const existingFunction = code.substring(rightRange[0], rightRange[1]);
+            } else if (right.type === 'FunctionExpression' && right.id === null) {
+              // Function without an id, e.g `window.foo=function(a){};`
+              const existingFunction = code.substring(rightRange[0], rightRange[1]);
+              changes.push({
+                type: 'overwrite',
+                range: [statementRange[0], rightRange[1]],
+                content: `export ${
+                  renewedExport.default ? 'default ' : ''
+                }${existingFunction.replace(
+                  'function(',
+                  `function${renewedExport.default ? '' : ` ${renewedExport.local}`}(`,
+                )}`,
+              });
+            } else if (right.type === 'ArrowFunctionExpression') {
+              const existingFunction = code.substring(rightRange[0], rightRange[1]);
+              changes.push({
+                type: 'overwrite',
+                range: [statementRange[0], rightRange[1]],
+                content: `export ${renewedExport.default ? 'default ' : ''}var ${
+                  renewedExport.local
+                }=${existingFunction}`,
+              });
+            } else if (right.type === 'ClassExpression') {
+              const existingClass = code.substring(rightRange[0], rightRange[1]);
+              if (renewedExport.default) {
                 changes.push({
                   type: 'overwrite',
                   range: [statementRange[0], rightRange[1]],
-                  content: `export ${
-                    renewedExport.default ? 'default ' : ''
-                  }${existingFunction.replace(
-                    'function(',
-                    `function${renewedExport.default ? '' : ` ${renewedExport.local}`}(`,
-                  )}`,
-                });
-              } else if (right.type === 'ArrowFunctionExpression') {
-                const existingFunction = code.substring(rightRange[0], rightRange[1]);
-                changes.push({
-                  type: 'overwrite',
-                  range: [statementRange[0], rightRange[1]],
-                  content: `export ${renewedExport.default ? 'default ' : ''}var ${
-                    renewedExport.local
-                  }=${existingFunction}`,
+                  content: `export default ${existingClass}`,
                 });
               } else {
                 changes.push({
                   type: 'overwrite',
-                  range: [statementRange[0], rightRange[0]],
-                  content: renewedExport.default ? 'export default ' : 'export ',
+                  range: [statementRange[0], rightRange[1]],
+                  content: `export var ${renewedExport.local}=${existingClass}`,
                 });
               }
+            } else {
+              changes.push({
+                type: 'overwrite',
+                range: [statementRange[0], rightRange[0]],
+                content: renewedExport.default ? 'export default ' : 'export ',
+              });
             }
           }
         },

@@ -22,6 +22,7 @@ import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
 import ReservedWords from './transformers/reserved-words';
 import ConstTransform from './transformers/const';
+import CollapseDeclarations from './transformers/collapse-declarations';
 import { logSource } from './debug';
 import { Transform } from './transformers/transform';
 import { TransformOptions, MangledWords } from './types';
@@ -41,6 +42,7 @@ export const createTransforms = (
   return [
     new ReservedWords(context, inputOptions, outputOptions, transformOptions),
     new ConstTransform(context, inputOptions, outputOptions, transformOptions),
+    new CollapseDeclarations(context, inputOptions, outputOptions, transformOptions),
     new IifeTransform(context, inputOptions, outputOptions, transformOptions),
     new LiteralComputedKeys(context, inputOptions, outputOptions, transformOptions),
     new StrictTransform(context, inputOptions, outputOptions, transformOptions),
@@ -110,10 +112,12 @@ export async function postCompilation(
   // to clean up work is performed in preCompilation via postCompilation.
   logSource('before postCompilation handlers', code);
   for (const transform of transforms) {
+    logSource(`before ${transform.name} postCompilation`, code);
     const result = await transform.postCompilation(code, chunk, moduleMangledWords);
     if (result && result.code) {
       code = result.code;
     }
+    logSource(`after ${transform.name} postCompilation`, code);
   }
 
   logSource('after postCompilation handlers', code);

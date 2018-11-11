@@ -1,1 +1,1 @@
-export class Exported{constructor(b){this.a=b}console(){console.log(this.a)}}
+export var Exported=class{constructor(a){this.a=a}console(){console.log(this.a)}};
