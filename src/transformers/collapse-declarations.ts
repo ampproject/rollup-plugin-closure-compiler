@@ -23,7 +23,7 @@ import {
 } from '../types';
 import { RenderedChunk } from 'rollup';
 import { parse, walk, range } from '../acorn';
-import { VariableDeclaration, ClassDeclaration } from 'estree';
+import { VariableDeclaration, ClassDeclaration, Node } from 'estree';
 
 export default class CollapseDeclarations extends Transform implements TransformInterface {
   public name: string = 'CollapseDeclarations';
@@ -44,7 +44,7 @@ export default class CollapseDeclarations extends Transform implements Transform
     let allowTransform = true;
     const program = parse(code);
 
-    walk.simple(program, {
+    walk.ancestor(program, {
       ClassDeclaration(node: ClassDeclaration) {
         const classDeclarationRange = range(node);
 
@@ -64,32 +64,36 @@ export default class CollapseDeclarations extends Transform implements Transform
           allowTransform = false;
         }
       },
-      VariableDeclaration(node: VariableDeclaration) {
-        let allDeclarationsRemoved = true;
-        const variableDeclarations: Array<string> = [];
-        const variableDeclarationRange = range(node);
+      VariableDeclaration(node: VariableDeclaration, ancestors: Array<Node>) {
+        if (
+          ancestors.filter(ancestor => ancestor !== node && ancestor.type !== 'Program').length > 0
+        ) {
+          let allDeclarationsRemoved = true;
+          const variableDeclarations: Array<string> = [];
+          const variableDeclarationRange = range(node);
 
-        node.declarations.forEach(declaration => {
-          const declarationRange = range(declaration);
+          node.declarations.forEach(declaration => {
+            const declarationRange = range(declaration);
 
-          if (declaration.id.type !== 'Identifier') {
-            this.context.warn(
-              'Rollup Plugin Closure Compiler was unable to collapse variable declarations.',
-            );
+            if (declaration.id.type !== 'Identifier') {
+              this.context.warn(
+                'Rollup Plugin Closure Compiler was unable to collapse variable declarations.',
+              );
 
-            allowTransform = false;
-            allDeclarationsRemoved = false;
-          } else {
-            variableDeclarations.push(code.substring(declarationRange[0], declarationRange[1]));
+              allowTransform = false;
+              allDeclarationsRemoved = false;
+            } else {
+              variableDeclarations.push(code.substring(declarationRange[0], declarationRange[1]));
+            }
+          }, this);
+
+          if (allDeclarationsRemoved) {
+            declarations.push(...variableDeclarations);
+            changes.push({
+              type: 'remove',
+              range: variableDeclarationRange,
+            });
           }
-        }, this);
-
-        if (allDeclarationsRemoved) {
-          declarations.push(...variableDeclarations);
-          changes.push({
-            type: 'remove',
-            range: variableDeclarationRange,
-          });
         }
       },
     });
