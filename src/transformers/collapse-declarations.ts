@@ -66,7 +66,8 @@ export default class CollapseDeclarations extends Transform implements Transform
       },
       VariableDeclaration(node: VariableDeclaration, ancestors: Array<Node>) {
         if (
-          ancestors.filter(ancestor => ancestor !== node && ancestor.type !== 'Program').length > 0
+          ancestors.filter(ancestor => ancestor !== node && ancestor.type !== 'Program').length ===
+          0
         ) {
           let allDeclarationsRemoved = true;
           const variableDeclarations: Array<string> = [];
