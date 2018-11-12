@@ -22,7 +22,6 @@ import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
 import ReservedWords from './transformers/reserved-words';
 import ConstTransform from './transformers/const';
-import CollapseDeclarations from './transformers/collapse-declarations';
 import { logSource } from './debug';
 import { Transform } from './transformers/transform';
 import { TransformOptions, MangledWords } from './types';
@@ -42,7 +41,6 @@ export const createTransforms = (
   return [
     new ReservedWords(context, inputOptions, outputOptions, transformOptions),
     new ConstTransform(context, inputOptions, outputOptions, transformOptions),
-    new CollapseDeclarations(context, inputOptions, outputOptions, transformOptions),
     new IifeTransform(context, inputOptions, outputOptions, transformOptions),
     new LiteralComputedKeys(context, inputOptions, outputOptions, transformOptions),
     new StrictTransform(context, inputOptions, outputOptions, transformOptions),

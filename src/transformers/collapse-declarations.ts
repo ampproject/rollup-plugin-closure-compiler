@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// NOTE: This is an experimental transform that does not work yet.
+
 import { Transform } from './transform';
 import {
   TransformInterface,
