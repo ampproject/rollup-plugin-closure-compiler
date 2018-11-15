@@ -58,7 +58,7 @@ export default class LiteralComputedKeys extends Transform {
 
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
     };
   }
 }

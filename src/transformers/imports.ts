@@ -107,7 +107,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
 
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
     };
   }
 
@@ -135,7 +135,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
 
     return {
       code: source.toString(),
-      map: source.generateMap(),
+      map: source.generateMap().mappings,
     };
   }
 }

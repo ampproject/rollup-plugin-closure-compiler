@@ -21,6 +21,7 @@ import LiteralComputedKeys from './transformers/literal-computed-keys';
 import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
+import ConstTransform from './transformers/const';
 import { logSource } from './debug';
 
 /**
@@ -34,6 +35,7 @@ export const createTransforms = (
   options: InputOptions,
 ): Array<Transform> => {
   return [
+    new ConstTransform(context, options),
     new IifeTransform(context, options),
     new LiteralComputedKeys(context, options),
     new StrictTransform(context, options),

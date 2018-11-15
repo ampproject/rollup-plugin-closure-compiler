@@ -18,9 +18,9 @@ import { Transform } from '../types';
 import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-
-const STRICT_MODE_DECLARATION = `'use strict';`;
-const STRICT_MODE_DECLARATION_LENGTH = STRICT_MODE_DECLARATION.length;
+import { walk, parse } from '../acorn';
+import { ExpressionStatement } from 'estree';
+import { extname } from 'path';
 
 export default class StrictTransform extends Transform {
   /**
@@ -34,16 +34,28 @@ export default class StrictTransform extends Transform {
       this.context.warn(
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
-    } else if (isESMFormat(this.outputOptions.format) && code.startsWith(STRICT_MODE_DECLARATION)) {
+    } else if (
+      isESMFormat(this.outputOptions.format) ||
+      (this.outputOptions.file && extname(this.outputOptions.file) === '.mjs')
+    ) {
       const source = new MagicString(code);
+      const program = parse(code);
 
-      // This will only remove the top level 'use strict' directive since we cannot
-      // be certain source does not contain strings with the intended content.
-      source.remove(0, STRICT_MODE_DECLARATION_LENGTH);
+      walk.simple(program, {
+        ExpressionStatement(node: ExpressionStatement) {
+          if (
+            node.expression.type === 'Literal' &&
+            node.expression.value === 'use strict' &&
+            node.range
+          ) {
+            source.remove(node.range[0], node.range[1]);
+          }
+        },
+      });
 
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
       };
     }
 
