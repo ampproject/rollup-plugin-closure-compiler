@@ -104,7 +104,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
       };
     }
 
@@ -269,7 +269,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
       return {
         code: source.toString(),
-        map: source.generateMap(),
+        map: source.generateMap().mappings,
       };
     }
 
