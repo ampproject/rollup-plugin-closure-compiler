@@ -303,32 +303,38 @@ export default class ExportTransform extends Transform implements TransformInter
 
               walk.simple(program, {
                 VariableDeclaration(variableDeclaration: VariableDeclaration) {
-                  exportLocationDiscovered = ExportTransform.renewVariableDeclarationExport(
-                    variableDeclaration,
-                    renewedExport,
-                    right.name,
-                    exportVariables,
-                    changes,
-                    mangledExportWords,
-                  );
+                  if (!exportLocationDiscovered) {
+                    exportLocationDiscovered = ExportTransform.renewVariableDeclarationExport(
+                      variableDeclaration,
+                      renewedExport,
+                      right.name,
+                      exportVariables,
+                      changes,
+                      mangledExportWords,
+                    );
+                  }
                 },
                 ClassDeclaration(classDeclaration: ClassDeclaration) {
-                  exportLocationDiscovered = ExportTransform.renewClassDeclarationExport(
-                    classDeclaration,
-                    renewedExport,
-                    right.name,
-                    changes,
-                    mangledExportWords,
-                  );
+                  if (!exportLocationDiscovered) {
+                    exportLocationDiscovered = ExportTransform.renewClassDeclarationExport(
+                      classDeclaration,
+                      renewedExport,
+                      right.name,
+                      changes,
+                      mangledExportWords,
+                    );
+                  }
                 },
                 FunctionDeclaration(functionDeclaration: FunctionDeclaration) {
-                  exportLocationDiscovered = ExportTransform.renewFunctionDeclarationExport(
-                    functionDeclaration,
-                    renewedExport,
-                    right.name,
-                    changes,
-                    mangledExportWords,
-                  );
+                  if (!exportLocationDiscovered) {
+                    exportLocationDiscovered = ExportTransform.renewFunctionDeclarationExport(
+                      functionDeclaration,
+                      renewedExport,
+                      right.name,
+                      changes,
+                      mangledExportWords,
+                    );
+                  }
                 },
               });
 
