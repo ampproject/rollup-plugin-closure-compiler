@@ -21,8 +21,6 @@ import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 
 export default class ConstTransform extends Transform implements TransformInterface {
-  public name: string = 'ConstTransform';
-
   /**
    * When outputting ES2017+ code there is neglagible differences between `const` and `let` for runtime performance.
    * So, we replace all usages of `const` with `let` to enable more variable folding.
@@ -30,9 +28,8 @@ export default class ConstTransform extends Transform implements TransformInterf
    * @return code after removing the strict mode declaration (when safe to do so)
    */
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
-    // const changes: Array<CodeTransform> = [];
-    const program = parse(code);
     const source = new MagicString(code);
+    const program = parse(code);
 
     walk.simple(program, {
       VariableDeclaration(node: VariableDeclaration) {
