@@ -129,11 +129,20 @@ export default function(
 
     delete compileOptions.externs;
   }
+  
+  const js = [sync(code)];
+  if (compileOptions.js) {
+    if (typeof compileOptions.js === 'array') {
+      js.push(...compileOptions.js);
+    } else {
+      js.push(compileOptions.js);
+    }
+  }
 
   const options = {
     ...defaults(outputOptions, externs, transforms),
     ...compileOptions,
-    js: sync(code),
+    js,
     create_source_map: mapFile,
   };
 
