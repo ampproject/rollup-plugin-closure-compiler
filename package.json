@@ -35,7 +35,7 @@
     "temp-write": "3.4.0"
   },
   "devDependencies": {
-    "@types/acorn": "4.0.3",
+    "@types/acorn": "4.0.4",
     "@types/estree": "0.0.39",
     "@types/temp-write": "3.3.0",
     "ava": "1.0.0-rc.2",
