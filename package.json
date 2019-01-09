@@ -38,7 +38,7 @@
     "@types/acorn": "4.0.3",
     "@types/estree": "0.0.39",
     "@types/temp-write": "3.3.0",
-    "ava": "1.0.0-rc.2",
+    "ava": "1.0.1",
     "builtins": "2.0.0",
     "husky": "1.2.0",
     "lint-staged": "8.1.0",
