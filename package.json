@@ -31,7 +31,7 @@
     "acorn-dynamic-import": "4.0.0",
     "acorn-walk": "6.1.1",
     "google-closure-compiler": "20190121.0.0",
-    "magic-string": "0.25.1",
+    "magic-string": "0.25.2",
     "temp-write": "3.4.0"
   },
   "devDependencies": {
