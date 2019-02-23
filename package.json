@@ -46,7 +46,7 @@
     "rimraf": "2.6.3",
     "rollup": "0.67.4",
     "rollup-plugin-copy": "0.2.3",
-    "tslint": "5.12.1",
+    "tslint": "5.13.0",
     "typescript": "3.2.4"
   },
   "files": [
