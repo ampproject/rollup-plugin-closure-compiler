@@ -28,6 +28,18 @@ enum Platform {
   JAVASCRIPT = 'javascript',
 }
 
+/**
+ * splits user `prefer` option from compiler options object
+ * returns new object containing options and prefered platform
+ * @param {CompileOptions} content - compiler options object
+ * @return {Object}
+ * @example rollup.config.js
+ *  buble(),
+ *  compiler({
+ *    formatting: 'PRETTY_PRINT',
+ *    prefer: 'javascript',
+ *  }),
+ */
 function filterContent(content: CompileOptions) {
   let prefer = null;
   if ('prefer' in content) {
@@ -38,6 +50,13 @@ function filterContent(content: CompileOptions) {
   return res;
 }
 
+/**
+ * finds prefered user platform precedence in list of defaults
+ * and re-orders the list with prefered option first
+ * @param {Array} haystack - array of allowed platform strings
+ * @param {String} needle - prefered platform
+ * @return {Array}
+ */
 function reOrder(haystack: string[], needle: string) {
   const index = haystack.indexOf(needle);
   const precedent = haystack.splice(index, 1);
