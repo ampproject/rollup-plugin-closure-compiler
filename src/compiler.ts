@@ -28,7 +28,7 @@ enum Platform {
   JAVASCRIPT = 'javascript',
 }
 
-function filterContent(content: any) {
+function filterContent(content: CompileOptions) {
   let prefer = null;
   if ('prefer' in content) {
     prefer = content['prefer'];
@@ -38,7 +38,7 @@ function filterContent(content: any) {
   return res;
 }
 
-function reOrder(haystack: any, needle: string) {
+function reOrder(haystack: string[], needle: string) {
   const index = haystack.indexOf(needle);
   const precedent = haystack.splice(index, 1);
   return precedent.concat(haystack);
