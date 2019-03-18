@@ -28,6 +28,8 @@ enum Platform {
   JAVASCRIPT = 'javascript',
 }
 
+type ExtendedCompileOptions = CompileOptions & { prefer: string }
+
 /**
  * splits user `prefer` option from compiler options object
  * returns new object containing options and prefered platform
@@ -40,7 +42,7 @@ enum Platform {
  *    prefer: 'javascript',
  *  }),
  */
-function filterContent(content: any[]) {
+function filterContent(content: ExtendedCompileOptions) {
   let prefer = '';
   if ('prefer' in content) {
     prefer = content['prefer'];
@@ -72,7 +74,7 @@ const PLATFORM_PRECEDENCE = [Platform.NATIVE, Platform.JAVA, Platform.JAVASCRIPT
  * @return Promise<string> source following compilation and Transforms.
  */
 export default function(
-  compileOptions: CompileOptions,
+  compileOptions: ExtendedCompileOptions,
   transforms: Array<Transform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
