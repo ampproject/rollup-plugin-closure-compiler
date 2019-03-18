@@ -40,8 +40,8 @@ enum Platform {
  *    prefer: 'javascript',
  *  }),
  */
-function filterContent(content: CompileOptions) {
-  let prefer = null;
+function filterContent(content: any[]) {
+  let prefer = '';
   if ('prefer' in content) {
     prefer = content['prefer'];
     delete content.prefer;
@@ -81,7 +81,7 @@ export default function(
     
     const { prefer, config } = options;
 
-    const USER_PLATFORM_PRECEDENCE = (prefer !== null) ? reOrder(PLATFORM_PRECEDENCE, prefer) : PLATFORM_PRECEDENCE;
+    const USER_PLATFORM_PRECEDENCE = (prefer !== '') ? reOrder(PLATFORM_PRECEDENCE, prefer) : PLATFORM_PRECEDENCE;
 
     const instance = new compiler(config);
 
