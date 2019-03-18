@@ -31,14 +31,13 @@ enum Platform {
 type ExtendedCompileOptions = CompileOptions & { prefer: string }
 
 /**
- * splits user `prefer` option from compiler options object
- * returns new object containing options and prefered platform
+ * Splits user `prefer` option from compiler options object
+ * returns new object containing options and preferred platform.
  * @param {CompileOptions} content - compiler options object
  * @return {Object}
- * @example rollup.config.js
+ * @example in rollup.config.js
  *  buble(),
  *  compiler({
- *    formatting: 'PRETTY_PRINT',
  *    prefer: 'javascript',
  *  }),
  */
@@ -53,10 +52,10 @@ function filterContent(content: ExtendedCompileOptions) {
 }
 
 /**
- * finds prefered user platform precedence in list of defaults
- * and re-orders the list with prefered option first
+ * Finds prefered user platform precedence in list of defaults
+ * and re-orders the list with prefered option first.
  * @param {Array} haystack - array of allowed platform strings
- * @param {String} needle - prefered platform
+ * @param {String} needle - preferred platform string
  * @return {Array}
  */
 function reOrder(haystack: string[], needle: string) {
@@ -90,7 +89,6 @@ export default function(
     const firstSupportedPlatform = getFirstSupportedPlatform(USER_PLATFORM_PRECEDENCE);
 
     if (firstSupportedPlatform !== Platform.JAVA) {
-      // We would like to use the native platform instead of Java or Javascript on this system.
 
       // TODO(KB): Provide feedback on this API. It's a little strange to nullify the JAR_PATH
       // and provide a fake java path.
