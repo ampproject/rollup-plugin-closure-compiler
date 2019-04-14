@@ -44,7 +44,7 @@
     "lint-staged": "8.1.4",
     "prettier": "1.17.0",
     "rimraf": "2.6.3",
-    "rollup": "0.67.4",
+    "rollup": "0.68.2",
     "rollup-plugin-copy": "1.1.0",
     "tslint": "5.13.0",
     "typescript": "3.4.3"
