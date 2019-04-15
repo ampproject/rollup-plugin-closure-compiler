@@ -116,7 +116,9 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
           const output = await compile(optionKey, format);
 
           t.plan(output.length);
-          output.forEach(result => t.is(result.code, result.minified));
+          for (result of output) {
+            t.is(result.code, result.minified)
+          }
         },
       );
     }
