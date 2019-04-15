@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
+import { Transform, Range } from '../types';
 import { literalName, importLocalNames } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
@@ -33,7 +33,7 @@ const HEADER = `/**
 
 interface RangedImport {
   type: string;
-  range: [number, number];
+  range: Range;
 }
 
 export default class ImportTransform extends Transform {
@@ -83,7 +83,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
-        const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+        const range: Range = node.range ? [node.range[0], node.range[1]] : [0, 0];
         self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
         source.remove(range[0], range[1]);
 
@@ -127,7 +127,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       Identifier(node: Identifier) {
         if (node.name === DYNAMIC_IMPORT_REPLACEMENT) {
-          const range: [number, number] = node.range ? [node.range[0], node.range[1]] : [0, 0];
+          const range: Range = node.range ? [node.range[0], node.range[1]] : [0, 0];
           source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
         }
       },
