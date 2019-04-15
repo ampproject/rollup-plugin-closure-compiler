@@ -21,7 +21,9 @@
     "test": "ava -v test/**/*.js",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",
-    "lint": "tslint -c tslint.json -p tsconfig.json"
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "release": "np",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "rollup": ">= 0.67.4"
@@ -42,6 +44,7 @@
     "builtins": "2.0.0",
     "husky": "1.3.1",
     "lint-staged": "8.1.5",
+    "np": "4.0.2",
     "prettier": "1.17.0",
     "rimraf": "2.6.3",
     "rollup": "0.67.4",
@@ -50,9 +53,7 @@
     "typescript": "3.4.3"
   },
   "files": [
-    "dist/index.d.ts",
-    "dist/index.js",
-    "dist/index.mjs"
+    "dist"
   ],
   "lint-staged": {
     "*.ts": [
