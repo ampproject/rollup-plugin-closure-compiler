@@ -42,6 +42,8 @@ export const ALL_EXPORT_DECLARATIONS = [
   EXPORT_ALL_DECLARATION,
 ];
 
+export type Range = [number, number];
+
 export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,
   NAMED_CLASS = 1,
@@ -58,7 +60,7 @@ export interface ExportNameToClosureMapping {
   [key: string]: {
     alias: string | null;
     type: ExportClosureMapping;
-    range: [number, number];
+    range: Range;
   };
 }
 

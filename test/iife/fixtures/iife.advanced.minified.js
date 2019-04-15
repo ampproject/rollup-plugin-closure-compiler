@@ -1,1 +1,1 @@
-'use strict';var wrapper=function(a){a.a=function(a){document.body.innerHTML="hello "+a};return a}({});
+'use strict';var wrapper=function(a){a.a=function(b){document.body.innerHTML="hello "+b};return a}({});
