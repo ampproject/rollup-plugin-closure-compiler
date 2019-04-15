@@ -1,6 +1,6 @@
 {
   "name": "@ampproject/rollup-plugin-closure-compiler",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Rollup + Google Closure Compiler",
   "main": "dist/index.js",
   "jsnext:main": "dist/index.mjs",
