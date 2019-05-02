@@ -34,7 +34,7 @@
     "acorn-walk": "6.1.1",
     "google-closure-compiler": "20190415.0.0",
     "magic-string": "0.25.2",
-    "temp-write": "3.4.0"
+    "temp-write": "4.0.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
