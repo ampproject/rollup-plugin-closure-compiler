@@ -42,7 +42,7 @@
     "@types/temp-write": "3.3.0",
     "ava": "1.4.1",
     "builtins": "2.0.0",
-    "husky": "2.1.0",
+    "husky": "2.2.0",
     "lint-staged": "8.1.5",
     "np": "5.0.1",
     "prettier": "1.17.0",
