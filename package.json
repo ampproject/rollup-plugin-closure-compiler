@@ -41,7 +41,7 @@
     "@types/estree": "0.0.39",
     "@types/temp-write": "3.3.0",
     "ava": "1.4.1",
-    "builtins": "2.0.0",
+    "builtins": "2.0.1",
     "husky": "2.2.0",
     "lint-staged": "8.1.7",
     "np": "5.0.1",
