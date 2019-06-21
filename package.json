@@ -32,7 +32,7 @@
     "acorn": "6.1.1",
     "acorn-dynamic-import": "4.0.0",
     "acorn-walk": "6.1.1",
-    "google-closure-compiler": "20190528.0.0",
+    "google-closure-compiler": "20190618.0.0",
     "magic-string": "0.25.2",
     "temp-write": "4.0.0"
   },
