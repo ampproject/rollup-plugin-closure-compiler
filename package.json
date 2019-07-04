@@ -29,7 +29,7 @@
     "rollup": ">= 0.67.4"
   },
   "dependencies": {
-    "acorn": "6.1.1",
+    "acorn": "6.2.0",
     "acorn-dynamic-import": "4.0.0",
     "acorn-walk": "6.1.1",
     "google-closure-compiler": "20190618.0.0",
