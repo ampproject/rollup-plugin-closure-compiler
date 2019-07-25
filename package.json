@@ -51,7 +51,7 @@
     "prettier": "1.18.2",
     "rimraf": "2.6.3",
     "rollup": "0.67.4",
-    "rollup-plugin-copy": "2.0.1",
+    "rollup-plugin-copy": "3.1.0",
     "tslint": "5.18.0",
     "typescript": "3.5.3"
   },
