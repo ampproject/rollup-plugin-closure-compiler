@@ -28,6 +28,40 @@ enum Platform {
   JAVASCRIPT = 'javascript',
 }
 
+/**
+ * Splits user `prefer` option from compiler options object
+ * returns new object containing options and preferred platform.
+ * @param {CompileOptions} content - compiler options object
+ * @return {Object}
+ * @example in rollup.config.js
+ *  buble(),
+ *  compiler({
+ *    prefer: 'javascript',
+ *  }),
+ */
+function filterContent(content: CompileOptions) {
+  let prefer: any = '';
+  if ('prefer' in content) {
+    prefer = content['prefer'];
+    delete content.prefer;
+  };
+  const res = { config: content, prefer: prefer };
+  return res;
+}
+
+/**
+ * Finds prefered user platform precedence in list of defaults
+ * and re-orders the list with prefered option first.
+ * @param {Array} haystack - array of allowed platform strings
+ * @param {String} needle - preferred platform string
+ * @return {Array}
+ */
+function reOrder(haystack: string[], needle: string) {
+  const index = haystack.indexOf(needle);
+  const precedent = haystack.splice(index, 1);
+  return precedent.concat(haystack);
+}
+
 const PLATFORM_PRECEDENCE = [Platform.NATIVE, Platform.JAVA, Platform.JAVASCRIPT];
 
 /**
@@ -41,10 +75,18 @@ export default function(
   transforms: Array<Transform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
-    const instance = new compiler(compileOptions);
+    
+    const options = filterContent(compileOptions);
+    
+    const { prefer, config } = options;
 
-    if (getFirstSupportedPlatform(PLATFORM_PRECEDENCE) === Platform.NATIVE) {
-      // We would like to use the native platform instead of Java or Javascript on this system.
+    const USER_PLATFORM_PRECEDENCE = (prefer !== '') ? reOrder(PLATFORM_PRECEDENCE, prefer) : PLATFORM_PRECEDENCE;
+
+    const instance = new compiler(config);
+
+    const firstSupportedPlatform = getFirstSupportedPlatform(USER_PLATFORM_PRECEDENCE);
+
+    if (firstSupportedPlatform !== Platform.JAVA) {
 
       // TODO(KB): Provide feedback on this API. It's a little strange to nullify the JAR_PATH
       // and provide a fake java path.
