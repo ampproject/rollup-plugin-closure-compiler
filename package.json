@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.39",
-    "@types/node": "12.11.5",
+    "@types/node": "12.11.6",
     "@types/temp-write": "3.3.0",
     "ava": "2.4.0",
     "builtins": "2.0.1",
