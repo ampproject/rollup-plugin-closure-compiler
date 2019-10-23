@@ -2,12 +2,12 @@
   "compileOnSave": true,
   "compilerOptions": {
     "lib": [
-      "es2017",
+      "esnext",
     ],
     "outDir": "transpile",
     "sourceMap": true,
     "moduleResolution": "node",
-    "target": "es2017",
+    "target": "esnext",
     "baseUrl": ".",
     "allowJs": false,
     "noUnusedLocals": true,
