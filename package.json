@@ -32,26 +32,26 @@
     "rollup": ">= 0.67.4"
   },
   "dependencies": {
-    "acorn": "6.2.0",
+    "acorn": "6.3.0",
     "acorn-dynamic-import": "4.0.0",
     "acorn-walk": "6.2.0",
-    "google-closure-compiler": "20190909.0.0",
-    "magic-string": "0.25.3",
+    "google-closure-compiler": "20190929.0.0",
+    "magic-string": "0.25.4",
     "temp-write": "4.0.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.39",
     "@types/temp-write": "3.3.0",
-    "ava": "2.2.0",
+    "ava": "2.4.0",
     "builtins": "2.0.1",
-    "husky": "3.0.0",
+    "husky": "3.0.7",
     "lint-staged": "9.4.2",
     "np": "5.0.3",
     "prettier": "1.18.2",
-    "rimraf": "2.6.3",
+    "rimraf": "3.0.0",
     "rollup": "0.67.4",
-    "rollup-plugin-copy": "2.0.1",
+    "rollup-plugin-copy": "3.1.0",
     "tslint": "5.18.0",
     "typescript": "3.5.3"
   },
