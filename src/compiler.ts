@@ -27,42 +27,41 @@ enum Platform {
   JAVA = 'java',
   JAVASCRIPT = 'javascript',
 }
+const DEFAULT_PLATFORM_PRECEDENCE = [Platform.NATIVE, Platform.JAVA, Platform.JAVASCRIPT];
 
 /**
- * Splits user `prefer` option from compiler options object
+ * Splits user `platform` option from compiler options object
  * returns new object containing options and preferred platform.
  * @param {CompileOptions} content - compiler options object
  * @return {Object}
  * @example in rollup.config.js
- *  buble(),
  *  compiler({
- *    prefer: 'javascript',
+ *    platform: 'javascript',
  *  }),
  */
-function filterContent(content: CompileOptions) {
-  let prefer: any = '';
-  if ('prefer' in content) {
-    prefer = content['prefer'];
-    delete content.prefer;
-  };
-  const res = { config: content, prefer: prefer };
-  return res;
+function filterContent(content: CompileOptions): [CompileOptions, Platform] {
+  let platform: string = '';
+  if ('platform' in content && typeof content.platform === 'string') {
+    platform = content.platform;
+    delete content.platform;
+  }
+  return [content, platform as Platform];
 }
 
 /**
- * Finds prefered user platform precedence in list of defaults
- * and re-orders the list with prefered option first.
- * @param {Array} haystack - array of allowed platform strings
- * @param {String} needle - preferred platform string
+ * Reorders platform preferences based on configuration.
+ * @param {String} platformPreference - preferred platform string
  * @return {Array}
  */
-function reOrder(haystack: string[], needle: string) {
-  const index = haystack.indexOf(needle);
-  const precedent = haystack.splice(index, 1);
-  return precedent.concat(haystack);
-}
+function orderPlatforms(platformPreference: Platform | string): Array<Platform> {
+  if (platformPreference === '') {
+    return DEFAULT_PLATFORM_PRECEDENCE;
+  }
 
-const PLATFORM_PRECEDENCE = [Platform.NATIVE, Platform.JAVA, Platform.JAVASCRIPT];
+  const index = DEFAULT_PLATFORM_PRECEDENCE.indexOf(platformPreference as Platform);
+  const newPlatformPreferences = DEFAULT_PLATFORM_PRECEDENCE.splice(index, 1);
+  return newPlatformPreferences.concat(DEFAULT_PLATFORM_PRECEDENCE);
+}
 
 /**
  * Run Closure Compiler and `postCompilation` Transforms on input source.
@@ -75,19 +74,11 @@ export default function(
   transforms: Array<Transform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
-    
-    const options = filterContent(compileOptions);
-    
-    const { prefer, config } = options;
-
-    const USER_PLATFORM_PRECEDENCE = (prefer !== '') ? reOrder(PLATFORM_PRECEDENCE, prefer) : PLATFORM_PRECEDENCE;
-
+    const [config, platform] = filterContent(compileOptions);
     const instance = new compiler(config);
-
-    const firstSupportedPlatform = getFirstSupportedPlatform(USER_PLATFORM_PRECEDENCE);
+    const firstSupportedPlatform = getFirstSupportedPlatform(orderPlatforms(platform));
 
     if (firstSupportedPlatform !== Platform.JAVA) {
-
       // TODO(KB): Provide feedback on this API. It's a little strange to nullify the JAR_PATH
       // and provide a fake java path.
       instance.JAR_PATH = null;
