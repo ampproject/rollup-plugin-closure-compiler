@@ -22,7 +22,7 @@ import {
   Node,
   ClassDeclaration,
 } from 'estree';
-import { TransformSourceDescription } from 'rollup';
+import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
@@ -33,6 +33,20 @@ import {
 } from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
+
+const CJS_EXTERN = `/**
+* @fileoverview Externs built via derived configuration from Rollup or input code.
+* This extern contains the export global object so Closure doesn't get confused by its presence.
+* @externs
+*/
+
+/**
+ * @typedef {{
+ *   __esModule: boolean,
+ * }}
+ */
+let exports;
+`;
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -74,6 +88,14 @@ export default class ExportTransform extends Transform implements TransformInter
     });
 
     return originalExports;
+  }
+
+  public extern(options: OutputOptions): string {
+    if (options.format === 'cjs') {
+      return CJS_EXTERN;
+    }
+
+    return '';
   }
 
   /**
@@ -225,9 +247,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
                     if (originalExports[exportName].alias !== null) {
                       collectedExportsToAppend.push(
-                        `${ancestor.expression.left.property.name} as ${
-                          originalExports[exportName].alias
-                        }`,
+                        `${ancestor.expression.left.property.name} as ${originalExports[exportName].alias}`,
                       );
                     } else {
                       collectedExportsToAppend.push(ancestor.expression.left.property.name);
@@ -250,9 +270,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
                     if (ancestor.expression.right.type === 'Identifier') {
                       collectedExportsToAppend.push(
-                        `${ancestor.expression.right.name} as ${
-                          ancestor.expression.left.property.name
-                        }`,
+                        `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
                       );
                     }
                     break;
