@@ -15,8 +15,7 @@
  */
 
 import { CompileOptions } from 'google-closure-compiler';
-import * as fs from 'fs';
-import { promisify } from 'util';
+import { promises as fsPromises } from 'fs';
 import {
   OutputOptions,
   RawSourceMap,
@@ -29,8 +28,6 @@ import compiler from './compiler';
 import options from './options';
 import { preCompilation, createTransforms } from './transforms';
 import { Transform } from './types';
-
-const readFile = promisify(fs.readFile);
 
 /**
  * Transform the tree-shaken code from Rollup with Closure Compiler (with derived configuration and transforms)
@@ -56,7 +53,7 @@ const renderChunk = async (
 
   return compiler(compileOptions, transforms).then(
     async code => {
-      return { code, map: JSON.parse(await readFile(mapFile, 'utf8')) };
+      return { code, map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')) };
     },
     (error: Error) => {
       throw error;

@@ -17,11 +17,9 @@
 import test from 'ava';
 import compiler from '../../transpile';
 import * as rollup from 'rollup';
-import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import { join } from 'path';
-import { promisify } from 'util';
 
-const readFile = promisify(fs.readFile);
 const closureFlags = {
   default: {
     warning_level: 'VERBOSE',
@@ -37,17 +35,20 @@ const closureFlags = {
 async function compile(name, option) {
   const bundle = await rollup.rollup({
     input: `test/${name}/fixtures/warnings.js`,
-    plugins: [
-      compiler(closureFlags[option]),
-    ],
+    plugins: [compiler(closureFlags[option])],
   });
 
   return {
-    minified: await readFile(join(`test/${name}/fixtures/warnings.esm.${option}.js`), 'utf8'),
-    code: (await bundle.generate({
-      format: 'es',
-      sourcemap: true,
-    })).code,
+    minified: await fsPromises.readFile(
+      join(`test/${name}/fixtures/warnings.esm.${option}.js`),
+      'utf8',
+    ),
+    code: (
+      await bundle.generate({
+        format: 'es',
+        sourcemap: true,
+      })
+    ).code,
   };
 }
 
@@ -56,7 +57,7 @@ Object.keys(closureFlags).forEach(option => {
     try {
       await compile('error-reporting', option);
       t.fail('successfully built files without warning about input');
-    } catch(e) {
+    } catch (e) {
       t.pass();
     }
   });

@@ -17,13 +17,10 @@
 import test from 'ava';
 import { createTransforms } from '../../transpile/transforms';
 import { defaults } from '../../transpile/options';
-import * as fs from 'fs';
-import { promisify } from 'util';
-
-const readFile = promisify(fs.readFile);
+import { promises as fsPromises } from 'fs';
 
 test('generate extern for cjs export pattern', async t => {
-  const externFixtureContent = await readFile('test/export-cjs/fixtures/export.extern.js', 'utf8');
+  const externFixtureContent = await fsPromises.readFile('test/export-cjs/fixtures/export.extern.js', 'utf8');
   const outputOptions = {
     format: 'cjs',
   };
@@ -32,7 +29,7 @@ test('generate extern for cjs export pattern', async t => {
   const options = defaults(outputOptions, [], transforms);
 
   const contentMatch = options.externs.some(async externFilePath => {
-    const fileContent = await readFile(externFilePath, 'utf8');
+    const fileContent = await fsPromises.readFile(externFilePath, 'utf8');
     return fileContent === externFixtureContent;
   });
 

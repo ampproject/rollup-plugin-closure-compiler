@@ -17,9 +17,7 @@
 import test from 'ava';
 import compile from '../../transpile/options';
 import path from 'path';
-import fs from 'fs';
-import util from 'util';
-const readFile = util.promisify(fs.readFile);
+import {promises as fsPromises} from 'fs';
 
 const PROVIDED_EXTERN = path.resolve('test', 'closure-config', 'fixtures', 'externs.js');
 const IIFE_TRANSFORM_EXTERN_CONTENT = '/** @externs */ function wrapper(){}';
@@ -51,6 +49,6 @@ test('when rollup configuration specifies externs, extern is leveraged', async t
   // While we can use the path for the provided extern, we need to inspect the content of 
   // the other extern to ensure it is the generated extern.
   // Externs are passed as filepaths to Closure Compiler.
-  const fileContent = await readFile(compilerOptionsExterns.filter(path => path !== PROVIDED_EXTERN)[0], 'utf8');
+  const fileContent = await fsPromises.readFile(compilerOptionsExterns.filter(path => path !== PROVIDED_EXTERN)[0], 'utf8');
   t.true(fileContent === IIFE_TRANSFORM_EXTERN_CONTENT);
 });

@@ -19,9 +19,6 @@ const { default: compiler } = require('../transpile/index');
 const rollup = require('rollup');
 const fs = require('fs');
 const path = require('path');
-const util = require('util');
-
-const readFile = util.promisify(fs.readFile);
 
 const DEFAULT_CLOSURE_OPTIONS = { default: {} };
 const ADVANCED_CLOSURE_OPTIONS = {
@@ -74,7 +71,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
     const output = [];
     if (bundles.output) {
       for (file in bundles.output) {
-        const minified = await readFile(
+        const minified = await fs.promises.readFile(
           path.join(
             fixtureLocation(
               category,
@@ -92,7 +89,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
         });
       }
     } else {
-      const minified = await readFile(
+      const minified = await fs.promises.readFile(
         path.join(
           fixtureLocation(category, path.parse(bundles.fileName).name, format, optionKey, true),
         ),

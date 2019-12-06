@@ -19,11 +19,9 @@ import compiler from '../../transpile';
 import { createTransforms } from '../../transpile/transforms';
 import { defaults } from '../../transpile/options';
 import * as rollup from 'rollup';
-import * as fs from 'fs';
+import {promises as fsPromises} from 'fs';
 import { join } from 'path';
-import { promisify } from 'util';
 
-const readFile = promisify(fs.readFile);
 const formats = ['iife'];
 const closureFlags = {
   default: {},
@@ -37,7 +35,7 @@ const closureFlags = {
 };
 
 test('generate extern for iife name', async t => {
-  const externFixtureContent = await readFile('test/iife/fixtures/iife.extern.js', 'utf8');
+  const externFixtureContent = await fsPromises.readFile('test/iife/fixtures/iife.extern.js', 'utf8');
   const outputOptions = {
     format: 'iife',
     name: 'wrapper',
@@ -47,7 +45,7 @@ test('generate extern for iife name', async t => {
   const options = defaults(outputOptions, [], transforms);
 
   const contentMatch = options.externs.some(async externFilePath => {
-    const fileContent = await readFile(externFilePath, 'utf8');
+    const fileContent = await fsPromises.readFile(externFilePath, 'utf8');
     return fileContent === externFixtureContent;
   });
 
@@ -64,7 +62,7 @@ formats.forEach(format => {
     });
 
     return {
-      minified: await readFile(join(`test/${name}/fixtures/${format}.${option}.minified.js`), 'utf8'),
+      minified: await fsPromises.readFile(join(`test/${name}/fixtures/${format}.${option}.minified.js`), 'utf8'),
       code: (await bundle.generate({
         format,
         name: 'wrapper',

@@ -13,7 +13,7 @@
   },
   "author": "The AMP HTML Authors",
   "engines": {
-    "node": ">=8"
+    "node": ">=12"
   },
   "keywords": [
     "rollup-plugin"
@@ -25,7 +25,6 @@
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "lint:fix": "tslint -c tslint.json -p tsconfig.json --fix",
     "release": "np",
     "prepublishOnly": "npm-run-all build"
   },
@@ -60,7 +59,7 @@
   },
   "lint-staged": {
     "*.ts": [
-      "npm-run-all lint:fix",
+      "yarn lint --fix",
       "prettier --config .prettierrc --write",
       "git add"
     ]
