@@ -25,8 +25,9 @@
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",
     "lint": "tslint -c tslint.json -p tsconfig.json",
+    "lint:fix": "tslint -c tslint.json -p tsconfig.json --fix",
     "release": "np",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm-run-all build"
   },
   "peerDependencies": {
     "rollup": ">= 0.67.4"
@@ -59,14 +60,14 @@
   },
   "lint-staged": {
     "*.ts": [
-      "npm run lint --fix",
+      "npm-run-all lint:fix",
       "prettier --config .prettierrc --write",
       "git add"
     ]
   },
   "husky": {
     "hooks": {
-      "pre-push": "npm run test && npm run build",
+      "pre-push": "npm-run-all test build",
       "pre-commit": "lint-staged"
     }
   },
