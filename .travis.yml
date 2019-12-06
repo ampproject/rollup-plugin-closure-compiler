@@ -1,6 +1,6 @@
 language: node_js
+dist: xenial
 sudo: required  # See http://docs.travis-ci.com/user/trusty-ci-environment/
-dist: trusty
 node_js:
   - "lts/*"
 before_install:
@@ -12,3 +12,4 @@ branches:
 cache:
   directories:
     - node_modules
+  yarn: true
