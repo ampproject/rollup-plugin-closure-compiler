@@ -5,7 +5,7 @@ node_js:
   - "lts/*"
 before_install:
   - unset _JAVA_OPTIONS  # JVM heap sizes break closure compiler. #11203.
-script: npm run test
+script: yarn test
 branches:
   only:
     - master
