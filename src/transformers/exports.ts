@@ -115,6 +115,8 @@ export default class ExportTransform extends Transform implements TransformInter
       const source = new MagicString(code);
       this.originalExports = await this.deriveExports(code);
 
+      console.log({ exports: this.originalExports });
+
       Object.keys(this.originalExports).forEach(key => {
         // Remove export statements before Closure Compiler sees the code
         // This prevents CC from transpiling `export` statements when the language_out is set to a value
@@ -176,6 +178,7 @@ export default class ExportTransform extends Transform implements TransformInter
                 originalExportIdentifiers.includes(ancestor.expression.left.property.name)
               ) {
                 const exportName = ancestor.expression.left.property.name;
+                console.log({ exportName }, originalExports[exportName]);
                 switch (originalExports[exportName].type) {
                   case ExportClosureMapping.DEFAULT_FUNCTION:
                   case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
@@ -198,7 +201,7 @@ export default class ExportTransform extends Transform implements TransformInter
                         source.overwrite(
                           ancestor.expression.range[0],
                           firstParameter.range[0] - 1,
-                          `export function ${ancestor.expression.left.property.name}`,
+                          `export function ${originalExports[exportName].originalKey}`,
                         );
                       }
                     }
@@ -221,7 +224,9 @@ export default class ExportTransform extends Transform implements TransformInter
                               source.overwrite(
                                 node.range[0],
                                 node.body.range[0],
-                                `export default class extends ${node.superClass.name}`,
+                                `export default class extends ${
+                                  originalExports[node.superClass.name].originalKey
+                                }`,
                               );
                             } else {
                               source.overwrite(
@@ -247,10 +252,10 @@ export default class ExportTransform extends Transform implements TransformInter
 
                     if (originalExports[exportName].alias !== null) {
                       collectedExportsToAppend.push(
-                        `${ancestor.expression.left.property.name} as ${originalExports[exportName].alias}`,
+                        `${originalExports[exportName].originalKey} as ${originalExports[exportName].alias}`,
                       );
                     } else {
-                      collectedExportsToAppend.push(ancestor.expression.left.property.name);
+                      collectedExportsToAppend.push(originalExports[exportName].originalKey);
                     }
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
@@ -270,7 +275,9 @@ export default class ExportTransform extends Transform implements TransformInter
 
                     if (ancestor.expression.right.type === 'Identifier') {
                       collectedExportsToAppend.push(
-                        `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
+                        `${originalExports[ancestor.expression.right.name].originalKey} as ${
+                          ancestor.expression.left.property.name
+                        }`,
                       );
                     }
                     break;

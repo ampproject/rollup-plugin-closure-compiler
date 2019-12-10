@@ -78,11 +78,15 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
     const self = this;
     const source = new MagicString(code);
+    console.error('parse', code);
     const program = parse(code);
 
+    // console.error(program, code);
+
     walk.simple(program, {
-      async ImportDeclaration(node: ImportDeclaration) {
+      ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
+        // console.log('import declaration', name);
         const range: Range = node.range ? [node.range[0], node.range[1]] : [0, 0];
         self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
         source.remove(range[0], range[1]);
@@ -118,6 +122,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
+    console.log('imports postCompilation', code);
     const program = parse(code);
 
     Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>

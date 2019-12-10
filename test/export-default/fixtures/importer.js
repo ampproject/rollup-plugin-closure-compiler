@@ -1,0 +1,1 @@
+export { default as history, createHistory as createBrowserHistory } from './browser.js';

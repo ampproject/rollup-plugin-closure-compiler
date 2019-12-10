@@ -32,6 +32,13 @@ import {
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
+const ILLEGAL_NAME_IDENTIFIERS = ['default'];
+function remapKey(key: string): [string, string] {
+  return ILLEGAL_NAME_IDENTIFIERS.includes(key)
+    ? [`_CLOSURE_COMPATIBLE_KEY_${key}`, key]
+    : [key, key];
+}
+
 function functionDeclarationName(
   context: PluginContext,
   declaration: ExportDeclarationsWithFunctions,
@@ -84,9 +91,11 @@ export function NamedDeclaration(
   // var Foo=function(){}export{Foo as default} => default export function
 
   if (functionName !== null) {
+    const [remappedKey, originalKey] = remapKey(functionName);
     return {
-      [functionName]: {
+      [remappedKey]: {
         alias: null,
+        originalKey,
         type: ExportClosureMapping.NAMED_FUNCTION,
         range: [
           declaration.range ? declaration.range[0] : 0,
@@ -95,9 +104,11 @@ export function NamedDeclaration(
       },
     };
   } else if (className !== null) {
+    const [remappedKey, originalKey] = remapKey(className);
     return {
-      [className]: {
+      [remappedKey]: {
         alias: null,
+        originalKey,
         type: ExportClosureMapping.NAMED_CLASS,
         range: [
           declaration.range ? declaration.range[0] : 0,
@@ -111,8 +122,10 @@ export function NamedDeclaration(
 
     variableDeclarations.forEach(variableDeclarator => {
       if (variableDeclarator.id.type === 'Identifier') {
-        exportMap[variableDeclarator.id.name] = {
+        const [remappedKey, originalKey] = remapKey(variableDeclarator.id.name);
+        exportMap[remappedKey] = {
           alias: null,
+          originalKey,
           type: ExportClosureMapping.NAMED_CONSTANT,
           range: [
             declaration.range ? declaration.range[0] : 0,
@@ -125,11 +138,13 @@ export function NamedDeclaration(
   } else if (declaration.specifiers) {
     const exportMap: ExportNameToClosureMapping = {};
     declaration.specifiers.forEach(exportSpecifier => {
+      const [remappedKey, originalKey] = remapKey(exportSpecifier.local.name);
       if (exportSpecifier.exported.name === 'default') {
         // This is a default export in a specifier list.
         // e.g. export { foo as default };
-        exportMap[exportSpecifier.local.name] = {
+        exportMap[remappedKey] = {
           alias: null,
+          originalKey,
           type: ExportClosureMapping.DEFAULT,
           range: [
             declaration.range ? declaration.range[0] : 0,
@@ -137,11 +152,12 @@ export function NamedDeclaration(
           ],
         };
       } else {
-        exportMap[exportSpecifier.local.name] = {
+        exportMap[remappedKey] = {
           alias:
             exportSpecifier.local.name !== exportSpecifier.exported.name
               ? exportSpecifier.exported.name
               : null,
+          originalKey,
           type: ExportClosureMapping.NAMED_CONSTANT,
           range: [
             declaration.range ? declaration.range[0] : 0,
@@ -165,10 +181,12 @@ export function DefaultDeclaration(
       case 'FunctionDeclaration':
         const functionName = functionDeclarationName(context, declaration);
         if (functionName !== null) {
+          const [remappedKey, originalKey] = remapKey(functionName);
           return {
-            [functionName]: {
+            [remappedKey]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              originalKey,
               range: [
                 declaration.range ? declaration.range[0] : 0,
                 declaration.range ? declaration.range[1] : 0,
@@ -180,10 +198,12 @@ export function DefaultDeclaration(
       case 'ClassDeclaration':
         const className = classDeclarationName(context, declaration);
         if (className !== null) {
+          const [remappedKey, originalKey] = remapKey(className);
           return {
-            [className]: {
+            [remappedKey]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_CLASS,
+              originalKey,
               range: [
                 declaration.range ? declaration.range[0] : 0,
                 declaration.range ? declaration.range[1] : 0,
@@ -194,10 +214,12 @@ export function DefaultDeclaration(
         break;
       case 'Identifier':
         if (declaration.declaration.name) {
+          const [remappedKey, originalKey] = remapKey(declaration.declaration.name);
           return {
-            [declaration.declaration.name]: {
+            [remappedKey]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              originalKey,
               range: [
                 declaration.range ? declaration.range[0] : 0,
                 declaration.range ? declaration.range[1] : 0,
@@ -208,10 +230,12 @@ export function DefaultDeclaration(
         break;
       case 'Identifier':
         if (declaration.declaration.name) {
+          const [remappedKey, originalKey] = remapKey(declaration.declaration.name);
           return {
-            [declaration.declaration.name]: {
+            [remappedKey]: {
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              originalKey,
               range: [
                 declaration.range ? declaration.range[0] : 0,
                 declaration.range ? declaration.range[1] : 0,

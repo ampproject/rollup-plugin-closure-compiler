@@ -34,8 +34,8 @@ const ES5_STRICT_CLOSURE_OPTIONS = {
 };
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
-  ...ADVANCED_CLOSURE_OPTIONS,
-  ...ES5_STRICT_CLOSURE_OPTIONS,
+  // ...ADVANCED_CLOSURE_OPTIONS,
+  // ...ES5_STRICT_CLOSURE_OPTIONS,
 };
 
 const ES_OUTPUT = 'es';
@@ -61,6 +61,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
       external: ['lodash'],
       experimentalCodeSplitting: codeSplit,
       onwarn: _ => null,
+      external: ['./browser.js'],
     });
 
     const bundles = await bundle.generate({
