@@ -78,7 +78,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
     const self = this;
     const source = new MagicString(code);
-    console.error('parse', code);
+    // console.error('parse', code);
     const program = parse(code);
 
     // console.error(program, code);
@@ -122,7 +122,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
-    console.log('imports postCompilation', code);
+    // console.log('imports postCompilation', code);
     const program = parse(code);
 
     Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>

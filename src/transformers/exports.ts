@@ -26,10 +26,11 @@ import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
-  ExportNameToClosureMapping,
+  ExportNameToClosureMappingInfo,
   Transform,
   TransformInterface,
   ExportClosureMapping,
+  ExportClosureMappingInfo,
 } from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
@@ -57,16 +58,17 @@ let exports;
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
 export default class ExportTransform extends Transform implements TransformInterface {
-  private originalExports: ExportNameToClosureMapping = {};
+  private originalExports: ExportNameToClosureMappingInfo = {};
 
-  private async deriveExports(code: string): Promise<ExportNameToClosureMapping> {
-    const context = this.context;
-    let originalExports: ExportNameToClosureMapping = {};
+  private async deriveExports(code: string): Promise<ExportNameToClosureMappingInfo> {
+    let originalExports: ExportNameToClosureMappingInfo = {};
+    const { context } = this;
     const program = parse(code);
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
         const namedDeclarationValues = NamedDeclaration(context, node);
+        console.log(namedDeclarationValues, { namedDeclarationValues });
         if (namedDeclarationValues !== null) {
           originalExports = { ...originalExports, ...namedDeclarationValues };
         }
@@ -88,6 +90,13 @@ export default class ExportTransform extends Transform implements TransformInter
     });
 
     return originalExports;
+  }
+
+  private static exportFormat(toExport: ExportClosureMappingInfo): string {
+    if (toExport.alias) {
+      return `${toExport.originalKey} as ${toExport.alias}`;
+    }
+    return toExport.originalKey;
   }
 
   public extern(options: OutputOptions): string {
@@ -115,7 +124,7 @@ export default class ExportTransform extends Transform implements TransformInter
       const source = new MagicString(code);
       this.originalExports = await this.deriveExports(code);
 
-      console.log({ exports: this.originalExports });
+      console.log(code, { exports: this.originalExports });
 
       Object.keys(this.originalExports).forEach(key => {
         // Remove export statements before Closure Compiler sees the code
@@ -125,6 +134,8 @@ export default class ExportTransform extends Transform implements TransformInter
         // Window scoped references for each key are required to ensure Closure Compilre retains the code.
         source.append(`\nwindow['${key}'] = ${key};`);
       });
+
+      // console.log('after exports precompilation', source.toString());
 
       return {
         code: source.toString(),
@@ -153,7 +164,7 @@ export default class ExportTransform extends Transform implements TransformInter
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
       const program = parse(code);
-      const collectedExportsToAppend: Array<string> = [];
+      const collectedExportsToAppend: Map<string, Array<string>> = new Map();
 
       const originalExports = this.originalExports;
       const originalExportIdentifiers = Object.keys(originalExports);
@@ -178,17 +189,33 @@ export default class ExportTransform extends Transform implements TransformInter
                 originalExportIdentifiers.includes(ancestor.expression.left.property.name)
               ) {
                 const exportName = ancestor.expression.left.property.name;
-                console.log({ exportName }, originalExports[exportName]);
-                switch (originalExports[exportName].type) {
+                const { type, source: exportSource } = originalExports[exportName];
+                // console.log({ exportName }, originalExports[exportName]);
+                switch (type) {
                   case ExportClosureMapping.DEFAULT_FUNCTION:
                   case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
                   case ExportClosureMapping.DEFAULT:
                     if (ancestor.expression.left.range) {
-                      source.overwrite(
-                        ancestor.expression.left.range[0],
-                        ancestor.expression.left.range[1] + ancestor.expression.operator.length,
-                        `export default `,
-                      );
+                      if (exportSource === null) {
+                        source.overwrite(
+                          ancestor.expression.left.range[0],
+                          ancestor.expression.left.range[1] + ancestor.expression.operator.length,
+                          `export default `,
+                        );
+                      } else if (ancestor.expression.right.range) {
+                        source.overwrite(
+                          ancestor.expression.left.range[0],
+                          ancestor.expression.right.range[1] + 1,
+                          '',
+                        );
+
+                        collectedExportsToAppend.set(
+                          exportSource,
+                          (collectedExportsToAppend.get(exportSource) || []).concat(
+                            ExportTransform.exportFormat(originalExports[exportName]),
+                          ),
+                        );
+                      }
                     }
                     break;
                   case ExportClosureMapping.NAMED_FUNCTION:
@@ -243,20 +270,27 @@ export default class ExportTransform extends Transform implements TransformInter
                     break;
                   case ExportClosureMapping.NAMED_CONSTANT:
                     if (ancestor.expression.left.object.range) {
-                      source.overwrite(
-                        ancestor.expression.left.object.range[0],
-                        ancestor.expression.left.object.range[1] + 1,
-                        'var ',
-                      );
+                      if (exportSource === null) {
+                        source.overwrite(
+                          ancestor.expression.left.object.range[0],
+                          ancestor.expression.left.object.range[1] + 1,
+                          'var ',
+                        );
+                      } else if (ancestor.expression.right.range) {
+                        source.overwrite(
+                          ancestor.expression.left.object.range[0],
+                          ancestor.expression.right.range[1] + 1,
+                          '',
+                        );
+                      }
                     }
 
-                    if (originalExports[exportName].alias !== null) {
-                      collectedExportsToAppend.push(
-                        `${originalExports[exportName].originalKey} as ${originalExports[exportName].alias}`,
-                      );
-                    } else {
-                      collectedExportsToAppend.push(originalExports[exportName].originalKey);
-                    }
+                    collectedExportsToAppend.set(
+                      exportSource || '',
+                      (collectedExportsToAppend.get(exportSource || '') || []).concat(
+                        ExportTransform.exportFormat(originalExports[exportName]),
+                      ),
+                    );
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
                   case ExportClosureMapping.DEFAULT_OBJECT:
@@ -274,10 +308,13 @@ export default class ExportTransform extends Transform implements TransformInter
                     }
 
                     if (ancestor.expression.right.type === 'Identifier') {
-                      collectedExportsToAppend.push(
-                        `${originalExports[ancestor.expression.right.name].originalKey} as ${
-                          ancestor.expression.left.property.name
-                        }`,
+                      collectedExportsToAppend.set(
+                        '',
+                        (collectedExportsToAppend.get('') || []).concat(
+                          `${originalExports[ancestor.expression.right.name].originalKey} as ${
+                            ancestor.expression.left.property.name
+                          }`,
+                        ),
                       );
                     }
                     break;
@@ -288,8 +325,16 @@ export default class ExportTransform extends Transform implements TransformInter
         },
       });
 
-      if (collectedExportsToAppend.length > 0) {
-        source.append(`export{${collectedExportsToAppend.join(',')}};`);
+      // console.log('collectedExports keys', collectedExportsToAppend.keys());
+
+      for (const key of collectedExportsToAppend.keys()) {
+        // console.log('found key', key);
+        const values = collectedExportsToAppend.get(key) || [];
+        if (key === '') {
+          source.append(`export{${values.join(',')}};`);
+        } else {
+          source.append(`export{${values.join(',')}} from '${key}';`);
+        }
       }
 
       return {

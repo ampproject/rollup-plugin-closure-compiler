@@ -23,11 +23,12 @@ import {
 } from 'estree';
 import { PluginContext } from 'rollup';
 import {
-  ExportNameToClosureMapping,
+  ExportNameToClosureMappingInfo,
   ExportClosureMapping,
   IMPORT_SPECIFIER,
   IMPORT_NAMESPACE_SPECIFIER,
   IMPORT_DEFAULT_SPECIFIER,
+  Range,
 } from '../types';
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
@@ -83,9 +84,15 @@ function classDeclarationName(
 export function NamedDeclaration(
   context: PluginContext,
   declaration: ExportNamedDeclaration,
-): ExportNameToClosureMapping | null {
-  const functionName = functionDeclarationName(context, declaration);
-  const className = classDeclarationName(context, declaration);
+): ExportNameToClosureMappingInfo | null {
+  // console.log({ declaration });
+  const functionName: string | null = functionDeclarationName(context, declaration);
+  const className: string | null = classDeclarationName(context, declaration);
+  const range: Range = declaration.range || [0, 0];
+  const source: string | null =
+    declaration.source && declaration.source.value && typeof declaration.source.value === 'string'
+      ? declaration.source.value
+      : null;
 
   // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
   // var Foo=function(){}export{Foo as default} => default export function
@@ -97,10 +104,8 @@ export function NamedDeclaration(
         alias: null,
         originalKey,
         type: ExportClosureMapping.NAMED_FUNCTION,
-        range: [
-          declaration.range ? declaration.range[0] : 0,
-          declaration.range ? declaration.range[1] : 0,
-        ],
+        range,
+        source,
       },
     };
   } else if (className !== null) {
@@ -110,46 +115,45 @@ export function NamedDeclaration(
         alias: null,
         originalKey,
         type: ExportClosureMapping.NAMED_CLASS,
-        range: [
-          declaration.range ? declaration.range[0] : 0,
-          declaration.range ? declaration.range[1] : 0,
-        ],
+        range,
+        source,
       },
     };
   } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
     const variableDeclarations = declaration.declaration.declarations;
-    const exportMap: ExportNameToClosureMapping = {};
+    const exportMap: ExportNameToClosureMappingInfo = {};
 
     variableDeclarations.forEach(variableDeclarator => {
+      // console.log('looping variableDeclarations');
       if (variableDeclarator.id.type === 'Identifier') {
         const [remappedKey, originalKey] = remapKey(variableDeclarator.id.name);
         exportMap[remappedKey] = {
           alias: null,
           originalKey,
           type: ExportClosureMapping.NAMED_CONSTANT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
+          range,
+          source,
         };
       }
     });
     return exportMap;
   } else if (declaration.specifiers) {
-    const exportMap: ExportNameToClosureMapping = {};
+    const exportMap: ExportNameToClosureMappingInfo = {};
     declaration.specifiers.forEach(exportSpecifier => {
       const [remappedKey, originalKey] = remapKey(exportSpecifier.local.name);
-      if (exportSpecifier.exported.name === 'default') {
+      // console.log('found', [remappedKey, originalKey], exportSpecifier.local.name);
+      if (originalKey === 'default') {
         // This is a default export in a specifier list.
         // e.g. export { foo as default };
         exportMap[remappedKey] = {
-          alias: null,
+          alias:
+            exportSpecifier.local.name !== exportSpecifier.exported.name
+              ? exportSpecifier.exported.name
+              : null,
           originalKey,
           type: ExportClosureMapping.DEFAULT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
+          range,
+          source,
         };
       } else {
         exportMap[remappedKey] = {
@@ -159,10 +163,8 @@ export function NamedDeclaration(
               : null,
           originalKey,
           type: ExportClosureMapping.NAMED_CONSTANT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
+          range,
+          source,
         };
       }
     });
@@ -175,8 +177,13 @@ export function NamedDeclaration(
 export function DefaultDeclaration(
   context: PluginContext,
   declaration: ExportDefaultDeclaration,
-): ExportNameToClosureMapping | null {
+): ExportNameToClosureMappingInfo | null {
   if (declaration.declaration) {
+    const range: Range = [
+      declaration.range ? declaration.range[0] : 0,
+      declaration.range ? declaration.range[1] : 0,
+    ];
+
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
         const functionName = functionDeclarationName(context, declaration);
@@ -187,10 +194,8 @@ export function DefaultDeclaration(
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               originalKey,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source: null,
             },
           };
         }
@@ -204,10 +209,8 @@ export function DefaultDeclaration(
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_CLASS,
               originalKey,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source: null,
             },
           };
         }
@@ -220,10 +223,8 @@ export function DefaultDeclaration(
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               originalKey,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source: null,
             },
           };
         }
@@ -236,10 +237,8 @@ export function DefaultDeclaration(
               alias: null,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               originalKey,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source: null,
             },
           };
         }

@@ -56,14 +56,15 @@ export enum ExportClosureMapping {
   DEFAULT_VALUE = 8,
   DEFAULT_OBJECT = 9,
 }
-export interface ClosureMapping {
+export interface ExportClosureMappingInfo {
   alias: string | null;
   originalKey: string;
   type: ExportClosureMapping;
   range: Range;
+  source: string | null;
 }
-export interface ExportNameToClosureMapping {
-  [key: string]: ClosureMapping;
+export interface ExportNameToClosureMappingInfo {
+  [key: string]: ExportClosureMappingInfo;
 }
 
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
