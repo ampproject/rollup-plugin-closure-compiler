@@ -16,7 +16,8 @@
     "noImplicitThis": true,
     "alwaysStrict": true,
     "declaration": true,
-    "module": "esnext"
+    "module": "esnext",
+    "allowSyntheticDefaultImports": true,
   },
   "include": [
     "./**/*.ts",

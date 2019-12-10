@@ -196,7 +196,7 @@ export default class ExportTransform extends Transform implements TransformInter
                       source.overwrite(
                         ancestor.expression.left.range[0],
                         ancestor.expression.left.range[1] + ancestor.expression.operator.length,
-                        `export default `,
+                        'export default ',
                       );
                     }
                     break;
@@ -239,7 +239,7 @@ export default class ExportTransform extends Transform implements TransformInter
                               source.overwrite(
                                 node.range[0],
                                 node.body.range[0],
-                                `export default class`,
+                                'export default class',
                               );
                             }
                             source.remove(...ancestor.range);
@@ -261,6 +261,7 @@ export default class ExportTransform extends Transform implements TransformInter
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
                   case ExportClosureMapping.DEFAULT_OBJECT:
+                    console.log(code);
                     if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
                       source.overwrite(
                         ancestor.expression.left.object.range[0],
