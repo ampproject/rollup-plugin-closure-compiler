@@ -83,7 +83,6 @@ export default class ExportTransform extends Transform implements TransformInter
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        console.log(NamedDeclaration(context, node));
         storeExport(NamedDeclaration(context, node));
       },
       ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
@@ -163,7 +162,6 @@ export default class ExportTransform extends Transform implements TransformInter
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
       const program = parse(code);
-      console.log('parsed', program);
       let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
       const { originalExports } = this;
 
@@ -282,7 +280,7 @@ export default class ExportTransform extends Transform implements TransformInter
                       break;
                     case ExportClosureMapping.DEFAULT_VALUE:
                     case ExportClosureMapping.DEFAULT_OBJECT:
-                      console.log(code);
+                      // console.log(code);
                       if (
                         ancestor.expression.left.object.range &&
                         ancestor.expression.right.range
@@ -328,7 +326,7 @@ export default class ExportTransform extends Transform implements TransformInter
         }
       }
 
-      console.log('done', source.toString());
+      // console.log('done', source.toString());
 
       return {
         code: source.toString(),
