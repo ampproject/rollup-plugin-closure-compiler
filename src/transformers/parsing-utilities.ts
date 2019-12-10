@@ -28,6 +28,8 @@ import {
   IMPORT_SPECIFIER,
   IMPORT_NAMESPACE_SPECIFIER,
   IMPORT_DEFAULT_SPECIFIER,
+  ExportDetailsMapping,
+  ExportDetails,
 } from '../types';
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
@@ -76,7 +78,7 @@ function classDeclarationName(
 export function NamedDeclaration(
   context: PluginContext,
   declaration: ExportNamedDeclaration,
-): ExportNameToClosureMapping | null {
+): Array<ExportDetails> {
   const functionName = functionDeclarationName(context, declaration);
   const className = classDeclarationName(context, declaration);
 
@@ -159,7 +161,7 @@ export function NamedDeclaration(
 export function DefaultDeclaration(
   context: PluginContext,
   declaration: ExportDefaultDeclaration,
-): ExportNameToClosureMapping | null {
+): Array<ExportDetails> {
   if (declaration.declaration) {
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':

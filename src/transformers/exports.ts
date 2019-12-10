@@ -25,12 +25,7 @@ import {
 import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
-import {
-  ExportNameToClosureMapping,
-  Transform,
-  TransformInterface,
-  ExportClosureMapping,
-} from '../types';
+import { Transform, TransformInterface, ExportClosureMapping, ExportDetails } from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
 
@@ -57,25 +52,41 @@ let exports;
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
 export default class ExportTransform extends Transform implements TransformInterface {
-  private originalExports: ExportNameToClosureMapping = {};
+  private originalExports: Map<string, ExportDetails> = new Map();
 
-  private async deriveExports(code: string): Promise<ExportNameToClosureMapping> {
-    const context = this.context;
-    let originalExports: ExportNameToClosureMapping = {};
+  /**
+   * Store an export from a source into the originalExports Map.
+   * @param mapping mapping of details from this declaration.
+   */
+  private storeExport = (mapping: Array<ExportDetails>): void =>
+    mapping.forEach(map => this.originalExports.set(map.closureName, map));
+
+  private static storeExportToAppend(
+    collected: Map<string | null, Array<string>>,
+    exportDetails: ExportDetails,
+  ): Map<string | null, Array<string>> {
+    const update = collected.get(exportDetails.source) || [];
+
+    if (exportDetails.exported === exportDetails.local) {
+      update.push(exportDetails.exported);
+    } else {
+      update.push(`${exportDetails.local} as ${exportDetails.exported}`);
+    }
+    collected.set(exportDetails.source, update);
+
+    return collected;
+  }
+
+  private async deriveExports(code: string): Promise<void> {
+    const { context, storeExport } = this;
     const program = parse(code);
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        const namedDeclarationValues = NamedDeclaration(context, node);
-        if (namedDeclarationValues !== null) {
-          originalExports = { ...originalExports, ...namedDeclarationValues };
-        }
+        storeExport(NamedDeclaration(context, node));
       },
       ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-        const defaultDeclarationValue = DefaultDeclaration(context, node);
-        if (defaultDeclarationValue !== null) {
-          originalExports = { ...originalExports, ...defaultDeclarationValue };
-        }
+        storeExport(DefaultDeclaration(context, node));
       },
       ExportAllDeclaration(node: ExportAllDeclaration) {
         // TODO(KB): This case `export * from "./import"` is not currently supported.
@@ -86,8 +97,6 @@ export default class ExportTransform extends Transform implements TransformInter
         );
       },
     });
-
-    return originalExports;
   }
 
   public extern(options: OutputOptions): string {
@@ -112,17 +121,19 @@ export default class ExportTransform extends Transform implements TransformInter
         'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
       );
     } else if (isESMFormat(this.outputOptions.format)) {
+      await this.deriveExports(code);
       const source = new MagicString(code);
-      this.originalExports = await this.deriveExports(code);
 
-      Object.keys(this.originalExports).forEach(key => {
+      for (const key of this.originalExports.keys()) {
+        const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
+
         // Remove export statements before Closure Compiler sees the code
         // This prevents CC from transpiling `export` statements when the language_out is set to a value
         // where exports were not part of the language.
-        source.remove(this.originalExports[key].range[0], this.originalExports[key].range[1]);
+        source.remove(...value.range);
         // Window scoped references for each key are required to ensure Closure Compilre retains the code.
         source.append(`\nwindow['${key}'] = ${key};`);
-      });
+      }
 
       return {
         code: source.toString(),
@@ -151,10 +162,8 @@ export default class ExportTransform extends Transform implements TransformInter
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
       const program = parse(code);
-      const collectedExportsToAppend: Array<string> = [];
-
-      const originalExports = this.originalExports;
-      const originalExportIdentifiers = Object.keys(originalExports);
+      let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
+      const { originalExports } = this;
 
       source.trimEnd();
 
@@ -173,10 +182,13 @@ export default class ExportTransform extends Transform implements TransformInter
                 ancestor.expression.left.object.type === 'Identifier' &&
                 ancestor.expression.left.object.name === 'window' &&
                 ancestor.expression.left.property.type === 'Identifier' &&
-                originalExportIdentifiers.includes(ancestor.expression.left.property.name)
+                originalExports.get(ancestor.expression.left.property.name)
               ) {
-                const exportName = ancestor.expression.left.property.name;
-                switch (originalExports[exportName].type) {
+                const { name: exportName } = ancestor.expression.left.property;
+                const exportDetails: ExportDetails = originalExports.get(
+                  exportName,
+                ) as ExportDetails;
+                switch (exportDetails.type) {
                   case ExportClosureMapping.DEFAULT_FUNCTION:
                   case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
                   case ExportClosureMapping.DEFAULT:
@@ -193,7 +205,7 @@ export default class ExportTransform extends Transform implements TransformInter
                       ancestor.expression.right.type === 'FunctionExpression' &&
                       ancestor.expression.right.params.length > 0
                     ) {
-                      const firstParameter = ancestor.expression.right.params[0];
+                      const [firstParameter] = ancestor.expression.right.params;
                       if (ancestor.expression.range && firstParameter.range) {
                         source.overwrite(
                           ancestor.expression.range[0],
@@ -206,7 +218,7 @@ export default class ExportTransform extends Transform implements TransformInter
                   case ExportClosureMapping.DEFAULT_CLASS:
                   case ExportClosureMapping.NAMED_DEFAULT_CLASS:
                     if (ancestor.expression.right.type === 'Identifier') {
-                      const mangledName = ancestor.expression.right.name;
+                      const { name: mangledName } = ancestor.expression.right;
 
                       walk.simple(program, {
                         ClassDeclaration(node: ClassDeclaration) {
@@ -230,28 +242,22 @@ export default class ExportTransform extends Transform implements TransformInter
                                 `export default class`,
                               );
                             }
-                            source.remove(ancestor.range[0], ancestor.range[1]);
+                            source.remove(...ancestor.range);
                           }
                         },
                       });
                     }
                     break;
                   case ExportClosureMapping.NAMED_CONSTANT:
-                    if (ancestor.expression.left.object.range) {
-                      source.overwrite(
-                        ancestor.expression.left.object.range[0],
-                        ancestor.expression.left.object.range[1] + 1,
-                        'var ',
-                      );
+                    const { object: leftObject } = ancestor.expression.left;
+                    if (leftObject.range) {
+                      source.overwrite(leftObject.range[0], leftObject.range[1] + 1, 'var ');
                     }
 
-                    if (originalExports[exportName].alias !== null) {
-                      collectedExportsToAppend.push(
-                        `${ancestor.expression.left.property.name} as ${originalExports[exportName].alias}`,
-                      );
-                    } else {
-                      collectedExportsToAppend.push(ancestor.expression.left.property.name);
-                    }
+                    collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                      collectedExportsToAppend,
+                      exportDetails,
+                    );
                     break;
                   case ExportClosureMapping.DEFAULT_VALUE:
                   case ExportClosureMapping.DEFAULT_OBJECT:
@@ -265,13 +271,17 @@ export default class ExportTransform extends Transform implements TransformInter
                     break;
                   default:
                     if (ancestor.range) {
-                      source.remove(ancestor.range[0], ancestor.range[1]);
+                      source.remove(...ancestor.range);
                     }
 
                     if (ancestor.expression.right.type === 'Identifier') {
-                      collectedExportsToAppend.push(
-                        `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
+                      collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                        collectedExportsToAppend,
+                        exportDetails,
                       );
+                      // collectedExportsToAppend.push(
+                      //   `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
+                      // );
                     }
                     break;
                 }
@@ -281,8 +291,15 @@ export default class ExportTransform extends Transform implements TransformInter
         },
       });
 
-      if (collectedExportsToAppend.length > 0) {
-        source.append(`export{${collectedExportsToAppend.join(',')}};`);
+      for (const exportSource of collectedExportsToAppend.keys()) {
+        const toAppend = collectedExportsToAppend.get(exportSource);
+        if (toAppend && toAppend.length > 0) {
+          if (exportSource === null) {
+            source.append(`export{${toAppend.join(',')}};`);
+          } else {
+            source.append(`export{${toAppend.join(',')}} from '${exportSource}';`);
+          }
+        }
       }
 
       return {
