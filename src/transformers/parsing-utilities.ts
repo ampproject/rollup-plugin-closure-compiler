@@ -30,7 +30,7 @@ import {
   ExportDetails,
   Range,
 } from '../types';
-import sanitize from 'sanitize-filename';
+const sanitize = require('sanitize-filename');
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
@@ -89,6 +89,10 @@ export function NamedDeclaration(
   const functionName = functionDeclarationName(context, declaration);
   const className = classDeclarationName(context, declaration);
   const range: Range = declaration.range as Range;
+  const source: string | null =
+    declaration.source && declaration.source.value && typeof declaration.source.value === 'string'
+      ? declaration.source.value
+      : null;
 
   // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
   // var Foo=function(){}export{Foo as default} => default export function
@@ -98,10 +102,10 @@ export function NamedDeclaration(
       {
         local: functionName,
         exported: functionName,
-        closureName: closureMangleExportName(functionName, null),
+        closureName: closureMangleExportName(functionName, source),
         type: ExportClosureMapping.NAMED_FUNCTION,
         range,
-        source: null,
+        source,
       },
     ];
   } else if (className !== null) {
@@ -109,10 +113,10 @@ export function NamedDeclaration(
       {
         local: className,
         exported: className,
-        closureName: closureMangleExportName(className, null),
+        closureName: closureMangleExportName(className, source),
         type: ExportClosureMapping.NAMED_CLASS,
         range,
-        source: null,
+        source,
       },
     ];
   } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
@@ -124,10 +128,10 @@ export function NamedDeclaration(
         exportDetails.push({
           local: declarator.id.name,
           exported: declarator.id.name,
-          closureName: closureMangleExportName(declarator.id.name, null),
+          closureName: closureMangleExportName(declarator.id.name, source),
           type: ExportClosureMapping.NAMED_CONSTANT,
           range,
-          source: null,
+          source,
         });
       }
     }
@@ -139,10 +143,10 @@ export function NamedDeclaration(
       exportDetails.push({
         local: specifier.local.name,
         exported: specifier.exported.name,
-        closureName: closureMangleExportName(specifier.local.name, null),
+        closureName: closureMangleExportName(specifier.local.name, source),
         type: ExportClosureMapping.NAMED_CONSTANT,
         range,
-        source: null,
+        source,
       });
     }
     return exportDetails;
@@ -157,6 +161,7 @@ export function DefaultDeclaration(
 ): Array<ExportDetails> {
   if (declaration.declaration) {
     const range: Range = declaration.range as Range;
+    const source = null;
 
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
@@ -166,10 +171,10 @@ export function DefaultDeclaration(
             {
               local: functionName,
               exported: functionName,
-              closureName: closureMangleExportName(functionName, null),
+              closureName: closureMangleExportName(functionName, source),
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
-              source: null,
+              source,
             },
           ];
         }
@@ -181,10 +186,10 @@ export function DefaultDeclaration(
             {
               local: className,
               exported: className,
-              closureName: closureMangleExportName(className, null),
+              closureName: closureMangleExportName(className, source),
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
-              source: null,
+              source,
             },
           ];
         }
@@ -195,10 +200,10 @@ export function DefaultDeclaration(
             {
               local: declaration.declaration.name,
               exported: declaration.declaration.name,
-              closureName: closureMangleExportName(declaration.declaration.name, null),
+              closureName: closureMangleExportName(declaration.declaration.name, source),
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
-              source: null,
+              source,
             },
           ];
         }

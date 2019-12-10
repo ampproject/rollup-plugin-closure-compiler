@@ -16,7 +16,7 @@
 
 import { sync } from 'temp-write';
 
-const DEBUG_ENABLED = false;
+const DEBUG_ENABLED = true;
 
 export const logSource = (preamble: string, source: string, code?: string) => {
   if (DEBUG_ENABLED) {

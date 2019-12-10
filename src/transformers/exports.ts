@@ -83,6 +83,7 @@ export default class ExportTransform extends Transform implements TransformInter
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
+        console.log(NamedDeclaration(context, node));
         storeExport(NamedDeclaration(context, node));
       },
       ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
@@ -162,6 +163,7 @@ export default class ExportTransform extends Transform implements TransformInter
     } else if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
       const program = parse(code);
+      console.log('parsed', program);
       let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
       const { originalExports } = this;
 
@@ -180,111 +182,134 @@ export default class ExportTransform extends Transform implements TransformInter
                 ancestor.expression.type === 'AssignmentExpression' &&
                 ancestor.expression.left.type === 'MemberExpression' &&
                 ancestor.expression.left.object.type === 'Identifier' &&
-                ancestor.expression.left.object.name === 'window' &&
-                ancestor.expression.left.property.type === 'Identifier' &&
-                originalExports.get(ancestor.expression.left.property.name)
+                ancestor.expression.left.object.name === 'window'
               ) {
-                const { name: exportName } = ancestor.expression.left.property;
-                const exportDetails: ExportDetails = originalExports.get(
-                  exportName,
-                ) as ExportDetails;
-                switch (exportDetails.type) {
-                  case ExportClosureMapping.DEFAULT_FUNCTION:
-                  case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-                  case ExportClosureMapping.DEFAULT:
-                    if (ancestor.expression.left.range) {
-                      source.overwrite(
-                        ancestor.expression.left.range[0],
-                        ancestor.expression.left.range[1] + ancestor.expression.operator.length,
-                        'export default ',
-                      );
-                    }
-                    break;
-                  case ExportClosureMapping.NAMED_FUNCTION:
-                    if (
-                      ancestor.expression.right.type === 'FunctionExpression' &&
-                      ancestor.expression.right.params.length > 0
-                    ) {
-                      const [firstParameter] = ancestor.expression.right.params;
-                      if (ancestor.expression.range && firstParameter.range) {
+                const { property: leftProperty } = ancestor.expression.left;
+                let exportName: string | null = null;
+                if (leftProperty.type === 'Identifier') {
+                  exportName = leftProperty.name;
+                } else if (
+                  leftProperty.type === 'Literal' &&
+                  typeof leftProperty.value === 'string'
+                ) {
+                  exportName = leftProperty.value;
+                }
+
+                if (exportName !== null && originalExports.get(exportName)) {
+                  const exportDetails: ExportDetails = originalExports.get(
+                    exportName,
+                  ) as ExportDetails;
+                  switch (exportDetails.type) {
+                    case ExportClosureMapping.DEFAULT_FUNCTION:
+                    case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
+                    case ExportClosureMapping.DEFAULT:
+                      if (ancestor.expression.left.range) {
                         source.overwrite(
-                          ancestor.expression.range[0],
-                          firstParameter.range[0] - 1,
-                          `export function ${ancestor.expression.left.property.name}`,
+                          ancestor.expression.left.range[0],
+                          ancestor.expression.left.range[1] + ancestor.expression.operator.length,
+                          'export default ',
                         );
                       }
-                    }
-                    break;
-                  case ExportClosureMapping.DEFAULT_CLASS:
-                  case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-                    if (ancestor.expression.right.type === 'Identifier') {
-                      const { name: mangledName } = ancestor.expression.right;
+                      break;
+                    case ExportClosureMapping.NAMED_FUNCTION:
+                      if (
+                        ancestor.expression.right.type === 'FunctionExpression' &&
+                        ancestor.expression.right.params.length > 0
+                      ) {
+                        const [firstParameter] = ancestor.expression.right.params;
+                        if (ancestor.expression.range && firstParameter.range) {
+                          source.overwrite(
+                            ancestor.expression.range[0],
+                            firstParameter.range[0] - 1,
+                            `export function ${exportName}`,
+                          );
+                        }
+                      }
+                      break;
+                    case ExportClosureMapping.DEFAULT_CLASS:
+                    case ExportClosureMapping.NAMED_DEFAULT_CLASS:
+                      if (ancestor.expression.right.type === 'Identifier') {
+                        const { name: mangledName } = ancestor.expression.right;
 
-                      walk.simple(program, {
-                        ClassDeclaration(node: ClassDeclaration) {
-                          if (
-                            node.id &&
-                            node.id.name === mangledName &&
-                            node.range &&
-                            node.body.range &&
-                            ancestor.range
-                          ) {
-                            if (node.superClass && node.superClass.type === 'Identifier') {
-                              source.overwrite(
-                                node.range[0],
-                                node.body.range[0],
-                                `export default class extends ${node.superClass.name}`,
-                              );
-                            } else {
-                              source.overwrite(
-                                node.range[0],
-                                node.body.range[0],
-                                'export default class',
-                              );
+                        walk.simple(program, {
+                          ClassDeclaration(node: ClassDeclaration) {
+                            if (
+                              node.id &&
+                              node.id.name === mangledName &&
+                              node.range &&
+                              node.body.range &&
+                              ancestor.range
+                            ) {
+                              if (node.superClass && node.superClass.type === 'Identifier') {
+                                source.overwrite(
+                                  node.range[0],
+                                  node.body.range[0],
+                                  `export default class extends ${node.superClass.name}`,
+                                );
+                              } else {
+                                source.overwrite(
+                                  node.range[0],
+                                  node.body.range[0],
+                                  'export default class',
+                                );
+                              }
+                              source.remove(...ancestor.range);
                             }
-                            source.remove(...ancestor.range);
-                          }
-                        },
-                      });
-                    }
-                    break;
-                  case ExportClosureMapping.NAMED_CONSTANT:
-                    const { object: leftObject } = ancestor.expression.left;
-                    if (leftObject.range) {
-                      source.overwrite(leftObject.range[0], leftObject.range[1] + 1, 'var ');
-                    }
+                          },
+                        });
+                      }
+                      break;
+                    case ExportClosureMapping.NAMED_CONSTANT:
+                      if (exportDetails.source === null) {
+                        const { object: leftObject } = ancestor.expression.left;
+                        if (leftObject.range) {
+                          source.overwrite(leftObject.range[0], leftObject.range[1] + 1, 'var ');
+                        }
+                      } else if (
+                        ancestor.expression.left.range &&
+                        ancestor.expression.right.range
+                      ) {
+                        source.remove(
+                          ancestor.expression.left.range[0],
+                          ancestor.expression.right.range[1] + 1,
+                        );
+                      }
 
-                    collectedExportsToAppend = ExportTransform.storeExportToAppend(
-                      collectedExportsToAppend,
-                      exportDetails,
-                    );
-                    break;
-                  case ExportClosureMapping.DEFAULT_VALUE:
-                  case ExportClosureMapping.DEFAULT_OBJECT:
-                    console.log(code);
-                    if (ancestor.expression.left.object.range && ancestor.expression.right.range) {
-                      source.overwrite(
-                        ancestor.expression.left.object.range[0],
-                        ancestor.expression.right.range[0],
-                        'export default ',
-                      );
-                    }
-                    break;
-                  default:
-                    if (ancestor.range) {
-                      source.remove(...ancestor.range);
-                    }
-
-                    if (ancestor.expression.right.type === 'Identifier') {
                       collectedExportsToAppend = ExportTransform.storeExportToAppend(
                         collectedExportsToAppend,
                         exportDetails,
                       );
-                      // collectedExportsToAppend.push(
-                      //   `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
-                      // );
-                    }
-                    break;
+                      break;
+                    case ExportClosureMapping.DEFAULT_VALUE:
+                    case ExportClosureMapping.DEFAULT_OBJECT:
+                      console.log(code);
+                      if (
+                        ancestor.expression.left.object.range &&
+                        ancestor.expression.right.range
+                      ) {
+                        source.overwrite(
+                          ancestor.expression.left.object.range[0],
+                          ancestor.expression.right.range[0],
+                          'export default ',
+                        );
+                      }
+                      break;
+                    default:
+                      if (ancestor.range) {
+                        source.remove(...ancestor.range);
+                      }
+
+                      if (ancestor.expression.right.type === 'Identifier') {
+                        collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                          collectedExportsToAppend,
+                          exportDetails,
+                        );
+                        // collectedExportsToAppend.push(
+                        //   `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
+                        // );
+                      }
+                      break;
+                  }
                 }
               }
             });
@@ -298,10 +323,12 @@ export default class ExportTransform extends Transform implements TransformInter
           if (exportSource === null) {
             source.append(`export{${toAppend.join(',')}};`);
           } else {
-            source.append(`export{${toAppend.join(',')}} from '${exportSource}';`);
+            source.append(`export{${toAppend.join(',')}}from'${exportSource}';`);
           }
         }
       }
+
+      console.log('done', source.toString());
 
       return {
         code: source.toString(),
