@@ -4,6 +4,8 @@ export function exportedFunction() {
 
 export const constNumber = 1;
 
+export const exportedArray = [1,2,3];
+
 export const constFunction = function(argument) {
   console.log(argument);
 };
