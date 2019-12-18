@@ -106,7 +106,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
 
   for (const format of formats) {
     for(const optionKey of Object.keys(closureFlags)) {
-      const method = shouldFail ? test.failing.serial : test.serial;
+      const method = shouldFail ? test.serial.failing : test.serial;
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
         async t => {
