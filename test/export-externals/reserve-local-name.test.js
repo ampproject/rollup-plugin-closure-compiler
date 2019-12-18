@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 The AMP HTML Authors. All Rights Reserved.
+ * Copyright 2019 The AMP HTML Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,6 @@
  * limitations under the License.
  */
 
-import { sync } from 'temp-write';
+import {generator} from '../generator';
 
-const DEBUG_ENABLED = false;
-
-export const logSource = (preamble: string, source: string, code?: string) => {
-  if (DEBUG_ENABLED) {
-    console.log(preamble);
-    console.log(sync(source));
-    if (code) {
-      console.log(sync(code));
-    }
-  }
-};
-
-export const log = (preamble: string, message: string | object): void | null => {
-  if (DEBUG_ENABLED) {
-    console.log(preamble);
-    console.log(message);
-  }
-};
+generator('export-externals', 'reserve-local-name');

@@ -28,20 +28,19 @@ import { isESMFormat } from '../options';
 import { Transform, TransformInterface, ExportClosureMapping, ExportDetails } from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
+import { log } from '../debug';
+
+const EXTERN_OVERVIEW = `/**
+* @fileoverview Externs built via derived configuration from Rollup or input code.
+* @externs
+*/`;
 
 const CJS_EXTERN = `/**
-* @fileoverview Externs built via derived configuration from Rollup or input code.
-* This extern contains the export global object so Closure doesn't get confused by its presence.
-* @externs
-*/
-
-/**
  * @typedef {{
  *   __esModule: boolean,
  * }}
  */
-let exports;
-`;
+let exports;`;
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
@@ -52,6 +51,7 @@ let exports;
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
 export default class ExportTransform extends Transform implements TransformInterface {
+  public name = 'ExportTransform';
   private originalExports: Map<string, ExportDetails> = new Map();
 
   /**
@@ -100,11 +100,19 @@ export default class ExportTransform extends Transform implements TransformInter
   }
 
   public extern(options: OutputOptions): string {
+    let output = EXTERN_OVERVIEW;
     if (options.format === 'cjs') {
-      return CJS_EXTERN;
+      output += CJS_EXTERN;
     }
 
-    return '';
+    for (const key of this.originalExports.keys()) {
+      const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
+      if (value.source !== null) {
+        output += `function ${key}(){};\n`;
+      }
+    }
+
+    return output;
   }
 
   /**
@@ -132,7 +140,11 @@ export default class ExportTransform extends Transform implements TransformInter
         // where exports were not part of the language.
         source.remove(...value.range);
         // Window scoped references for each key are required to ensure Closure Compilre retains the code.
-        source.append(`\nwindow['${key}'] = ${key};`);
+        if (value.source === null) {
+          source.append(`\nwindow['${value.local}'] = ${value.local};`);
+        } else {
+          source.append(`\nwindow['${key}'] = ${key};`);
+        }
       }
 
       return {
@@ -193,6 +205,7 @@ export default class ExportTransform extends Transform implements TransformInter
                   exportName = leftProperty.value;
                 }
 
+                log('', { exportName, originalExports });
                 if (exportName !== null && originalExports.get(exportName)) {
                   const exportDetails: ExportDetails = originalExports.get(
                     exportName,
@@ -280,7 +293,6 @@ export default class ExportTransform extends Transform implements TransformInter
                       break;
                     case ExportClosureMapping.DEFAULT_VALUE:
                     case ExportClosureMapping.DEFAULT_OBJECT:
-                      // console.log(code);
                       if (
                         ancestor.expression.left.object.range &&
                         ancestor.expression.right.range
@@ -321,12 +333,10 @@ export default class ExportTransform extends Transform implements TransformInter
           if (exportSource === null) {
             source.append(`export{${toAppend.join(',')}};`);
           } else {
-            source.append(`export{${toAppend.join(',')}}from'${exportSource}';`);
+            source.prepend(`export{${toAppend.join(',')}}from'${exportSource}';`);
           }
         }
       }
-
-      // console.log('done', source.toString());
 
       return {
         code: source.toString(),

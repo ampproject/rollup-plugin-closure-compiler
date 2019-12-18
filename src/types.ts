@@ -71,6 +71,7 @@ export interface ExportDetails {
 
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
+  name: string;
   extern: (options: OutputOptions) => string;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
@@ -79,6 +80,7 @@ export class Transform implements TransformInterface {
   protected context: PluginContext;
   protected inputOptions: InputOptions;
   public outputOptions: OutputOptions | null;
+  public name: string = 'Transform';
 
   constructor(context: PluginContext, inputOptions: InputOptions) {
     this.context = context;

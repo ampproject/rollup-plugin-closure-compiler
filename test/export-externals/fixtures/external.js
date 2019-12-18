@@ -22,3 +22,11 @@ export class ExportedClass {
     console.log(this.name_);
   }
 }
+
+export const constObject = {
+  key: "value",
+};
+
+export default function() {
+  return 'bar';
+}

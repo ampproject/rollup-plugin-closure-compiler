@@ -40,6 +40,7 @@ export default class ImportTransform extends Transform {
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
   private dynamicImportPresent: boolean = false;
+  public name = 'ImportTransform';
 
   /**
    * Generate externs for local names of external imports.

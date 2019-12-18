@@ -75,11 +75,12 @@ function classDeclarationName(
   return null;
 }
 
+const RESERVED_EXPORT_NAMES = ['default'];
 function closureMangleExportName(exportName: string, source: string | null): string {
-  if (source === null) {
-    return exportName;
+  if (RESERVED_EXPORT_NAMES.includes(exportName)) {
+    return `__CLOSURE_MANGLE_NAME__${exportName}__${sanitize(source).replace(/\./g, '')}`;
   }
-  return `__CLOSURE_MANGLE_NAME__${exportName}__${sanitize(source)}`;
+  return exportName;
 }
 
 export function NamedDeclaration(

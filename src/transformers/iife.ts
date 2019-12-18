@@ -31,6 +31,8 @@ const HEADER = `/**
  * This preserves the name after compilation since Closure now believes it to be a well known global.
  */
 export default class IifeTransform extends Transform {
+  public name = 'IifeTransform';
+
   public extern(options: OutputOptions): string {
     if (options.format === 'iife' && options.name) {
       return HEADER + `function ${options.name}(){};\n`;
