@@ -18,6 +18,7 @@ import { sync } from 'temp-write';
 
 const DEBUG_ENABLED = false;
 
+/* c8 ignore next 9 */
 export const logSource = (preamble: string, source: string, code?: string) => {
   if (DEBUG_ENABLED) {
     console.log(preamble);
@@ -28,6 +29,7 @@ export const logSource = (preamble: string, source: string, code?: string) => {
   }
 };
 
+/* c8 ignore next 6 */
 export const log = (preamble: string, message: string | object): void | null => {
   if (DEBUG_ENABLED) {
     console.log(preamble);

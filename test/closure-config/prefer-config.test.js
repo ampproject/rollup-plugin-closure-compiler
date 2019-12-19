@@ -16,18 +16,28 @@
 
 import test from 'ava';
 import options from '../../transpile/options';
+import { generator } from '../generator';
 
 test('platform unspecified is respected', t => {
   const typical = options({}, 'let x = 1;', []);
 
-  t.is(typical[0].platform, undefined); 
+  t.is(typical[0].platform, undefined);
 });
 
 test('platform javascript is respected', t => {
-  const javascriptPlatform = options({
-    platform: 'javascript',
-  }, 'let x = 1;', []);
+  const javascriptPlatform = options(
+    {
+      platform: 'javascript',
+    },
+    'let x = 1;',
+    [],
+  );
 
-  t.is(javascriptPlatform[0].platform, 'javascript'); 
+  t.is(javascriptPlatform[0].platform, 'javascript');
 });
 
+generator('closure-config', 'prefer-config', undefined, undefined, {
+  javascript: {
+    platform: 'javascript',
+  },
+});
