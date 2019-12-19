@@ -30,7 +30,6 @@ import {
   ExportDetails,
   Range,
 } from '../types';
-const sanitize = require('sanitize-filename');
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
@@ -75,14 +74,6 @@ function classDeclarationName(
   return null;
 }
 
-const RESERVED_EXPORT_NAMES = ['default'];
-function closureMangleExportName(exportName: string, source: string | null): string {
-  if (RESERVED_EXPORT_NAMES.includes(exportName)) {
-    return `__CLOSURE_MANGLE_NAME__${exportName}__${sanitize(source).replace(/\./g, '')}`;
-  }
-  return exportName;
-}
-
 export function NamedDeclaration(
   context: PluginContext,
   declaration: ExportNamedDeclaration,
@@ -103,7 +94,7 @@ export function NamedDeclaration(
       {
         local: functionName,
         exported: functionName,
-        closureName: closureMangleExportName(functionName, source),
+        closureName: functionName,
         type: ExportClosureMapping.NAMED_FUNCTION,
         range,
         source,
@@ -114,7 +105,7 @@ export function NamedDeclaration(
       {
         local: className,
         exported: className,
-        closureName: closureMangleExportName(className, source),
+        closureName: className,
         type: ExportClosureMapping.NAMED_CLASS,
         range,
         source,
@@ -129,7 +120,7 @@ export function NamedDeclaration(
         exportDetails.push({
           local: declarator.id.name,
           exported: declarator.id.name,
-          closureName: closureMangleExportName(declarator.id.name, source),
+          closureName: declarator.id.name,
           type: ExportClosureMapping.NAMED_CONSTANT,
           range,
           source,
@@ -144,7 +135,7 @@ export function NamedDeclaration(
       exportDetails.push({
         local: specifier.local.name,
         exported: specifier.exported.name,
-        closureName: closureMangleExportName(specifier.exported.name, source),
+        closureName: specifier.exported.name,
         type: ExportClosureMapping.NAMED_CONSTANT,
         range,
         source,
@@ -172,7 +163,7 @@ export function DefaultDeclaration(
             {
               local: functionName,
               exported: functionName,
-              closureName: closureMangleExportName(functionName, source),
+              closureName: functionName,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
               source,
@@ -187,7 +178,7 @@ export function DefaultDeclaration(
             {
               local: className,
               exported: className,
-              closureName: closureMangleExportName(className, source),
+              closureName: className,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
               source,
@@ -201,7 +192,7 @@ export function DefaultDeclaration(
             {
               local: declaration.declaration.name,
               exported: declaration.declaration.name,
-              closureName: closureMangleExportName(declaration.declaration.name, source),
+              closureName: declaration.declaration.name,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
               range,
               source,
