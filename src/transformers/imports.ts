@@ -84,24 +84,23 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
-        const range: Range = node.range ? [node.range[0], node.range[1]] : [0, 0];
-        self.importedExternalsSyntax[name] = code.slice(range[0], range[1]);
-        source.remove(range[0], range[1]);
+        const range: Range = node.range as Range;
+        self.importedExternalsSyntax[name] = code.slice(...range);
+        source.remove(...range);
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
           importLocalNames(self.context, node),
         );
       },
       Import(node: RangedImport) {
+        const [start, end] = node.range;
         self.dynamicImportPresent = true;
         // Rename the `import` method to something we can put in externs.
         // CC doesn't understand dynamic import yet.
         source.overwrite(
-          node.range[0],
-          node.range[1],
-          code
-            .substring(node.range[0], node.range[1])
-            .replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
+          start,
+          end,
+          code.substring(start, end).replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
         );
       },
     });
@@ -128,8 +127,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     walk.simple(program, {
       Identifier(node: Identifier) {
         if (node.name === DYNAMIC_IMPORT_REPLACEMENT) {
-          const range: Range = node.range ? [node.range[0], node.range[1]] : [0, 0];
-          source.overwrite(range[0], range[1], DYNAMIC_IMPORT_KEYWORD);
+          const [start, end] = node.range as Range;
+          source.overwrite(start, end, DYNAMIC_IMPORT_KEYWORD);
         }
       },
     });

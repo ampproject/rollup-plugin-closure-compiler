@@ -14,14 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-import {
-  OutputOptions,
-  TransformSourceDescription,
-  PluginContext,
-  InputOptions,
-  InputOption,
-} from 'rollup';
+import { OutputOptions, TransformSourceDescription, PluginContext, InputOptions } from 'rollup';
 const dynamicImport = require('acorn-dynamic-import');
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
@@ -65,9 +58,6 @@ export interface ExportDetails {
   range: Range;
   source: string | null;
 }
-// export interface ExportDetailsMapping {
-//   [key: string]: ExportDetails;
-// }
 
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
@@ -96,25 +86,27 @@ export class Transform implements TransformInterface {
       code,
     };
   }
+
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
     return {
       code,
     };
   }
 
-  protected isEntryPoint(id: string) {
-    const inputs = (input: InputOption): Array<string> => {
-      if (typeof input === 'string') {
-        return [input];
-      } else if (typeof input === 'object') {
-        return Object.values(input);
-      } else {
-        return input;
-      }
-    };
+  // TODO (KB): Is this needed?
+  // protected isEntryPoint(id: string) {
+  //   const inputs = (input: InputOption): Array<string> => {
+  //     if (typeof input === 'string') {
+  //       return [input];
+  //     } else if (typeof input === 'object') {
+  //       return Object.values(input);
+  //     } else {
+  //       return input;
+  //     }
+  //   };
 
-    return inputs(this.inputOptions.input)
-      .map(input => path.resolve(input))
-      .includes(id);
-  }
+  //   return inputs(this.inputOptions.input)
+  //     .map(input => path.resolve(input))
+  //     .includes(id);
+  // }
 }
