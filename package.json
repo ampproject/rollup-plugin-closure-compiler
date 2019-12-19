@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.40",
-    "@types/node": "12.12.14",
+    "@types/node": "12.12.21",
     "@types/temp-write": "3.3.0",
     "ava": "2.4.0",
     "builtins": "3.0.0",
@@ -82,7 +82,7 @@
     "verbose": true
   },
   "volta": {
-    "node": "12.13.1",
+    "node": "12.14.0",
     "yarn": "1.21.1"
   }
 }
