@@ -7,8 +7,8 @@ before_install:
   - unset _JAVA_OPTIONS  # JVM heap sizes break closure compiler. #11203.
 script: 
   - yarn pretest
-  - yarn cover
-  - yarn cover-lcov
+  - yarn c8 ava
+  - yarn c8 report --reporter=lcovonly
   - yarn codecov
 branches:
   only:
