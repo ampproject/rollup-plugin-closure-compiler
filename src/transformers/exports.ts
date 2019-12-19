@@ -39,7 +39,7 @@ const CJS_EXTERN = `/**
  *   __esModule: boolean,
  * }}
  */
-let exports;`;
+var exports;`;
 
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
