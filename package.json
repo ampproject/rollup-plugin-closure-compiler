@@ -22,11 +22,11 @@
   "scripts": {
     "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
     "test": "ava",
-    "precoverage": "c8 ava",
+    "precoverage": "yarn pretest && c8 ava",
     "coverage": "c8 report --reporter=html",
     "postcoverage": "sirv coverage/",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
-    "postbuild": "rollup --config rollup.config.js",
+    "postbuild": "rollup -c",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "release": "np",
     "prepublishOnly": "npm-run-all build"
@@ -51,6 +51,7 @@
     "ava": "2.4.0",
     "builtins": "2.0.1",
     "c8": "6.0.1",
+    "codecov": "3.6.1",
     "husky": "3.1.0",
     "lint-staged": "9.5.0",
     "np": "5.2.1",
@@ -83,6 +84,6 @@
   },
   "volta": {
     "node": "12.13.1",
-    "yarn": "1.21.0"
+    "yarn": "1.21.1"
   }
 }
