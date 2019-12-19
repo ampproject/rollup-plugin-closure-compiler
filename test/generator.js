@@ -58,7 +58,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
     const bundle = await rollup.rollup({
       input: fixtureLocation(category, name, format, optionKey, false),
       plugins: [compiler(closureFlags[optionKey])],
-      external: ['lodash', './external.js'],
+      external: ['lodash', './external.js', './external-default.js'],
       experimentalCodeSplitting: codeSplit,
       onwarn: _ => null,
     });
