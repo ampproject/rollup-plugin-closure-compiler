@@ -28,7 +28,6 @@ import { isESMFormat } from '../options';
 import { Transform, TransformInterface, ExportClosureMapping, ExportDetails } from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
-import { log } from '../debug';
 
 const EXTERN_OVERVIEW = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -108,7 +107,7 @@ export default class ExportTransform extends Transform implements TransformInter
     for (const key of this.originalExports.keys()) {
       const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
       if (value.source !== null) {
-        output += `function ${key}(){};\n`;
+        output += `function ${value.closureName}(){};\n`;
       }
     }
 
@@ -141,9 +140,9 @@ export default class ExportTransform extends Transform implements TransformInter
         source.remove(...value.range);
         // Window scoped references for each key are required to ensure Closure Compilre retains the code.
         if (value.source === null) {
-          source.append(`\nwindow['${value.local}'] = ${value.local};`);
+          source.append(`\nwindow['${value.closureName}'] = ${value.local};`);
         } else {
-          source.append(`\nwindow['${key}'] = ${key};`);
+          source.append(`\nwindow['${value.closureName}'] = ${value.exported};`);
         }
       }
 
@@ -181,7 +180,6 @@ export default class ExportTransform extends Transform implements TransformInter
 
       walk.ancestor(program, {
         // We inserted window scoped assignments for all the export statements during `preCompilation`
-        // window['exportName'] = exportName;
         // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
         // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
         Identifier(node: Identifier, ancestors: Array<Node>) {
@@ -205,7 +203,6 @@ export default class ExportTransform extends Transform implements TransformInter
                   exportName = leftProperty.value;
                 }
 
-                log('', { exportName, originalExports });
                 if (exportName !== null && originalExports.get(exportName)) {
                   const exportDetails: ExportDetails = originalExports.get(
                     exportName,
@@ -276,6 +273,10 @@ export default class ExportTransform extends Transform implements TransformInter
                         if (leftObject.range) {
                           source.overwrite(leftObject.range[0], leftObject.range[1] + 1, 'var ');
                         }
+                        if (exportDetails.local !== exportDetails.exported) {
+                          exportDetails.local = exportDetails.exported;
+                          exportDetails.closureName = exportDetails.local;
+                        }
                       } else if (
                         ancestor.expression.left.range &&
                         ancestor.expression.right.range
@@ -314,9 +315,6 @@ export default class ExportTransform extends Transform implements TransformInter
                           collectedExportsToAppend,
                           exportDetails,
                         );
-                        // collectedExportsToAppend.push(
-                        //   `${ancestor.expression.right.name} as ${ancestor.expression.left.property.name}`,
-                        // );
                       }
                       break;
                   }

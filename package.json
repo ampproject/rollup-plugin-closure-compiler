@@ -22,6 +22,9 @@
   "scripts": {
     "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
     "test": "ava",
+    "precoverage": "c8 ava",
+    "coverage": "c8 report --reporter=html",
+    "postcoverage": "sirv coverage/",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup --config rollup.config.js",
     "lint": "tslint -c tslint.json -p tsconfig.json",
@@ -47,6 +50,7 @@
     "@types/temp-write": "3.3.0",
     "ava": "2.4.0",
     "builtins": "2.0.1",
+    "c8": "6.0.1",
     "husky": "3.1.0",
     "lint-staged": "9.5.0",
     "np": "5.2.1",
@@ -54,6 +58,7 @@
     "prettier": "1.19.1",
     "rimraf": "3.0.0",
     "rollup": "0.67.4",
+    "sirv-cli": "0.4.5",
     "tslint": "5.20.1",
     "typescript": "3.7.3"
   },

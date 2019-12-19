@@ -1,1 +1,1 @@
-var a=1;export{a as bar};
+var bar=1;export{bar};

@@ -144,7 +144,7 @@ export function NamedDeclaration(
       exportDetails.push({
         local: specifier.local.name,
         exported: specifier.exported.name,
-        closureName: closureMangleExportName(specifier.local.name, source),
+        closureName: closureMangleExportName(specifier.exported.name, source),
         type: ExportClosureMapping.NAMED_CONSTANT,
         range,
         source,
