@@ -40,6 +40,7 @@
     "acorn-walk": "7.0.0",
     "google-closure-compiler": "20191111.0.0",
     "magic-string": "0.25.4",
+    "sanitize-filename": "1.6.3",
     "temp-write": "4.0.0"
   },
   "devDependencies": {

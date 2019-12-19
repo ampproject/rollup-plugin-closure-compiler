@@ -30,6 +30,7 @@ import {
   ExportDetails,
   Range,
 } from '../types';
+const sanitize = require('sanitize-filename');
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
 
@@ -77,7 +78,7 @@ function classDeclarationName(
 const RESERVED_EXPORT_NAMES = ['default'];
 function closureMangleExportName(exportName: string, source: string | null): string {
   if (RESERVED_EXPORT_NAMES.includes(exportName)) {
-    return `__CLOSURE_MANGLE_NAME__${exportName}`;
+    return `__CLOSURE_MANGLE_NAME__${exportName}__${sanitize(source).replace(/\./g, '')}`;
   }
   return exportName;
 }
