@@ -740,12 +740,12 @@ builtin-modules@^1.1.1:
   resolved "https://registry.yarnpkg.com/builtin-modules/-/builtin-modules-1.1.1.tgz#270f076c5a72c02f5b65a47df94c5fe3a278892f"
   integrity sha1-Jw8HbFpywC9bZaR9+Uxf46J4iS8=
 
-builtins@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/builtins/-/builtins-2.0.1.tgz#42a4d6fe38973a7c185b435970d13e5e70f70f3c"
-  integrity sha512-XkkVe5QAb6guWPXTzpSrYpSlN3nqEmrrE2TkAr/tp7idSF6+MONh9WvKrAuR3HiKLvoSgmbs8l1U9IPmMrIoLw==
+builtins@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/builtins/-/builtins-3.0.0.tgz#d50c7467cf1b993ee58b389001e3476da78fb000"
+  integrity sha512-WxD4J/Uer15eE0IAGHLjz4xhs74+n9Mr6/deYOUaUL4QS3IJyv6jlamqR4SBluP1tkvEZ8My4jh1DEzpnMeBWw==
   dependencies:
-    semver "^6.0.0"
+    semver "^7.0.0"
 
 builtins@^1.0.3:
   version "1.0.3"
@@ -3646,6 +3646,11 @@ semver@^6.0.0, semver@^6.1.2, semver@^6.2.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
   integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
+
+semver@^7.0.0:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.1.1.tgz#29104598a197d6cbe4733eeecbe968f7b43a9667"
+  integrity sha512-WfuG+fl6eh3eZ2qAf6goB7nhiCd7NPXhmyFxigB/TOkQyeLP8w8GsVehvtGNtnNmyboz4TgeK40B1Kbql/8c5A==
 
 serialize-error@^2.1.0:
   version "2.1.0"
