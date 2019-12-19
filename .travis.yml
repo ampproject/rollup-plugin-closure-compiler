@@ -6,6 +6,7 @@ node_js:
 before_install:
   - unset _JAVA_OPTIONS  # JVM heap sizes break closure compiler. #11203.
 script: 
+  - yarn pretest
   - yarn cover
   - yarn cover-lcov
   - yarn codecov
