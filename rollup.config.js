@@ -16,7 +16,6 @@
 
 import pkg from './package.json';
 import builtins from 'builtins';
-import copy from 'rollup-plugin-copy';
 
 export default {
   input: './transpile/index.js',
@@ -24,12 +23,6 @@ export default {
     ...builtins(),
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
-  ],
-  plugins: [
-    copy({
-      './transpile/index.d.ts': './dist/index.d.ts',
-      verbose: true,
-    }),
   ],
   output: [
     {

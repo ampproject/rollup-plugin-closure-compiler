@@ -65,6 +65,7 @@ export async function preCompilation(
     transform.outputOptions = outputOptions;
     const result = await transform.preCompilation(code);
     if (result && result.code) {
+      logSource(`after ${transform.name} preCompilation`, result && result.code);
       code = result.code;
     }
   }
@@ -86,6 +87,7 @@ export async function postCompilation(code: string, transforms: Array<Transform>
   for (const transform of transforms) {
     const result = await transform.postCompilation(code);
     if (result && result.code) {
+      logSource(`after ${transform.name} postCompilation`, result && result.code);
       code = result.code;
     }
   }

@@ -23,11 +23,12 @@ import {
 } from 'estree';
 import { PluginContext } from 'rollup';
 import {
-  ExportNameToClosureMapping,
   ExportClosureMapping,
   IMPORT_SPECIFIER,
   IMPORT_NAMESPACE_SPECIFIER,
   IMPORT_DEFAULT_SPECIFIER,
+  ExportDetails,
+  Range,
 } from '../types';
 
 type ExportDeclarationsWithFunctions = ExportNamedDeclaration | ExportDefaultDeclaration;
@@ -76,154 +77,133 @@ function classDeclarationName(
 export function NamedDeclaration(
   context: PluginContext,
   declaration: ExportNamedDeclaration,
-): ExportNameToClosureMapping | null {
+): Array<ExportDetails> {
   const functionName = functionDeclarationName(context, declaration);
   const className = classDeclarationName(context, declaration);
+  const range: Range = declaration.range as Range;
+  const source: string | null =
+    declaration.source && declaration.source.value && typeof declaration.source.value === 'string'
+      ? declaration.source.value
+      : null;
 
   // TODO(KB): This logic isn't great. If something has a named declaration, lets instead use the AST to find out what it is.
   // var Foo=function(){}export{Foo as default} => default export function
 
   if (functionName !== null) {
-    return {
-      [functionName]: {
-        alias: null,
+    return [
+      {
+        local: functionName,
+        exported: functionName,
+        closureName: functionName,
         type: ExportClosureMapping.NAMED_FUNCTION,
-        range: [
-          declaration.range ? declaration.range[0] : 0,
-          declaration.range ? declaration.range[1] : 0,
-        ],
+        range,
+        source,
       },
-    };
+    ];
   } else if (className !== null) {
-    return {
-      [className]: {
-        alias: null,
+    return [
+      {
+        local: className,
+        exported: className,
+        closureName: className,
         type: ExportClosureMapping.NAMED_CLASS,
-        range: [
-          declaration.range ? declaration.range[0] : 0,
-          declaration.range ? declaration.range[1] : 0,
-        ],
+        range,
+        source,
       },
-    };
+    ];
   } else if (declaration.declaration && declaration.declaration.type === 'VariableDeclaration') {
-    const variableDeclarations = declaration.declaration.declarations;
-    const exportMap: ExportNameToClosureMapping = {};
+    const { declarations } = declaration.declaration;
+    const exportDetails: Array<ExportDetails> = [];
 
-    variableDeclarations.forEach(variableDeclarator => {
-      if (variableDeclarator.id.type === 'Identifier') {
-        exportMap[variableDeclarator.id.name] = {
-          alias: null,
+    for (const declarator of declarations) {
+      if (declarator.id.type === 'Identifier') {
+        exportDetails.push({
+          local: declarator.id.name,
+          exported: declarator.id.name,
+          closureName: declarator.id.name,
           type: ExportClosureMapping.NAMED_CONSTANT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
-        };
+          range,
+          source,
+        });
       }
-    });
-    return exportMap;
+    }
+    return exportDetails;
   } else if (declaration.specifiers) {
-    const exportMap: ExportNameToClosureMapping = {};
-    declaration.specifiers.forEach(exportSpecifier => {
-      if (exportSpecifier.exported.name === 'default') {
-        // This is a default export in a specifier list.
-        // e.g. export { foo as default };
-        exportMap[exportSpecifier.local.name] = {
-          alias: null,
-          type: ExportClosureMapping.DEFAULT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
-        };
-      } else {
-        exportMap[exportSpecifier.local.name] = {
-          alias:
-            exportSpecifier.local.name !== exportSpecifier.exported.name
-              ? exportSpecifier.exported.name
-              : null,
-          type: ExportClosureMapping.NAMED_CONSTANT,
-          range: [
-            declaration.range ? declaration.range[0] : 0,
-            declaration.range ? declaration.range[1] : 0,
-          ],
-        };
-      }
-    });
-    return exportMap;
+    const exportDetails: Array<ExportDetails> = [];
+
+    for (const specifier of declaration.specifiers) {
+      exportDetails.push({
+        local: specifier.local.name,
+        exported: specifier.exported.name,
+        closureName: specifier.exported.name,
+        type: ExportClosureMapping.NAMED_CONSTANT,
+        range,
+        source,
+      });
+    }
+    return exportDetails;
   }
 
-  return null;
+  return [];
 }
 
 export function DefaultDeclaration(
   context: PluginContext,
   declaration: ExportDefaultDeclaration,
-): ExportNameToClosureMapping | null {
+): Array<ExportDetails> {
   if (declaration.declaration) {
+    const range: Range = declaration.range as Range;
+    const source = null;
+
     switch (declaration.declaration.type) {
       case 'FunctionDeclaration':
         const functionName = functionDeclarationName(context, declaration);
         if (functionName !== null) {
-          return {
-            [functionName]: {
-              alias: null,
+          return [
+            {
+              local: functionName,
+              exported: functionName,
+              closureName: functionName,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source,
             },
-          };
+          ];
         }
         break;
       case 'ClassDeclaration':
         const className = classDeclarationName(context, declaration);
         if (className !== null) {
-          return {
-            [className]: {
-              alias: null,
-              type: ExportClosureMapping.NAMED_DEFAULT_CLASS,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+          return [
+            {
+              local: className,
+              exported: className,
+              closureName: className,
+              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
+              range,
+              source,
             },
-          };
+          ];
         }
         break;
       case 'Identifier':
         if (declaration.declaration.name) {
-          return {
-            [declaration.declaration.name]: {
-              alias: null,
+          return [
+            {
+              local: declaration.declaration.name,
+              exported: declaration.declaration.name,
+              closureName: declaration.declaration.name,
               type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
+              range,
+              source,
             },
-          };
-        }
-        break;
-      case 'Identifier':
-        if (declaration.declaration.name) {
-          return {
-            [declaration.declaration.name]: {
-              alias: null,
-              type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
-              range: [
-                declaration.range ? declaration.range[0] : 0,
-                declaration.range ? declaration.range[1] : 0,
-              ],
-            },
-          };
+          ];
         }
         break;
     }
   }
 
-  return null;
+  return [];
 }
 
 export function literalName(context: PluginContext, literal: Literal): string {

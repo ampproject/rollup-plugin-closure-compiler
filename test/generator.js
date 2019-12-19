@@ -58,7 +58,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
     const bundle = await rollup.rollup({
       input: fixtureLocation(category, name, format, optionKey, false),
       plugins: [compiler(closureFlags[optionKey])],
-      external: ['lodash'],
+      external: ['lodash', './external.js', './external-default.js'],
       experimentalCodeSplitting: codeSplit,
       onwarn: _ => null,
     });
@@ -106,7 +106,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
 
   for (const format of formats) {
     for(const optionKey of Object.keys(closureFlags)) {
-      const method = shouldFail ? test.failing.serial : test.serial;
+      const method = shouldFail ? test.serial.failing : test.serial;
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
         async t => {

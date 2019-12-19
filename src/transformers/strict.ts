@@ -23,6 +23,8 @@ import { ExpressionStatement } from 'estree';
 import { extname } from 'path';
 
 export default class StrictTransform extends Transform {
+  public name = 'StrictTransform';
+
   /**
    * When outputting an es module, runtimes automatically apply strict mode conventions.
    * This means we can safely strip the 'use strict'; declaration from the top of the file.

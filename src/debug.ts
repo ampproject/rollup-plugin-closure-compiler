@@ -28,7 +28,7 @@ export const logSource = (preamble: string, source: string, code?: string) => {
   }
 };
 
-export const log = (preamble: string, message: string): void | null => {
+export const log = (preamble: string, message: string | object): void | null => {
   if (DEBUG_ENABLED) {
     console.log(preamble);
     console.log(message);

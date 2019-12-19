@@ -21,6 +21,8 @@ import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 
 export default class ConstTransform extends Transform implements TransformInterface {
+  public name = 'ConstTransform';
+
   /**
    * When outputting ES2017+ code there is neglagible differences between `const` and `let` for runtime performance.
    * So, we replace all usages of `const` with `let` to enable more variable folding.

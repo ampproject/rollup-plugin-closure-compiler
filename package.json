@@ -22,7 +22,7 @@
   "scripts": {
     "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
     "test": "ava",
-    "precoverage": "c8 ava",
+    "precoverage": "yarn pretest && c8 ava",
     "coverage": "c8 report --reporter=html",
     "postcoverage": "sirv coverage/",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
@@ -58,7 +58,6 @@
     "prettier": "1.19.1",
     "rimraf": "3.0.0",
     "rollup": "0.67.4",
-    "rollup-plugin-copy": "3.1.0",
     "sirv-cli": "0.4.5",
     "tslint": "5.20.1",
     "typescript": "3.7.3"
@@ -72,7 +71,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-push": "npm-run-all test build",
+      "pre-push": "yarn npm-run-all test build",
       "pre-commit": "lint-staged"
     }
   },

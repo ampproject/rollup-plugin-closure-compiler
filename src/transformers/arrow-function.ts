@@ -27,6 +27,8 @@ import { parse, walk } from '../acorn';
  * @see https://astexplorer.net/#/gist/20d7fbe32292c6c9f303c1d9643885ec/6c97fabca987814cced795b8d3d078094e642264
  */
 export default class ArrowFunctionTransform extends Transform implements TransformInterface {
+  public name = 'ArrowFunctionTransform';
+
   /**
    * @param code source to parse, and modify
    * @return modified input source with computed literal keys

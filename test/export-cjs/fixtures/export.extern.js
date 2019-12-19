@@ -9,4 +9,4 @@
  *   __esModule: boolean,
  * }}
  */
-let exports;
+var exports;

@@ -56,16 +56,22 @@ export enum ExportClosureMapping {
   DEFAULT_VALUE = 8,
   DEFAULT_OBJECT = 9,
 }
-export interface ExportNameToClosureMapping {
-  [key: string]: {
-    alias: string | null;
-    type: ExportClosureMapping;
-    range: Range;
-  };
+
+export interface ExportDetails {
+  local: string;
+  exported: string;
+  closureName: string;
+  type: ExportClosureMapping;
+  range: Range;
+  source: string | null;
 }
+// export interface ExportDetailsMapping {
+//   [key: string]: ExportDetails;
+// }
 
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
+  name: string;
   extern: (options: OutputOptions) => string;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
@@ -74,6 +80,7 @@ export class Transform implements TransformInterface {
   protected context: PluginContext;
   protected inputOptions: InputOptions;
   public outputOptions: OutputOptions | null;
+  public name: string = 'Transform';
 
   constructor(context: PluginContext, inputOptions: InputOptions) {
     this.context = context;
