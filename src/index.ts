@@ -18,11 +18,11 @@ import { CompileOptions } from 'google-closure-compiler';
 import { promises as fsPromises } from 'fs';
 import {
   OutputOptions,
-  RawSourceMap,
   Plugin,
   InputOptions,
   PluginContext,
   RenderedChunk,
+  SourceMapInput,
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
@@ -42,7 +42,7 @@ const renderChunk = async (
   requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
   outputOptions: OutputOptions,
-): Promise<{ code: string; map: RawSourceMap } | void> => {
+): Promise<{ code: string; map: SourceMapInput } | void> => {
   const code = await preCompilation(sourceCode, outputOptions, transforms);
   const [compileOptions, mapFile] = options(
     requestedCompileOptions,
@@ -51,14 +51,14 @@ const renderChunk = async (
     transforms,
   );
 
-  return compiler(compileOptions, transforms).then(
-    async code => {
-      return { code, map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')) };
-    },
-    (error: Error) => {
-      throw error;
-    },
-  );
+  try {
+    return {
+      code: await compiler(compileOptions, transforms),
+      map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
+    };
+  } catch (error) {
+    throw error;
+  }
 };
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
@@ -73,16 +73,17 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       if (
         'compilation_level' in requestedCompileOptions &&
         requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
-        inputOptions.experimentalCodeSplitting
+        Array.isArray(inputOptions.input)
       ) {
         context.warn(
-          'Rollup experimentalCodeSplitting with Closure Compiler ADVANCED_OPTIMIZATIONS is not currently supported.',
+          'Code Splitting with Closure Compiler ADVANCED_OPTIMIZATIONS is not currently supported.',
         );
       }
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       const transforms = createTransforms(context, inputOptions);
-      return await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
+      const output = await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
+      return output || null;
     },
   };
 }

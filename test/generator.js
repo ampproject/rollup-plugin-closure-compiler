@@ -50,7 +50,7 @@ const fixtureLocation = (category, name, format, optionsKey, minified = false) =
       : `${name}.js`
   }`;
 
-async function compile(category, name, codeSplit, closureFlags, optionKey, format) {
+async function compile(category, name, codeSplit, closureFlags, optionKey, format, wrapper) {
   const bundle = await rollup.rollup({
     input: fixtureLocation(category, name, format, optionKey, false),
     plugins: [compiler(closureFlags[optionKey])],
@@ -61,6 +61,7 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
 
   const bundles = await bundle.generate({
     format,
+    name: wrapper,
     sourcemap: true,
   });
 
@@ -100,7 +101,7 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
   return output;
 }
 
-function generate(shouldFail, category, name, codeSplit, formats, closureFlags) {
+function generate(shouldFail, category, name, codeSplit, formats, closureFlags, wrapper) {
   const targetLength = longest(formats);
   const optionLength = longest(Object.keys(closureFlags));
 
@@ -110,7 +111,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags) 
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
         async t => {
-          const output = await compile(category, name, codeSplit, closureFlags, optionKey, format);
+          const output = await compile(category, name, codeSplit, closureFlags, optionKey, format, wrapper);
 
           t.plan(output.length);
           for (result of output) {
@@ -128,8 +129,9 @@ function failureGenerator(
   codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
+  wrapper = null,
 ) {
-  generate(true, category, name, codeSplit, formats, closureFlags);
+  generate(true, category, name, codeSplit, formats, closureFlags, wrapper);
 }
 
 function generator(
@@ -138,8 +140,9 @@ function generator(
   codeSplit = false,
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
+  wrapper = null,
 ) {
-  generate(false, category, name, codeSplit, formats, closureFlags);
+  generate(false, category, name, codeSplit, formats, closureFlags, wrapper);
 }
 
 module.exports = {
