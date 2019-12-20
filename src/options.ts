@@ -18,7 +18,7 @@ import { Transform } from './types';
 import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
-import { logSource } from './debug';
+import { log, logSource } from './debug';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
@@ -78,11 +78,13 @@ export const defaults = (
         .filter(Boolean)
         .concat(providedExterns)
     : providedExterns.length > 0
-      ? providedExterns
-      : '';
+    ? providedExterns
+    : '';
 
   if (typeof externs === 'string' && externs !== '') {
     logSource('externs', externs);
+  } else if (Array.isArray(externs)) {
+    log('externs', externs);
   }
 
   return {
