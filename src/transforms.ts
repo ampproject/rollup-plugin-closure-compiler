@@ -22,7 +22,6 @@ import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
 import ConstTransform from './transformers/const';
-import ArrowFunctionTransform from './transformers/arrow-function';
 import { logSource } from './debug';
 
 /**
@@ -42,7 +41,6 @@ export const createTransforms = (
     new StrictTransform(context, options),
     new ExportTransform(context, options),
     new ImportTransform(context, options),
-    new ArrowFunctionTransform(context, options),
   ];
 };
 

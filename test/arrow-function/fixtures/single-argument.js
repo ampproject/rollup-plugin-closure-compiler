@@ -1,0 +1,1 @@
+export const singleArgument = (ar) => console.log(ar);
