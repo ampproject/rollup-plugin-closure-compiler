@@ -13,7 +13,7 @@
   },
   "author": "The AMP HTML Authors",
   "engines": {
-    "node": ">=12"
+    "node": ">=10"
   },
   "keywords": [
     "rollup-plugin"
@@ -32,7 +32,7 @@
     "prepublishOnly": "npm-run-all build"
   },
   "peerDependencies": {
-    "rollup": ">= 0.67.4"
+    "rollup": ">=1.27"
   },
   "dependencies": {
     "acorn": "7.1.0",
