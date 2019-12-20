@@ -20,7 +20,6 @@ import {
   ExportAllDeclaration,
   Identifier,
   Node,
-  ClassDeclaration,
 } from 'estree';
 import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
@@ -208,7 +207,6 @@ export default class ExportTransform extends Transform implements TransformInter
                     exportName,
                   ) as ExportDetails;
                   switch (exportDetails.type) {
-                    case ExportClosureMapping.DEFAULT_FUNCTION:
                     case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
                     case ExportClosureMapping.DEFAULT:
                       if (ancestor.expression.left.range) {
@@ -217,54 +215,6 @@ export default class ExportTransform extends Transform implements TransformInter
                           ancestor.expression.left.range[1] + ancestor.expression.operator.length,
                           'export default ',
                         );
-                      }
-                      break;
-                    case ExportClosureMapping.NAMED_FUNCTION:
-                      if (
-                        ancestor.expression.right.type === 'FunctionExpression' &&
-                        ancestor.expression.right.params.length > 0
-                      ) {
-                        const [firstParameter] = ancestor.expression.right.params;
-                        if (ancestor.expression.range && firstParameter.range) {
-                          source.overwrite(
-                            ancestor.expression.range[0],
-                            firstParameter.range[0] - 1,
-                            `export function ${exportName}`,
-                          );
-                        }
-                      }
-                      break;
-                    case ExportClosureMapping.DEFAULT_CLASS:
-                    case ExportClosureMapping.NAMED_DEFAULT_CLASS:
-                      if (ancestor.expression.right.type === 'Identifier') {
-                        const { name: mangledName } = ancestor.expression.right;
-
-                        walk.simple(program, {
-                          ClassDeclaration(node: ClassDeclaration) {
-                            if (
-                              node.id &&
-                              node.id.name === mangledName &&
-                              node.range &&
-                              node.body.range &&
-                              ancestor.range
-                            ) {
-                              if (node.superClass && node.superClass.type === 'Identifier') {
-                                source.overwrite(
-                                  node.range[0],
-                                  node.body.range[0],
-                                  `export default class extends ${node.superClass.name}`,
-                                );
-                              } else {
-                                source.overwrite(
-                                  node.range[0],
-                                  node.body.range[0],
-                                  'export default class',
-                                );
-                              }
-                              source.remove(...ancestor.range);
-                            }
-                          },
-                        });
                       }
                       break;
                     case ExportClosureMapping.NAMED_CONSTANT:
@@ -291,31 +241,6 @@ export default class ExportTransform extends Transform implements TransformInter
                         collectedExportsToAppend,
                         exportDetails,
                       );
-                      break;
-                    case ExportClosureMapping.DEFAULT_VALUE:
-                    case ExportClosureMapping.DEFAULT_OBJECT:
-                      if (
-                        ancestor.expression.left.object.range &&
-                        ancestor.expression.right.range
-                      ) {
-                        source.overwrite(
-                          ancestor.expression.left.object.range[0],
-                          ancestor.expression.right.range[0],
-                          'export default ',
-                        );
-                      }
-                      break;
-                    default:
-                      if (ancestor.range) {
-                        source.remove(...ancestor.range);
-                      }
-
-                      if (ancestor.expression.right.type === 'Identifier') {
-                        collectedExportsToAppend = ExportTransform.storeExportToAppend(
-                          collectedExportsToAppend,
-                          exportDetails,
-                        );
-                      }
                       break;
                   }
                 }
