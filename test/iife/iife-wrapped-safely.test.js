@@ -15,27 +15,16 @@
  */
 
 import test from 'ava';
-import compiler from '../../transpile';
 import { createTransforms } from '../../transpile/transforms';
 import { defaults } from '../../transpile/options';
-import * as rollup from 'rollup';
-import {promises as fsPromises} from 'fs';
-import { join } from 'path';
-
-const formats = ['iife'];
-const closureFlags = {
-  default: {},
-  advanced: {
-    compilation_level: 'ADVANCED_OPTIMIZATIONS',
-    language_out: 'ECMASCRIPT_2015',
-  },
-  es5: {
-    language_out: 'ECMASCRIPT5_STRICT',
-  }
-};
+import { promises as fsPromises } from 'fs';
+import { generator } from '../generator';
 
 test('generate extern for iife name', async t => {
-  const externFixtureContent = await fsPromises.readFile('test/iife/fixtures/iife.extern.js', 'utf8');
+  const externFixtureContent = await fsPromises.readFile(
+    'test/iife/fixtures/iife.extern.js',
+    'utf8',
+  );
   const outputOptions = {
     format: 'iife',
     name: 'wrapper',
@@ -52,30 +41,4 @@ test('generate extern for iife name', async t => {
   t.is(contentMatch, true);
 });
 
-formats.forEach(format => {
-  async function compile(name, option) {
-    const bundle = await rollup.rollup({
-      input: `test/${name}/fixtures/input.js`,
-      plugins: [
-        compiler(closureFlags[option]),
-      ],
-    });
-
-    return {
-      minified: await fsPromises.readFile(join(`test/${name}/fixtures/${format}.${option}.minified.js`), 'utf8'),
-      code: (await bundle.generate({
-        format,
-        name: 'wrapper',
-        sourcemap: true,
-      })).code,
-    };
-  }
-
-  Object.keys(closureFlags).forEach(option => {
-    test(`preserves iife wrapper name – ${format}, ${option}`, async t => {
-      const { minified, code } = await compile('iife', option);
-    
-      t.is(code, minified);
-    });
-  });
-});
+generator('iife', 'iife-wrapped-safely', undefined, ['iife'], undefined, 'wrapper');
