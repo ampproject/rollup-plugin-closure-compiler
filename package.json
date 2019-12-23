@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
-    "@types/estree": "0.0.40",
+    "@types/estree": "0.0.41",
     "@types/node": "12.12.21",
     "@types/temp-write": "3.3.0",
     "ava": "2.4.0",
