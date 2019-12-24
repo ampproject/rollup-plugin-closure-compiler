@@ -51,13 +51,19 @@ var exports;`;
 export default class ExportTransform extends Transform implements TransformInterface {
   public name = 'ExportTransform';
   private originalExports: Map<string, ExportDetails> = new Map();
+  private currentSourceExportCount: number = 0;
 
   /**
    * Store an export from a source into the originalExports Map.
    * @param mapping mapping of details from this declaration.
    */
   private storeExport = (mapping: Array<ExportDetails>): void =>
-    mapping.forEach(map => this.originalExports.set(map.closureName, map));
+    mapping.forEach(map => {
+      if (map.source === null) {
+        this.currentSourceExportCount++;
+      }
+      this.originalExports.set(map.closureName, map);
+    });
 
   private static storeExportToAppend(
     collected: Map<string | null, Array<string>>,
@@ -173,7 +179,7 @@ export default class ExportTransform extends Transform implements TransformInter
       const source = new MagicString(code);
       const program = parse(code);
       let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
-      const { originalExports } = this;
+      const { originalExports, currentSourceExportCount } = this;
 
       source.trimEnd();
 
@@ -218,10 +224,17 @@ export default class ExportTransform extends Transform implements TransformInter
                       }
                       break;
                     case ExportClosureMapping.NAMED_CONSTANT:
-                      if (exportDetails.source === null) {
+                      const exportFromCurrentSource = exportDetails.source === null;
+                      const inlineExport =
+                        exportFromCurrentSource && currentSourceExportCount === 1;
+                      // KRIS YOU'RE HERE!
+                      // When there is only a single export from the current source (source=null)
+                      // then inline the export statement instead of sending it into the collection for appending.
+                      if (exportFromCurrentSource) {
                         const { object: leftObject } = ancestor.expression.left;
                         if (leftObject.range) {
-                          source.overwrite(leftObject.range[0], leftObject.range[1] + 1, 'var ');
+                          const statement = inlineExport ? 'export var ' : 'var ';
+                          source.overwrite(leftObject.range[0], leftObject.range[1] + 1, statement);
                         }
                         if (exportDetails.local !== exportDetails.exported) {
                           exportDetails.local = exportDetails.exported;
@@ -237,10 +250,12 @@ export default class ExportTransform extends Transform implements TransformInter
                         );
                       }
 
-                      collectedExportsToAppend = ExportTransform.storeExportToAppend(
-                        collectedExportsToAppend,
-                        exportDetails,
-                      );
+                      if (!inlineExport) {
+                        collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                          collectedExportsToAppend,
+                          exportDetails,
+                        );
+                      }
                       break;
                   }
                 }
