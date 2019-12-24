@@ -23,14 +23,14 @@ import { log, logSource } from './debug';
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID =
-  'Providing the warning_level=VERBOSE and language_out=NO_TRANSPILE compile option will remove warnings.';
+  'Providing the warning_level=VERBOSE and language_out=NO_TRANSPILE compile options will remove warnings.';
 
 /**
  * Checks if output format is ESM
  * @param format
  * @return boolean
  */
-export const isESMFormat = (format?: ModuleFormat | 'esm'): boolean => {
+export const isESMFormat = (format?: ModuleFormat): boolean => {
   // TODO: remove `| 'esm'` when rollup upgrades its typings
   return format === 'esm' || format === 'es';
 };
@@ -64,10 +64,8 @@ export const defaults = (
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
-  // - When Rollup output is set to "es" it is expected the code will live in a ES Module,
+  // - When Rollup output is set to "es|esm" it is expected the code will live in a ES Module,
   // so safely be more aggressive in minification.
-  // - When Rollup is configured to output an iife, ensure Closure Compiler does not
-  // mangle the name of the iife wrapper.
 
   const externs = transformers
     ? transformers
@@ -138,6 +136,8 @@ export default function(
     js: sync(code),
     create_source_map: mapFile,
   };
+
+  log('compile options', options);
 
   return [options, mapFile];
 }
