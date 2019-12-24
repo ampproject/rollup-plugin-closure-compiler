@@ -227,9 +227,6 @@ export default class ExportTransform extends Transform implements TransformInter
                       const exportFromCurrentSource = exportDetails.source === null;
                       const inlineExport =
                         exportFromCurrentSource && currentSourceExportCount === 1;
-                      // KRIS YOU'RE HERE!
-                      // When there is only a single export from the current source (source=null)
-                      // then inline the export statement instead of sending it into the collection for appending.
                       if (exportFromCurrentSource) {
                         const { object: leftObject } = ancestor.expression.left;
                         if (leftObject.range) {
