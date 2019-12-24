@@ -16,7 +16,7 @@
 
 import { sync } from 'temp-write';
 
-const DEBUG_ENABLED = false;
+const DEBUG_ENABLED = true;
 
 /* c8 ignore next 9 */
 export const logSource = (preamble: string, source: string, code?: string) => {

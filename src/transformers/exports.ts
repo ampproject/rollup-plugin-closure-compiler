@@ -24,7 +24,13 @@ import {
 import { TransformSourceDescription, OutputOptions } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
-import { Transform, TransformInterface, ExportClosureMapping, ExportDetails } from '../types';
+import {
+  Transform,
+  TransformInterface,
+  ExportClosureMapping,
+  ExportDetails,
+  Range,
+} from '../types';
 import MagicString from 'magic-string';
 import { parse, walk } from '../acorn';
 
@@ -230,8 +236,33 @@ export default class ExportTransform extends Transform implements TransformInter
                       if (exportFromCurrentSource) {
                         const { object: leftObject } = ancestor.expression.left;
                         if (leftObject.range) {
-                          const statement = inlineExport ? 'export var ' : 'var ';
-                          source.overwrite(leftObject.range[0], leftObject.range[1] + 1, statement);
+                          const { right } = ancestor.expression;
+                          switch (right.type) {
+                            case 'FunctionExpression':
+                              if (right.params.length > 0) {
+                                // FunctionExpression has parameters.
+                                source.overwrite(
+                                  (leftObject.range as Range)[0],
+                                  (right.params[0].range as Range)[0],
+                                  `export function ${exportDetails.exported}(`,
+                                );
+                              } else {
+                                source.overwrite(
+                                  (leftObject.range as Range)[0],
+                                  (right.body.range as Range)[0],
+                                  `export function ${exportDetails.exported}(){`,
+                                );
+                              }
+                              break;
+                            default:
+                              const statement = inlineExport ? 'export var ' : 'var ';
+                              source.overwrite(
+                                leftObject.range[0],
+                                leftObject.range[1] + 1,
+                                statement,
+                              );
+                              break;
+                          }
                         }
                         if (exportDetails.local !== exportDetails.exported) {
                           exportDetails.local = exportDetails.exported;
