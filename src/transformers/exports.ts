@@ -244,13 +244,17 @@ export default class ExportTransform extends Transform implements TransformInter
                                 source.overwrite(
                                   (leftObject.range as Range)[0],
                                   (right.params[0].range as Range)[0],
-                                  `export function ${exportDetails.exported}(`,
+                                  `${inlineExport ? 'export ' : ''}function ${
+                                    exportDetails.exported
+                                  }(`,
                                 );
                               } else {
                                 source.overwrite(
                                   (leftObject.range as Range)[0],
                                   (right.body.range as Range)[0],
-                                  `export function ${exportDetails.exported}(){`,
+                                  `${inlineExport ? 'export ' : ''}function ${
+                                    exportDetails.exported
+                                  }()`,
                                 );
                               }
                               break;

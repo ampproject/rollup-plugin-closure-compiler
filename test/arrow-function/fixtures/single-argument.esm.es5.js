@@ -1,1 +1,1 @@
-export var singleArgument=function(a){return console.log(a)};
+export function singleArgument(a){return console.log(a)};
