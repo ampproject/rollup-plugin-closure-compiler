@@ -2,4 +2,7 @@ const foo = 1;
 const bar = function() {
   console.log(foo);
 }
-export{foo, bar};
+const baz = function(name) {
+  console.log(name);
+}
+export{foo, bar, baz};
