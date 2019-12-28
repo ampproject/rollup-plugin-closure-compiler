@@ -1,1 +1,1 @@
-export var exported=function(a){console.log(a);console.log(1)};
+export function exported(a){console.log(a);console.log(1)};
