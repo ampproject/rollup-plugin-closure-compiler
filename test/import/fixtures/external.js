@@ -1,3 +1,3 @@
-import _ from 'lodash';
+import _, { foo } from 'lodash';
 
-console.log('lodash', _);
+console.log('lodash', _, foo);

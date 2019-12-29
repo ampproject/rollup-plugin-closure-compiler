@@ -1,1 +1,1 @@
-import _ from 'lodash';console.log("lodash",_);
+import _,{foo} from 'lodash';console.log("lodash",_,foo);
