@@ -230,15 +230,18 @@ export default class ExportTransform extends Transform implements TransformInter
                       }
                       break;
                     case ExportClosureMapping.NAMED_CONSTANT:
-                      const exportFromCurrentSource = exportDetails.source === null;
-                      const inlineExport =
+                      const exportFromCurrentSource: boolean = exportDetails.source === null;
+                      const inlineExport: boolean =
                         exportFromCurrentSource && currentSourceExportCount === 1;
+                      let exportCollected: boolean = false;
                       if (exportFromCurrentSource) {
                         const { object: leftObject } = ancestor.expression.left;
                         if (leftObject.range) {
-                          const { right } = ancestor.expression;
+                          const { left, right } = ancestor.expression;
                           switch (right.type) {
                             case 'FunctionExpression':
+                              // Function Expressions can be inlined instead of preserved as variable references.
+                              // window['foo'] = function(){}; => export function foo(){} / function foo(){}
                               if (right.params.length > 0) {
                                 // FunctionExpression has parameters.
                                 source.overwrite(
@@ -256,6 +259,28 @@ export default class ExportTransform extends Transform implements TransformInter
                                     exportDetails.exported
                                   }()`,
                                 );
+                              }
+                              break;
+                            case 'Identifier':
+                              if (left.property.type === 'Identifier') {
+                                // Identifiers are present when a complex object (class) has been saved as an export.
+                                // In this case we currently opt out of inline exporting, since the identifier
+                                // is a mangled name for the export.
+                                exportDetails.local = right.name;
+                                exportDetails.closureName = left.property.name;
+
+                                source.remove(
+                                  (ancestor.expression.left.range as Range)[0],
+                                  (ancestor.expression.right.range as Range)[1] + 1,
+                                );
+
+                                // Since we're manually mapping the name back from the changes done by Closure
+                                // Ensure the export isn't stored for insertion here and later on.
+                                collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                                  collectedExportsToAppend,
+                                  exportDetails,
+                                );
+                                exportCollected = true;
                               }
                               break;
                             default:
@@ -282,7 +307,7 @@ export default class ExportTransform extends Transform implements TransformInter
                         );
                       }
 
-                      if (!inlineExport) {
+                      if (!inlineExport && !exportCollected) {
                         collectedExportsToAppend = ExportTransform.storeExportToAppend(
                           collectedExportsToAppend,
                           exportDetails,
