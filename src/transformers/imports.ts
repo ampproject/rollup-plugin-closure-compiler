@@ -98,10 +98,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           switch (specifier.type) {
             case IMPORT_SPECIFIER:
             case IMPORT_NAMESPACE_SPECIFIER:
-              const casted: ImportSpecifier = specifier as ImportSpecifier;
-              const { name: local } = casted.local;
-              const { name: imported } = casted.imported;
-
+              const { name: local } = (specifier as ImportSpecifier).local;
+              const { name: imported } = (specifier as ImportSpecifier).imported;
               specificSpecifiers.push(local === imported ? local : `${imported} as ${local}`);
               break;
             case IMPORT_DEFAULT_SPECIFIER:
