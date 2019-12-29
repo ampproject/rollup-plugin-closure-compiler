@@ -5,4 +5,16 @@ const bar = function() {
 const baz = function(name) {
   console.log(name);
 }
-export{foo, bar, baz};
+class ExportedClass {
+  constructor(name) {
+    /**
+     * @private {string}
+     */
+    this.name_ = name;
+  }
+
+  console() {
+    console.log(this.name_);
+  }
+}
+export{foo, bar, baz, ExportedClass};

@@ -54,7 +54,7 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
   const bundle = await rollup.rollup({
     input: fixtureLocation(category, name, format, optionKey, false),
     plugins: [compiler(closureFlags[optionKey])],
-    external: ['lodash', './external.js', './external-default.js'],
+    external: ['lodash', 'lodash2', 'lodash3', './external.js', './external-default.js'],
     experimentalCodeSplitting: codeSplit,
     onwarn: _ => null,
   });

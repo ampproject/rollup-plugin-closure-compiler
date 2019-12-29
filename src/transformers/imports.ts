@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-import { Transform, Range } from '../types';
+import {
+  Transform,
+  Range,
+  IMPORT_SPECIFIER,
+  IMPORT_NAMESPACE_SPECIFIER,
+  IMPORT_DEFAULT_SPECIFIER,
+} from '../types';
 import { literalName, importLocalNames } from './parsing-utilities';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { ImportDeclaration, Identifier } from 'estree';
+import { ImportDeclaration, Identifier, ImportSpecifier } from 'estree';
 import { parse, walk } from '../acorn';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
@@ -85,7 +91,29 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(self.context, node.source);
         const range: Range = node.range as Range;
-        self.importedExternalsSyntax[name] = code.slice(...range);
+
+        let defaultSpecifier: string | null = null;
+        const specificSpecifiers: Array<string> = [];
+        for (const specifier of node.specifiers) {
+          switch (specifier.type) {
+            case IMPORT_SPECIFIER:
+            case IMPORT_NAMESPACE_SPECIFIER:
+              const { name: local } = (specifier as ImportSpecifier).local;
+              const { name: imported } = (specifier as ImportSpecifier).imported;
+              specificSpecifiers.push(local === imported ? local : `${imported} as ${local}`);
+              break;
+            case IMPORT_DEFAULT_SPECIFIER:
+              defaultSpecifier = specifier.local.name;
+              break;
+          }
+        }
+        self.importedExternalsSyntax[name] = `import ${
+          defaultSpecifier !== null
+            ? `${defaultSpecifier}${specificSpecifiers.length > 0 ? ',' : ''}`
+            : ''
+        }${
+          specificSpecifiers.length > 0 ? `{${specificSpecifiers.join(',')}}` : ''
+        } from '${name}';`;
         source.remove(...range);
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
