@@ -108,7 +108,9 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           }
         }
         self.importedExternalsSyntax[name] = `import ${
-          defaultSpecifier !== null ? `${defaultSpecifier},` : ''
+          defaultSpecifier !== null
+            ? `${defaultSpecifier}${specificSpecifiers.length > 0 ? ',' : ''}`
+            : ''
         }${
           specificSpecifiers.length > 0 ? `{${specificSpecifiers.join(',')}}` : ''
         } from '${name}';`;
