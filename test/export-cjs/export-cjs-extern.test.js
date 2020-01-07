@@ -28,10 +28,12 @@ test('generate extern for cjs export pattern', async t => {
   const transforms = createTransforms({});
   const options = defaults(outputOptions, [], transforms);
 
-  const contentMatch = options.externs.some(async externFilePath => {
+  for (const externFilePath of options.externs) {
     const fileContent = await fsPromises.readFile(externFilePath, 'utf8');
-    return fileContent === externFixtureContent;
-  });
-
-  t.is(contentMatch, true);
+    if (fileContent === externFixtureContent) {
+      t.pass();
+      return;
+    }
+  }
+  t.fail('None of the externs match the expected format');
 });
