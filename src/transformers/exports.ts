@@ -21,7 +21,7 @@ import {
   Identifier,
   Node,
 } from 'estree';
-import { TransformSourceDescription, OutputOptions } from 'rollup';
+import { TransformSourceDescription } from 'rollup';
 import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
 import { isESMFormat } from '../options';
 import {
@@ -102,17 +102,21 @@ export default class ExportTransform extends Transform implements TransformInter
     });
   }
 
-  public extern(options: OutputOptions): string {
-    let output = EXTERN_OVERVIEW;
+  public extern(): string {
+    if (Array.from(this.originalExports.keys()).length > 0) {
+      let output = EXTERN_OVERVIEW;
 
-    for (const key of this.originalExports.keys()) {
-      const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
-      if (value.source !== null) {
-        output += `function ${value.closureName}(){};\n`;
+      for (const key of this.originalExports.keys()) {
+        const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
+        if (value.source !== null) {
+          output += `function ${value.closureName}(){};\n`;
+        }
       }
+
+      return output;
     }
 
-    return output;
+    return '';
   }
 
   /**
