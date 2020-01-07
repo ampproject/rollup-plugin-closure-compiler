@@ -39,13 +39,6 @@ const EXTERN_OVERVIEW = `/**
 * @externs
 */`;
 
-const CJS_EXTERN = `/**
- * @typedef {{
- *   __esModule: boolean,
- * }}
- */
-var exports;`;
-
 /**
  * This Transform will apply only if the Rollup configuration is for 'esm' output.
  *
@@ -111,9 +104,6 @@ export default class ExportTransform extends Transform implements TransformInter
 
   public extern(options: OutputOptions): string {
     let output = EXTERN_OVERVIEW;
-    if (options.format === 'cjs') {
-      output += CJS_EXTERN;
-    }
 
     for (const key of this.originalExports.keys()) {
       const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
