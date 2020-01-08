@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import {
-  Transform,
-  Range,
-  IMPORT_SPECIFIER,
-  IMPORT_NAMESPACE_SPECIFIER,
-  IMPORT_DEFAULT_SPECIFIER,
-} from '../types';
+import { Transform, Range } from '../types';
 import { literalName } from '../parsing/literal-name';
+import { FormatSpecifiers, Specifiers } from '../parsing/import-specifiers';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { ImportDeclaration, Identifier, ImportSpecifier } from 'estree';
+import { ImportDeclaration, Identifier } from 'estree';
 import { parse, walk } from '../acorn';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
@@ -40,19 +35,6 @@ const HEADER = `/**
 interface RangedImport {
   type: string;
   range: Range;
-}
-
-const VALID_SPECIFIERS = [IMPORT_SPECIFIER, IMPORT_NAMESPACE_SPECIFIER, IMPORT_DEFAULT_SPECIFIER];
-function importLocalNames(declaration: ImportDeclaration): Array<string> {
-  const returnableSpecifiers: Array<string> = [];
-
-  for (const specifier of declaration.specifiers || []) {
-    if (VALID_SPECIFIERS.includes(specifier.type)) {
-      returnableSpecifiers.push(specifier.local.name);
-    }
-  }
-
-  return returnableSpecifiers;
 }
 
 export default class ImportTransform extends Transform {
@@ -105,43 +87,11 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
       async ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(node.source);
         const range: Range = node.range as Range;
+        const specifiers: Specifiers = Specifiers(node.specifiers);
 
-        let defaultSpecifier: string | null = null;
-        const specificSpecifiers: Array<string> = [];
-        for (const specifier of node.specifiers) {
-          switch (specifier.type) {
-            case IMPORT_SPECIFIER:
-            case IMPORT_NAMESPACE_SPECIFIER:
-              const { name: local } = (specifier as ImportSpecifier).local;
-              const { name: imported } = (specifier as ImportSpecifier).imported;
-              specificSpecifiers.push(local === imported ? local : `${imported} as ${local}`);
-              break;
-            case IMPORT_DEFAULT_SPECIFIER:
-              defaultSpecifier = specifier.local.name;
-              break;
-          }
-        }
-
-        const multipleSpecifiers = specificSpecifiers.length > 0;
-        if (defaultSpecifier !== null) {
-          if (multipleSpecifiers) {
-            self.importedExternalsSyntax[
-              name
-            ] = `import ${defaultSpecifier},{${specificSpecifiers.join(',')}} from '${name}';`;
-          } else {
-            self.importedExternalsSyntax[name] = `import ${defaultSpecifier} from '${name}';`;
-          }
-        } else if (multipleSpecifiers) {
-          self.importedExternalsSyntax[name] = `import {${specificSpecifiers.join(
-            ',',
-          )}} from '${name}';`;
-        }
-
+        self.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
+        self.importedExternalsLocalNames.push(...specifiers.local);
         source.remove(...range);
-
-        self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
-          importLocalNames(node),
-        );
       },
       Import(node: RangedImport) {
         const [start, end] = node.range;
