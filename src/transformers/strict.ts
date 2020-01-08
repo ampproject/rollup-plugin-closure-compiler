@@ -19,7 +19,7 @@ import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { walk, parse } from '../acorn';
-import { ExpressionStatement } from 'estree';
+import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
 
 export default class StrictTransform extends Transform {
@@ -32,25 +32,17 @@ export default class StrictTransform extends Transform {
    * @return code after removing the strict mode declaration (when safe to do so)
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions === null) {
-      this.context.warn(
-        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
-      );
-    } else if (
-      isESMFormat(this.outputOptions.format) ||
-      (this.outputOptions.file && extname(this.outputOptions.file) === '.mjs')
-    ) {
+    const { format, file } = this.outputOptions;
+
+    if (isESMFormat(format) || (file && extname(file) === '.mjs')) {
       const source = new MagicString(code);
       const program = parse(code);
 
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {
-          if (
-            node.expression.type === 'Literal' &&
-            node.expression.value === 'use strict' &&
-            node.range
-          ) {
-            source.remove(node.range[0], node.range[1]);
+          const { type, value } = node.expression as SimpleLiteral;
+          if (type === 'Literal' && value === 'use strict' && node.range) {
+            source.remove(...node.range);
           }
         },
       });

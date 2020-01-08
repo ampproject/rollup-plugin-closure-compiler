@@ -69,7 +69,7 @@ export interface TransformInterface {
 export class Transform implements TransformInterface {
   protected context: PluginContext;
   protected inputOptions: InputOptions;
-  public outputOptions: OutputOptions | null;
+  public outputOptions: OutputOptions;
   public name: string = 'Transform';
 
   constructor(context: PluginContext, inputOptions: InputOptions) {
@@ -92,21 +92,4 @@ export class Transform implements TransformInterface {
       code,
     };
   }
-
-  // TODO (KB): Is this needed?
-  // protected isEntryPoint(id: string) {
-  //   const inputs = (input: InputOption): Array<string> => {
-  //     if (typeof input === 'string') {
-  //       return [input];
-  //     } else if (typeof input === 'object') {
-  //       return Object.values(input);
-  //     } else {
-  //       return input;
-  //     }
-  //   };
-
-  //   return inputs(this.inputOptions.input)
-  //     .map(input => path.resolve(input))
-  //     .includes(id);
-  // }
 }

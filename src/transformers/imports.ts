@@ -21,7 +21,7 @@ import {
   IMPORT_NAMESPACE_SPECIFIER,
   IMPORT_DEFAULT_SPECIFIER,
 } from '../types';
-import { literalName, importLocalNames } from './parsing-utilities';
+import { literalName } from '../parsing/literal-name';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ImportDeclaration, Identifier, ImportSpecifier } from 'estree';
@@ -40,6 +40,19 @@ const HEADER = `/**
 interface RangedImport {
   type: string;
   range: Range;
+}
+
+const VALID_SPECIFIERS = [IMPORT_SPECIFIER, IMPORT_NAMESPACE_SPECIFIER, IMPORT_DEFAULT_SPECIFIER];
+function importLocalNames(declaration: ImportDeclaration): Array<string> {
+  const returnableSpecifiers: Array<string> = [];
+
+  for (const specifier of declaration.specifiers || []) {
+    if (VALID_SPECIFIERS.includes(specifier.type)) {
+      returnableSpecifiers.push(specifier.local.name);
+    }
+  }
+
+  return returnableSpecifiers;
 }
 
 export default class ImportTransform extends Transform {
@@ -117,7 +130,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
         source.remove(...range);
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
-          importLocalNames(self.context, node),
+          importLocalNames(node),
         );
       },
       Import(node: RangedImport) {

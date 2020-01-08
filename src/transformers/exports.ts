@@ -22,7 +22,7 @@ import {
   Node,
 } from 'estree';
 import { TransformSourceDescription } from 'rollup';
-import { NamedDeclaration, DefaultDeclaration } from './parsing-utilities';
+import { NamedDeclaration, DefaultDeclaration } from '../parsing/export-details';
 import { isESMFormat } from '../options';
 import {
   Transform,
@@ -86,10 +86,10 @@ export default class ExportTransform extends Transform implements TransformInter
 
     walk.simple(program, {
       ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        storeExport(NamedDeclaration(context, node));
+        storeExport(NamedDeclaration(node));
       },
       ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-        storeExport(DefaultDeclaration(context, node));
+        storeExport(DefaultDeclaration(node));
       },
       ExportAllDeclaration(node: ExportAllDeclaration) {
         // TODO(KB): This case `export * from "./import"` is not currently supported.

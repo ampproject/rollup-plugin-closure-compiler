@@ -7,7 +7,7 @@
     "outDir": "transpile",
     "sourceMap": true,
     "moduleResolution": "node",
-    "target": "esnext",
+    "target": "es2019",
     "baseUrl": ".",
     "allowJs": false,
     "noUnusedLocals": true,
