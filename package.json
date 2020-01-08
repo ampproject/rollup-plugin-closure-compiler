@@ -27,7 +27,6 @@
     "postcoverage": "sirv coverage/",
     "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
     "postbuild": "rollup -c",
-    "lint": "tslint -c tslint.json -p tsconfig.json",
     "release": "np",
     "prepublishOnly": "npm-run-all build"
   },
@@ -59,12 +58,10 @@
     "rimraf": "3.0.0",
     "rollup": "1.28.0",
     "sirv-cli": "0.4.5",
-    "tslint": "5.20.1",
     "typescript": "3.7.4"
   },
   "lint-staged": {
     "*.ts": [
-      "yarn lint --fix",
       "prettier --config .prettierrc --write",
       "git add"
     ]
