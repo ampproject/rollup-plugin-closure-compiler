@@ -30,10 +30,7 @@ export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID =
  * @param format
  * @return boolean
  */
-export const isESMFormat = (format?: ModuleFormat): boolean => {
-  // TODO: remove `| 'esm'` when rollup upgrades its typings
-  return format === 'esm' || format === 'es';
-};
+export const isESMFormat = (format?: ModuleFormat): boolean => format === 'esm' || format === 'es';
 
 /**
  * Throw Errors if compile options will result in unexpected behaviour.

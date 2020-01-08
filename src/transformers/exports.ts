@@ -128,11 +128,7 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return modified input source with window scoped references.
    */
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions === null) {
-      this.context.warn(
-        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
-      );
-    } else if (isESMFormat(this.outputOptions.format)) {
+    if (isESMFormat(this.outputOptions.format)) {
       await this.deriveExports(code);
       const source = new MagicString(code);
 
@@ -171,11 +167,7 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return Promise containing the repaired source
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    if (this.outputOptions === null) {
-      this.context.warn(
-        'Rollup Plugin Closure Compiler, OutputOptions not known before Closure Compiler invocation.',
-      );
-    } else if (isESMFormat(this.outputOptions.format)) {
+    if (isESMFormat(this.outputOptions.format)) {
       const source = new MagicString(code);
       const program = parse(code);
       let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
