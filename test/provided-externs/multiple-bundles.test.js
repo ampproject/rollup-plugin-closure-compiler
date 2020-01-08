@@ -17,7 +17,7 @@
 const test = require('ava');
 const path = require('path');
 const rollup = require('rollup');
-const { default: compiler } = require('../../transpile/index');
+const { default: compiler } = require('../../transpile-tests/index');
 
 const options = {
   externs: [

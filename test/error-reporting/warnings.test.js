@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../../transpile';
+import compiler from '../../transpile-tests';
 import * as rollup from 'rollup';
 import { promises as fsPromises } from 'fs';
 import { join } from 'path';

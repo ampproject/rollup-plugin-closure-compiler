@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compile, {ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED, ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID} from '../../transpile/options';
+import compile, {ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED, ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID} from '../../transpile-tests/options';
 
 test('with no language out set, and warnings set to verbose... an error is returned', t => {
   try {

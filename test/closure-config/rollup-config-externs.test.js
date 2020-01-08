@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compile from '../../transpile/options';
+import compile from '../../transpile-tests/options';
 import path from 'path';
 import {promises as fsPromises} from 'fs';
 

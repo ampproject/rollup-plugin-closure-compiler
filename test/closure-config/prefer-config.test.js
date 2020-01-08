@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import options from '../../transpile/options';
+import options from '../../transpile-tests/options';
 import { generator } from '../generator';
 
 test('platform unspecified is respected', t => {

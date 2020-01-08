@@ -15,8 +15,8 @@
  */
 
 import test from 'ava';
-import { createTransforms } from '../../transpile/transforms';
-import { defaults } from '../../transpile/options';
+import { createTransforms } from '../../transpile-tests/transforms';
+import { defaults } from '../../transpile-tests/options';
 import { promises as fsPromises } from 'fs';
 
 test('generate extern for cjs export pattern', async t => {

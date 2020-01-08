@@ -18,6 +18,7 @@
     "declaration": true,
     "module": "esnext",
     "allowSyntheticDefaultImports": true,
+    "incremental": true,
   },
   "include": [
     "./**/*.ts",

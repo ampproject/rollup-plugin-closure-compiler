@@ -15,7 +15,7 @@
  */
 
 const test = require('ava');
-const { default: compiler } = require('../transpile/index');
+const { default: compiler } = require('../transpile-tests/index');
 const rollup = require('rollup');
 const fs = require('fs');
 const path = require('path');

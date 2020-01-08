@@ -20,7 +20,7 @@
   ],
   "license": "Apache-2.0",
   "scripts": {
-    "pretest": "rimraf dist transpile && tsc -p tsconfig.test.json & wait",
+    "pretest": "tsc -p tsconfig.test.json",
     "test": "ava",
     "precoverage": "yarn pretest && c8 ava",
     "coverage": "c8 report --reporter=html",
