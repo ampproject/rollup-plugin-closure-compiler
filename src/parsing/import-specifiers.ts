@@ -26,12 +26,14 @@ export interface Specifiers {
 export function Specifiers(
   specifiers: Array<ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier>,
 ): Specifiers {
-  let defaultName: Specifiers['default'] = null;
-  let specificNames: Specifiers['specific'] = [];
-  let localNames: Specifiers['local'] = [];
+  const returnable: Specifiers = {
+    default: null,
+    specific: [],
+    local: [],
+  };
 
   for (const specifier of specifiers) {
-    localNames.push(specifier.local.name);
+    returnable.local.push(specifier.local.name);
 
     switch (specifier.type) {
       case IMPORT_SPECIFIER:
@@ -40,34 +42,31 @@ export function Specifiers(
         const { name: imported } = (specifier as ImportSpecifier).imported;
 
         if (local === imported) {
-          specificNames.push(local);
+          returnable.specific.push(local);
         } else {
-          specificNames.push(`${imported} as ${local}`);
+          returnable.specific.push(`${imported} as ${local}`);
         }
         break;
       case IMPORT_DEFAULT_SPECIFIER:
-        defaultName = specifier.local.name;
+        returnable.default = specifier.local.name;
         break;
     }
   }
 
-  return {
-    default: defaultName,
-    specific: specificNames,
-    local: localNames,
-  };
+  return returnable;
 }
 
 export function FormatSpecifiers(specifiers: Specifiers, name: string): string {
   let formatted: string = 'import ';
+  let values: Array<string> = [];
 
   if (specifiers.default !== null) {
-    formatted += specifiers.default;
+    values.push(specifiers.default);
   }
   if (specifiers.specific.length > 0) {
-    formatted += `${specifiers.default !== null ? ',' : ''}{${specifiers.specific.join(',')}}`;
+    values.push(`{${specifiers.specific.join(',')}}`);
   }
-  formatted += ` from '${name}';`;
+  formatted += `${values.join(',')} from '${name}';`;
 
   return formatted;
 }
