@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
+import { Transform, Range } from '../types';
 import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
@@ -41,8 +41,10 @@ export default class StrictTransform extends Transform {
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {
           const { type, value } = node.expression as SimpleLiteral;
-          if (type === 'Literal' && value === 'use strict' && node.range) {
-            source.remove(...node.range);
+          const range: Range = node.range as Range;
+
+          if (type === 'Literal' && value === 'use strict') {
+            source.remove(...range);
           }
         },
       });

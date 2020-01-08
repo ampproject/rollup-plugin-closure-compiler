@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
+import { Transform, Range } from '../types';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
@@ -40,21 +40,18 @@ export default class LiteralComputedKeys extends Transform {
 
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {
-        const properties = node.properties;
-        properties.forEach(property => {
-          if (
-            property.computed &&
-            property.key.type === 'Literal' &&
-            property.range &&
-            property.value.range
-          ) {
+        for (const property of node.properties) {
+          const [propertyStart]: Range = property.range as Range;
+          const [valueStart]: Range = property.value.range as Range;
+
+          if (property.computed && property.key.type === 'Literal') {
             source.overwrite(
-              property.range[0],
-              property.value.range[0],
+              propertyStart,
+              valueStart,
               `${property.key.value}${property.value.type !== 'FunctionExpression' ? ':' : ''}`,
             );
           }
-        });
+        }
       },
     });
 
