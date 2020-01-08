@@ -18,34 +18,27 @@ import { ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
 import { ExportDetails, Range, ExportClosureMapping } from '../types';
 
 export function NamedDeclaration(declaration: ExportNamedDeclaration): Array<ExportDetails> {
-  const range: Range = declaration.range as Range;
+  const exportDetails: Array<ExportDetails> = [];
   const source: string | null =
     typeof declaration?.source?.value === 'string' ? declaration.source.value : null;
 
-  if (declaration.specifiers) {
-    const exportDetails: Array<ExportDetails> = [];
-
-    for (const specifier of declaration.specifiers) {
-      exportDetails.push({
-        local: specifier.local.name,
-        exported: specifier.exported.name,
-        closureName: specifier.exported.name,
-        type: ExportClosureMapping.NAMED_CONSTANT,
-        range,
-        source,
-      });
-    }
-
-    return exportDetails;
+  for (const specifier of declaration.specifiers) {
+    exportDetails.push({
+      local: specifier.local.name,
+      exported: specifier.exported.name,
+      closureName: specifier.exported.name,
+      type: ExportClosureMapping.NAMED_CONSTANT,
+      range: declaration.range as Range,
+      source,
+    });
   }
 
-  return [];
+  return exportDetails;
 }
 
 export function DefaultDeclaration(
   defaultDeclaration: ExportDefaultDeclaration,
 ): Array<ExportDetails> {
-  const range: Range = defaultDeclaration.range as Range;
   const { declaration } = defaultDeclaration;
 
   if (declaration.type === 'Identifier' && declaration.name) {
@@ -55,7 +48,7 @@ export function DefaultDeclaration(
         exported: declaration.name,
         closureName: declaration.name,
         type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
-        range,
+        range: defaultDeclaration.range as Range,
         source: null,
       },
     ];

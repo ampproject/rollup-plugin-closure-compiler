@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-import { PluginContext } from 'rollup';
 import { Literal, SimpleLiteral } from 'estree';
 
-export function literalName(context: PluginContext, literal: Literal): string {
-  // Literal can either be a SimpleLiteral, or RegExpLiteral
-  if ('regex' in literal) {
-    // This is a RegExpLiteral
-    context.warn(
-      'Rollup Plugin Closure Compiler found a Regex Literal Named Import. `import foo from "*/.hbs"`',
-    );
-    return '';
-  }
-
+export function literalName(literal: Literal): string {
   const literalValue = (literal as SimpleLiteral).value;
   return typeof literalValue === 'string' ? literalValue : '';
 }

@@ -102,7 +102,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
 
     walk.simple(program, {
       async ImportDeclaration(node: ImportDeclaration) {
-        const name = literalName(self.context, node.source);
+        const name = literalName(node.source);
         const range: Range = node.range as Range;
 
         let defaultSpecifier: string | null = null;
