@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform, TransformInterface } from '../types';
+import { Transform, TransformInterface, Range } from '../types';
 import { parse, walk } from '../acorn';
 import { VariableDeclaration } from 'estree';
 import { TransformSourceDescription } from 'rollup';
@@ -35,12 +35,9 @@ export default class ConstTransform extends Transform implements TransformInterf
 
     walk.simple(program, {
       VariableDeclaration(node: VariableDeclaration) {
-        if (node.kind === 'const' && node.range) {
-          source.overwrite(
-            node.range[0],
-            node.range[1],
-            code.substring(node.range[0], node.range[1]).replace('const ', 'let '),
-          );
+        const [start, end]: Range = node.range as Range;
+        if (node.kind === 'const') {
+          source.overwrite(start, end, code.substring(start, end).replace('const', 'let'));
         }
       },
     });
