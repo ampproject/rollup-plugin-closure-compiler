@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-import { sync } from 'temp-write';
+import { writeTempFile } from './temp-file';
 
 const DEBUG_ENABLED = false;
 
-/* c8 ignore next 9 */
-export const logSource = (preamble: string, source: string, code?: string) => {
+/* c8 ignore next 12 */
+export const logSource = async (preamble: string, source: string, code?: string): Promise<void> => {
   if (DEBUG_ENABLED) {
+    const sourceLocation: string = await writeTempFile(source);
+    const codeLocation: string = code ? await writeTempFile(code) : '';
+
     console.log(preamble);
-    console.log(sync(source));
+    console.log(sourceLocation);
     if (code) {
-      console.log(sync(code));
+      console.log(codeLocation);
     }
   }
 };

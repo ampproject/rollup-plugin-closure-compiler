@@ -17,7 +17,7 @@
 import { Transform } from './types';
 import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
-import { sync } from 'temp-write';
+import { writeTempFile } from './temp-file';
 import { log } from './debug';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
@@ -54,11 +54,11 @@ function validateCompileOptions(compileOptions: CompileOptions): void {
  * @param options
  * @return derived CompileOptions for Closure Compiler
  */
-export const defaults = (
+export const defaults = async (
   options: OutputOptions,
   providedExterns: Array<string>,
   transformers: Array<Transform> | null,
-): CompileOptions => {
+): Promise<CompileOptions> => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
   // so no transpile is default.
@@ -69,7 +69,7 @@ export const defaults = (
   for (const transform of transformers || []) {
     const extern = transform.extern(options);
     if (extern !== null) {
-      transformerExterns.push(sync(extern));
+      transformerExterns.push(await writeTempFile(extern));
     }
   }
 
@@ -91,13 +91,13 @@ export const defaults = (
  * @param code
  * @param transforms
  */
-export default function(
+export default async function(
   incomingCompileOptions: CompileOptions,
   outputOptions: OutputOptions,
   code: string,
   transforms: Array<Transform> | null,
-): [CompileOptions, string] {
-  const mapFile: string = sync('');
+): Promise<[CompileOptions, string]> {
+  const mapFile: string = await writeTempFile('');
   const compileOptions: CompileOptions = { ...incomingCompileOptions };
   let externs: Array<string> = [];
 
@@ -119,9 +119,9 @@ export default function(
   }
 
   const options = {
-    ...defaults(outputOptions, externs, transforms),
+    ...(await defaults(outputOptions, externs, transforms)),
     ...compileOptions,
-    js: sync(code),
+    js: await writeTempFile(code),
     create_source_map: mapFile,
   };
 

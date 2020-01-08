@@ -26,7 +26,7 @@ test('generate extern for cjs export pattern', async t => {
   };
 
   const transforms = createTransforms({});
-  const options = defaults(outputOptions, [], transforms);
+  const options = await defaults(outputOptions, [], transforms);
 
   for (const externFilePath of options.externs) {
     const fileContent = await fsPromises.readFile(externFilePath, 'utf8');

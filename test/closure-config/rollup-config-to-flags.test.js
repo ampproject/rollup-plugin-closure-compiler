@@ -17,10 +17,10 @@
 import test from 'ava';
 import { defaults } from '../../transpile-tests/options';
 
-test.beforeEach(t => {
+test.beforeEach(async t => {
   t.context = {
-    default: defaults({}, [], null),
-    esOutput: defaults({
+    default: await defaults({}, [], null),
+    esOutput: await defaults({
       format: 'es',
     }, [], null),
   };

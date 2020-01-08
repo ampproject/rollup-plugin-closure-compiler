@@ -39,13 +39,14 @@
     "acorn-walk": "7.0.0",
     "google-closure-compiler": "20200101.0.0",
     "magic-string": "0.25.5",
-    "temp-write": "4.0.0"
+    "uuid": "3.3.3"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.41",
     "@types/node": "12.12.24",
     "@types/temp-write": "3.3.0",
+    "@types/uuid": "3.4.6",
     "ava": "2.4.0",
     "builtins": "3.0.0",
     "c8": "7.0.0",

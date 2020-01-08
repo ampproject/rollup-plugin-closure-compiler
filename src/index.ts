@@ -44,7 +44,7 @@ const renderChunk = async (
   outputOptions: OutputOptions,
 ): Promise<{ code: string; map: SourceMapInput } | void> => {
   const code = await preCompilation(sourceCode, outputOptions, transforms);
-  const [compileOptions, mapFile] = options(
+  const [compileOptions, mapFile] = await options(
     requestedCompileOptions,
     outputOptions,
     code,

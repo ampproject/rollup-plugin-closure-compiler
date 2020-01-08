@@ -36,19 +36,20 @@ const IifeTransform = class {
 test('when rollup configuration specifies externs, extern is leveraged', async t => {
   t.plan(3);
 
-  const compilerOptionsExterns = compile({
+  const compiled = await compile({
     externs: PROVIDED_EXTERN,
   }, {
     format: 'iife',
     name: 'wrapper',
-  }, 'var x = 1;', [new IifeTransform()])[0].externs;
+  }, 'var x = 1;', [new IifeTransform()]);
+  const externs = compiled[0].externs;
 
-  t.is(compilerOptionsExterns.length, 2);
-  t.true(compilerOptionsExterns.includes(PROVIDED_EXTERN));
+  t.is(externs.length, 2);
+  t.true(externs.includes(PROVIDED_EXTERN));
 
   // While we can use the path for the provided extern, we need to inspect the content of 
   // the other extern to ensure it is the generated extern.
   // Externs are passed as filepaths to Closure Compiler.
-  const fileContent = await fsPromises.readFile(compilerOptionsExterns.filter(path => path !== PROVIDED_EXTERN)[0], 'utf8');
+  const fileContent = await fsPromises.readFile(externs.filter(path => path !== PROVIDED_EXTERN)[0], 'utf8');
   t.true(fileContent === IIFE_TRANSFORM_EXTERN_CONTENT);
 });

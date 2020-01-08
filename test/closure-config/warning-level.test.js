@@ -17,9 +17,9 @@
 import test from 'ava';
 import compile, {ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED, ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID} from '../../transpile-tests/options';
 
-test('with no language out set, and warnings set to verbose... an error is returned', t => {
+test('with no language out set, and warnings set to verbose... an error is returned', async t => {
   try {
-    compile({
+    await compile({
       warning_level: 'VERBOSE',
     }, {
       format: 'es',
@@ -31,9 +31,9 @@ test('with no language out set, and warnings set to verbose... an error is retur
   }
 });
 
-test('with language out set to no_transpile, and warnings set to verbose... an error is returned', t => {
+test('with language out set to no_transpile, and warnings set to verbose... an error is returned', async t => {
   try {
-    compile({
+    await compile({
       warning_level: 'VERBOSE',
       language_out: 'NO_TRANSPILE',
     }, {
