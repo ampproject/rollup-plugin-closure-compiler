@@ -121,13 +121,22 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
               break;
           }
         }
-        self.importedExternalsSyntax[name] = `import ${
-          defaultSpecifier !== null
-            ? `${defaultSpecifier}${specificSpecifiers.length > 0 ? ',' : ''}`
-            : ''
-        }${
-          specificSpecifiers.length > 0 ? `{${specificSpecifiers.join(',')}}` : ''
-        } from '${name}';`;
+
+        const multipleSpecifiers = specificSpecifiers.length > 0;
+        if (defaultSpecifier !== null) {
+          if (multipleSpecifiers) {
+            self.importedExternalsSyntax[
+              name
+            ] = `import ${defaultSpecifier},{${specificSpecifiers.join(',')}} from '${name}';`;
+          } else {
+            self.importedExternalsSyntax[name] = `import ${defaultSpecifier} from '${name}';`;
+          }
+        } else if (multipleSpecifiers) {
+          self.importedExternalsSyntax[name] = `import {${specificSpecifiers.join(
+            ',',
+          )}} from '${name}';`;
+        }
+
         source.remove(...range);
 
         self.importedExternalsLocalNames = self.importedExternalsLocalNames.concat(
@@ -162,9 +171,9 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     const source = new MagicString(code);
     const program = parse(code);
 
-    Object.values(this.importedExternalsSyntax).forEach(importedExternalSyntax =>
-      source.prepend(importedExternalSyntax),
-    );
+    for (const importedExternalSyntax of Object.values(this.importedExternalsSyntax)) {
+      source.prepend(importedExternalSyntax);
+    }
 
     walk.simple(program, {
       Identifier(node: Identifier) {
