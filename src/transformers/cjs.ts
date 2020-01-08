@@ -38,11 +38,11 @@ var exports;`;
 export default class CJSTransform extends Transform {
   public name = 'CJSTransform';
 
-  public extern(options: OutputOptions): string {
+  public extern(options: OutputOptions): string | null {
     if (options.format === 'cjs') {
       return HEADER;
     }
 
-    return '';
+    return null;
   }
 }

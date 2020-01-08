@@ -66,12 +66,13 @@ export default class ImportTransform extends Transform {
    * Otherwise, advanced mode compilation will fail since the reference is unknown.
    * @return string representing content of generated extern.
    */
-  public extern(): string {
-    let extern = HEADER;
+  public extern(): string | null {
+    let extern: string = HEADER;
+
     if (this.importedExternalsLocalNames.length > 0) {
-      this.importedExternalsLocalNames.forEach(name => {
+      for (const name of this.importedExternalsLocalNames) {
         extern += `function ${name}(){};\n`;
-      });
+      }
     }
 
     if (this.dynamicImportPresent) {
@@ -84,7 +85,7 @@ function ${DYNAMIC_IMPORT_REPLACEMENT}(path) { return Promise.resolve(path) };
 window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     }
 
-    return extern;
+    return extern === HEADER ? null : extern;
   }
 
   /**

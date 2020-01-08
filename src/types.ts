@@ -62,7 +62,7 @@ export interface ExportDetails {
 export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   name: string;
-  extern: (options: OutputOptions) => string;
+  extern: (options: OutputOptions) => string | null;
   preCompilation: TransformMethod;
   postCompilation: TransformMethod;
 }
@@ -77,8 +77,8 @@ export class Transform implements TransformInterface {
     this.inputOptions = inputOptions;
   }
 
-  public extern(options: OutputOptions): string {
-    return '';
+  public extern(options: OutputOptions): string | null {
+    return null;
   }
 
   public async preCompilation(code: string): Promise<TransformSourceDescription> {

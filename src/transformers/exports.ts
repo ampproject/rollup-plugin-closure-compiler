@@ -102,7 +102,7 @@ export default class ExportTransform extends Transform implements TransformInter
     });
   }
 
-  public extern(): string {
+  public extern(): string | null {
     if (Array.from(this.originalExports.keys()).length > 0) {
       let output = EXTERN_OVERVIEW;
 
@@ -116,7 +116,7 @@ export default class ExportTransform extends Transform implements TransformInter
       return output;
     }
 
-    return '';
+    return null;
   }
 
   /**

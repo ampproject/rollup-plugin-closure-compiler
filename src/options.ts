@@ -18,7 +18,7 @@ import { Transform } from './types';
 import { ModuleFormat, OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { sync } from 'temp-write';
-import { log, logSource } from './debug';
+import { log } from './debug';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
@@ -39,15 +39,16 @@ export const isESMFormat = (format?: ModuleFormat): boolean => {
  * Throw Errors if compile options will result in unexpected behaviour.
  * @param compileOptions
  */
-const validateCompileOptions = (compileOptions: CompileOptions): void => {
+function validateCompileOptions(compileOptions: CompileOptions): void {
   if ('warning_level' in compileOptions && compileOptions.warning_level === 'VERBOSE') {
     if (!('language_out' in compileOptions)) {
       throw new Error(ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED);
-    } else if ('language_out' in compileOptions && compileOptions.language_out === 'NO_TRANSPILE') {
+    }
+    if (compileOptions.language_out === 'NO_TRANSPILE') {
       throw new Error(ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID);
     }
   }
-};
+}
 
 /**
  * Generate default Closure Compiler CompileOptions an author can override if they wish.
@@ -67,22 +68,12 @@ export const defaults = (
   // - When Rollup output is set to "es|esm" it is expected the code will live in a ES Module,
   // so safely be more aggressive in minification.
 
-  const externs = transformers
-    ? transformers
-        .map(transform => {
-          const extern = transform.extern(options);
-          return extern !== '' ? sync(extern) : false;
-        })
-        .filter(Boolean)
-        .concat(providedExterns)
-    : providedExterns.length > 0
-    ? providedExterns
-    : '';
-
-  if (typeof externs === 'string' && externs !== '') {
-    logSource('externs', externs);
-  } else if (Array.isArray(externs)) {
-    log('externs', externs);
+  const transformerExterns: Array<string> = [];
+  for (const transform of transformers || []) {
+    const extern = transform.extern(options);
+    if (extern !== null) {
+      transformerExterns.push(sync(extern));
+    }
   }
 
   return {
@@ -90,7 +81,7 @@ export const defaults = (
     assume_function_wrapper: isESMFormat(options.format),
     warning_level: 'QUIET',
     module_resolution: 'NODE',
-    externs,
+    externs: transformerExterns.concat(providedExterns),
   };
 };
 

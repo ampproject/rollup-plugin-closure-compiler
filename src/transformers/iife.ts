@@ -33,11 +33,11 @@ const HEADER = `/**
 export default class IifeTransform extends Transform {
   public name = 'IifeTransform';
 
-  public extern(options: OutputOptions): string {
+  public extern(options: OutputOptions): string | null {
     if (options.format === 'iife' && options.name) {
       return HEADER + `window['${options.name}'] = ${options.name};\n`;
     }
 
-    return '';
+    return null;
   }
 }
