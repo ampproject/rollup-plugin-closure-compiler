@@ -66,7 +66,7 @@
       "prettier --config .prettierrc --write",
       "git add"
     ],
-    "*.js": [
+    "*.test.js": [
       "prettier --config .prettierrc --write",
       "git add"
     ]
