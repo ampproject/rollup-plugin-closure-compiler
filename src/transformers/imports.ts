@@ -84,7 +84,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     const program = parse(code);
 
     walk.simple(program, {
-      async ImportDeclaration(node: ImportDeclaration) {
+      ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(node.source);
         const range: Range = node.range as Range;
         const specifiers: Specifiers = Specifiers(node.specifiers);

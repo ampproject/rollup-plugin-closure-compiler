@@ -94,17 +94,22 @@ export async function postCompilation(
   // to clean up work is performed in preCompilation via postCompilation.
   const log: Array<[string, string]> = [];
 
-  log.push(['before', code]);
-  for (const transform of transforms) {
-    const result = await transform.postCompilation(code);
-    if (result && result.code) {
-      log.push([transform.name, result.code]);
-      code = result.code;
+  try {
+    log.push(['before', code]);
+    for (const transform of transforms) {
+      const result = await transform.postCompilation(code);
+      if (result && result.code) {
+        log.push([transform.name, result.code]);
+        code = result.code;
+      }
     }
-  }
 
-  log.push(['after', code]);
-  await logTransformChain(chunk.fileName, 'PostCompilation', log);
+    log.push(['after', code]);
+    await logTransformChain(chunk.fileName, 'PostCompilation', log);
+  } catch (e) {
+    await logTransformChain(chunk.fileName, 'PostCompilation', log);
+    throw e;
+  }
 
   return code;
 }

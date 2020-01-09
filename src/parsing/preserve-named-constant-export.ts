@@ -36,6 +36,7 @@ function PreserveFunction(
   const memberExpression = assignmentExpression.left as MemberExpression;
   const functionExpression = assignmentExpression.right as FunctionExpression;
   const [memberExpressionObjectStart] = memberExpression.object.range as Range;
+  const functionName = exportInline ? exportDetails.exported : exportDetails.local;
 
   if (functionExpression.params.length > 0) {
     const [paramsStart] = functionExpression.params[0].range as Range;
@@ -43,14 +44,14 @@ function PreserveFunction(
     source.overwrite(
       memberExpressionObjectStart,
       paramsStart,
-      `${exportInline ? 'export ' : ''}function ${exportDetails.exported}(`,
+      `${exportInline ? 'export ' : ''}function ${functionName}(`,
     );
   } else {
     const [bodyStart] = functionExpression.body.range as Range;
     source.overwrite(
       memberExpressionObjectStart,
       bodyStart,
-      `${exportInline ? 'export ' : ''}function ${exportDetails.exported}()`,
+      `${exportInline ? 'export ' : ''}function ${functionName}()`,
     );
   }
 
