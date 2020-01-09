@@ -18,5 +18,5 @@ import { generator, DEFAULT_CLOSURE_OPTIONS, ES5_STRICT_CLOSURE_OPTIONS } from '
 
 generator('import', 'utf8', true, undefined, {
   ...DEFAULT_CLOSURE_OPTIONS,
-  // ...ES5_STRICT_CLOSURE_OPTIONS,
+  ...ES5_STRICT_CLOSURE_OPTIONS,
 });
