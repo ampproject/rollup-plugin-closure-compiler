@@ -32,9 +32,9 @@ export default class StrictTransform extends Transform {
    * @return code after removing the strict mode declaration (when safe to do so)
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    const { format, file } = this.outputOptions;
+    const { file } = this.outputOptions;
 
-    if (isESMFormat(format) || (file && extname(file) === '.mjs')) {
+    if (isESMFormat(this.outputOptions) || (file && extname(file) === '.mjs')) {
       const source = new MagicString(code);
       const program = parse(code);
 

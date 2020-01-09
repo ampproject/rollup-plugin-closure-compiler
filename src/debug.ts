@@ -16,9 +16,9 @@
 
 import { writeTempFile } from './temp-file';
 
-const DEBUG_ENABLED = true;
+const DEBUG_ENABLED = false;
 
-/* c8 ignore next 8 */
+/* c8 ignore next 16 */
 export async function logTransformChain(
   file: string,
   stage: string,
@@ -36,7 +36,7 @@ export async function logTransformChain(
   }
 }
 
-/* c8 ignore next 6 */
+/* c8 ignore next 8 */
 export const log = (preamble: string | undefined, message: string | object): void | null => {
   if (DEBUG_ENABLED) {
     if (preamble) {

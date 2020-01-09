@@ -15,7 +15,7 @@
  */
 
 import { Transform } from './types';
-import { ModuleFormat, OutputOptions } from 'rollup';
+import { OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { writeTempFile } from './temp-file';
 import { log } from './debug';
@@ -27,10 +27,11 @@ export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID =
 
 /**
  * Checks if output format is ESM
- * @param format
+ * @param outputOptions
  * @return boolean
  */
-export const isESMFormat = (format?: ModuleFormat): boolean => format === 'esm' || format === 'es';
+export const isESMFormat = ({ format }: OutputOptions): boolean =>
+  format === 'esm' || format === 'es';
 
 /**
  * Throw Errors if compile options will result in unexpected behaviour.
@@ -76,7 +77,7 @@ export const defaults = async (
 
   return {
     language_out: 'NO_TRANSPILE',
-    assume_function_wrapper: isESMFormat(options.format),
+    assume_function_wrapper: isESMFormat(options),
     warning_level: 'QUIET',
     module_resolution: 'NODE',
     externs: transformerExterns.concat(providedExterns),
