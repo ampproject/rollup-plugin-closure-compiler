@@ -34,8 +34,8 @@ const ES5_STRICT_CLOSURE_OPTIONS = {
 };
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
-  ...ADVANCED_CLOSURE_OPTIONS,
-  ...ES5_STRICT_CLOSURE_OPTIONS,
+  // ...ADVANCED_CLOSURE_OPTIONS,
+  // ...ES5_STRICT_CLOSURE_OPTIONS,
 };
 
 const ES_OUTPUT = 'es';
@@ -111,7 +111,15 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags, 
       method(
         `${name} – ${format.padEnd(targetLength)} – ${optionKey.padEnd(optionLength)}`,
         async t => {
-          const output = await compile(category, name, codeSplit, closureFlags, optionKey, format, wrapper);
+          const output = await compile(
+            category,
+            name,
+            codeSplit,
+            closureFlags,
+            optionKey,
+            format,
+            wrapper,
+          );
 
           t.plan(output.length);
           for (result of output) {

@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { ExportNamedDeclaration, ExportDefaultDeclaration } from 'estree';
+import {
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  Node,
+  ExpressionStatement,
+  MemberExpression,
+  Expression,
+} from 'estree';
 import { ExportDetails, Range, ExportClosureMapping } from '../types';
 
 export function NamedDeclaration(declaration: ExportNamedDeclaration): Array<ExportDetails> {
@@ -26,7 +33,6 @@ export function NamedDeclaration(declaration: ExportNamedDeclaration): Array<Exp
     exportDetails.push({
       local: specifier.local.name,
       exported: specifier.exported.name,
-      closureName: specifier.exported.name,
       type: ExportClosureMapping.NAMED_CONSTANT,
       range: declaration.range as Range,
       source,
@@ -46,7 +52,6 @@ export function DefaultDeclaration(
       {
         local: declaration.name,
         exported: declaration.name,
-        closureName: declaration.name,
         type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
         range: defaultDeclaration.range as Range,
         source: null,
@@ -55,4 +60,27 @@ export function DefaultDeclaration(
   }
 
   return [];
+}
+
+export function NodeIsPreservedExport(node: Node): node is ExpressionStatement {
+  return (
+    node.type === 'ExpressionStatement' &&
+    node.expression.type === 'AssignmentExpression' &&
+    node.expression.left.type === 'MemberExpression' &&
+    node.expression.left.object.type === 'Identifier' &&
+    node.expression.left.object.name === 'window'
+  );
+}
+
+export function PreservedExportName(node: MemberExpression): string | null {
+  const { property }: { property: Expression } = node;
+
+  if (property.type === 'Identifier') {
+    return property.name;
+  }
+  if (property.type === 'Literal' && typeof property.value === 'string') {
+    return property.value;
+  }
+
+  return null;
 }
