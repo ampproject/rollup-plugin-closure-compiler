@@ -73,7 +73,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-push": "yarn npm-run-all test build",
+      "pre-push": "npm-run-all test build",
       "pre-commit": "lint-staged"
     }
   },
