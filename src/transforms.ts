@@ -65,7 +65,7 @@ export async function preCompilation(
     transform.outputOptions = outputOptions;
     const result = await transform.preCompilation(code);
     if (result && result.code) {
-      logSource(`after ${transform.name} preCompilation`, result && result.code);
+      await logSource(`after ${transform.name} preCompilation`, result && result.code);
       code = result.code;
     }
   }

@@ -69,7 +69,8 @@ export const defaults = async (
   for (const transform of transformers || []) {
     const extern = transform.extern(options);
     if (extern !== null) {
-      transformerExterns.push(await writeTempFile(extern));
+      const writtenExtern = await writeTempFile(extern);
+      transformerExterns.push(writtenExtern);
     }
   }
 
