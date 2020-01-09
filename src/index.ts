@@ -42,8 +42,9 @@ const renderChunk = async (
   requestedCompileOptions: CompileOptions = {},
   sourceCode: string,
   outputOptions: OutputOptions,
+  chunk: RenderedChunk,
 ): Promise<{ code: string; map: SourceMapInput } | void> => {
-  const code = await preCompilation(sourceCode, outputOptions, transforms);
+  const code = await preCompilation(sourceCode, outputOptions, chunk, transforms);
   const [compileOptions, mapFile] = await options(
     requestedCompileOptions,
     outputOptions,
@@ -53,7 +54,7 @@ const renderChunk = async (
 
   try {
     return {
-      code: await compiler(compileOptions, transforms),
+      code: await compiler(compileOptions, chunk, transforms),
       map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
     };
   } catch (error) {
@@ -82,7 +83,13 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       const transforms = createTransforms(context, inputOptions);
-      const output = await renderChunk(transforms, requestedCompileOptions, code, outputOptions);
+      const output = await renderChunk(
+        transforms,
+        requestedCompileOptions,
+        code,
+        outputOptions,
+        chunk,
+      );
       return output || null;
     },
   };

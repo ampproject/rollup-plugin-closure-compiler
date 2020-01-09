@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext, InputOptions } from 'rollup';
+import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
 import { Transform } from './types';
 import IifeTransform from './transformers/iife';
 import CJSTransform from './transformers/cjs';
@@ -23,7 +23,7 @@ import ExportTransform from './transformers/exports';
 import ImportTransform from './transformers/imports';
 import StrictTransform from './transformers/strict';
 import ConstTransform from './transformers/const';
-import { logSource } from './debug';
+import { logTransformChain } from './debug';
 
 /**
  * Instantiate transform class instances for the plugin invocation.
@@ -56,21 +56,26 @@ export const createTransforms = (
 export async function preCompilation(
   code: string,
   outputOptions: OutputOptions,
+  chunk: RenderedChunk,
   transforms: Array<Transform>,
 ): Promise<string> {
   // Each transform has a 'preCompilation' step that must complete before passing
   // the resulting code to Closure Compiler.
-  await logSource('before preCompilation handlers', code);
+  const log: Array<[string, string]> = [];
+
+  log.push(['before', code]);
   for (const transform of transforms) {
     transform.outputOptions = outputOptions;
     const result = await transform.preCompilation(code);
     if (result && result.code) {
-      await logSource(`after ${transform.name} preCompilation`, result && result.code);
+      log.push([transform.name, code]);
       code = result.code;
     }
   }
 
-  await logSource('after preCompilation handlers', code);
+  log.push(['after', code]);
+  await logTransformChain(chunk.fileName, 'PreCompilation', log);
+
   return code;
 }
 
@@ -80,18 +85,26 @@ export async function preCompilation(
  * @param transforms Transforms to execute.
  * @return source code following `postCompilation`
  */
-export async function postCompilation(code: string, transforms: Array<Transform>): Promise<string> {
+export async function postCompilation(
+  code: string,
+  chunk: RenderedChunk,
+  transforms: Array<Transform>,
+): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
-  await logSource('before postCompilation handlers', code);
+  const log: Array<[string, string]> = [];
+
+  log.push(['before', code]);
   for (const transform of transforms) {
     const result = await transform.postCompilation(code);
     if (result && result.code) {
-      logSource(`after ${transform.name} postCompilation`, result && result.code);
+      log.push([transform.name, result.code]);
       code = result.code;
     }
   }
 
-  await logSource('after postCompilation handlers', code);
+  log.push(['after', code]);
+  await logTransformChain(chunk.fileName, 'PostCompilation', log);
+
   return code;
 }

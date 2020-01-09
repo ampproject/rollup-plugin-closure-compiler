@@ -18,24 +18,30 @@ import { writeTempFile } from './temp-file';
 
 const DEBUG_ENABLED = true;
 
-/* c8 ignore next 12 */
-export const logSource = async (preamble: string, source: string, code?: string): Promise<void> => {
+/* c8 ignore next 8 */
+export async function logTransformChain(
+  file: string,
+  stage: string,
+  messages: Array<[string, string]>,
+): Promise<void> {
   if (DEBUG_ENABLED) {
-    const sourceLocation: string = await writeTempFile(source);
-    const codeLocation: string = code ? await writeTempFile(code) : '';
-
-    console.log(preamble);
-    console.log(sourceLocation);
-    if (code) {
-      console.log(codeLocation);
+    let output: string = `\n${file} - ${stage}`;
+    for (const [message, source] of messages) {
+      output += `\n${message.substr(0, 15).padEnd(18, '.')} - file://${await writeTempFile(
+        source,
+        '.js',
+      )}`;
     }
+    console.log(output);
   }
-};
+}
 
 /* c8 ignore next 6 */
-export const log = (preamble: string, message: string | object): void | null => {
+export const log = (preamble: string | undefined, message: string | object): void | null => {
   if (DEBUG_ENABLED) {
-    console.log(preamble);
+    if (preamble) {
+      console.log(preamble);
+    }
     console.log(message);
   }
 };

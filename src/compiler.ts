@@ -21,6 +21,7 @@ const {
 } = require('google-closure-compiler/lib/utils.js');
 import { Transform } from './types';
 import { postCompilation } from './transforms';
+import { RenderedChunk } from 'rollup';
 
 enum Platform {
   NATIVE = 'native',
@@ -71,6 +72,7 @@ function orderPlatforms(platformPreference: Platform | string): Array<Platform> 
  */
 export default function(
   compileOptions: CompileOptions,
+  chunk: RenderedChunk,
   transforms: Array<Transform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
@@ -95,7 +97,7 @@ export default function(
       } else if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
-        resolve(await postCompilation(code, transforms));
+        resolve(await postCompilation(code, chunk, transforms));
       }
     });
   });

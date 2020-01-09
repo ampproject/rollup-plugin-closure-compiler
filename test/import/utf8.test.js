@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-import { join, dirname } from 'path';
-import { tmpdir } from 'os';
-import { v4 } from 'uuid';
-import { promises } from 'fs';
+import { generator, DEFAULT_CLOSURE_OPTIONS, ES5_STRICT_CLOSURE_OPTIONS } from '../generator';
 
-export async function writeTempFile(content: string, extension: string = ''): Promise<string> {
-  const path: string = join(tmpdir(), v4() + extension);
-  await promises.mkdir(dirname(path), { recursive: true });
-  await promises.writeFile(path, content, 'utf-8');
-
-  return path;
-}
+generator('import', 'utf8', true, undefined, {
+  ...DEFAULT_CLOSURE_OPTIONS,
+  // ...ES5_STRICT_CLOSURE_OPTIONS,
+});
