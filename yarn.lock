@@ -421,13 +421,6 @@
   resolved "https://registry.yarnpkg.com/@types/parse-json/-/parse-json-4.0.0.tgz#2f8bb441434d163b35fb8ffdccd7138927ffb8c0"
   integrity sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==
 
-"@types/temp-write@3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@types/temp-write/-/temp-write-3.3.0.tgz#40fe3d1fae6e98a2e40a13abe83e7a1996ea51ee"
-  integrity sha512-RW+6TTQi6GVmOmpMoizl0Nfg8yhtPPGJQs8QtzW7eBH5XyoEM30GrUq4weYpEzITH2UrbGTd2Sn/5LRGlGPHrg==
-  dependencies:
-    "@types/node" "*"
-
 "@types/uuid@3.4.6":
   version "3.4.6"
   resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.4.6.tgz#d2c4c48eb85a757bf2927f75f939942d521e3016"

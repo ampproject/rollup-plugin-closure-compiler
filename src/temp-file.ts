@@ -19,8 +19,8 @@ import { tmpdir } from 'os';
 import { v4 } from 'uuid';
 import { promises } from 'fs';
 
-export async function writeTempFile(content: string): Promise<string> {
-  const path: string = join(tmpdir(), v4());
+export async function writeTempFile(content: string, extension: string = ''): Promise<string> {
+  const path: string = join(tmpdir(), v4() + extension);
   await promises.mkdir(dirname(path), { recursive: true });
   await promises.writeFile(path, content, 'utf-8');
 

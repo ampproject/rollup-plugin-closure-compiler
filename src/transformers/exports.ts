@@ -20,9 +20,18 @@ import {
   ExportAllDeclaration,
   Identifier,
   Node,
+  AssignmentExpression,
+  MemberExpression,
 } from 'estree';
 import { TransformSourceDescription } from 'rollup';
-import { NamedDeclaration, DefaultDeclaration } from '../parsing/export-details';
+import {
+  NamedDeclaration,
+  DefaultDeclaration,
+  NodeIsPreservedExport,
+  PreservedExportName,
+} from '../parsing/export-details';
+import { PreserveNamedConstant } from '../parsing/preserve-named-constant-export';
+import { PreserveDefault } from '../parsing/preserve-default-export';
 import { isESMFormat } from '../options';
 import {
   Transform,
@@ -60,8 +69,10 @@ export default class ExportTransform extends Transform implements TransformInter
     mapping.forEach(map => {
       if (map.source === null) {
         this.currentSourceExportCount++;
+        this.originalExports.set(map.local, map);
+      } else {
+        this.originalExports.set(map.exported, map);
       }
-      this.originalExports.set(map.closureName, map);
     });
 
   private static storeExportToAppend(
@@ -109,7 +120,7 @@ export default class ExportTransform extends Transform implements TransformInter
       for (const key of this.originalExports.keys()) {
         const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
         if (value.source !== null) {
-          output += `function ${value.closureName}(){};\n`;
+          output += `function ${value.exported}(){};\n`;
         }
       }
 
@@ -128,33 +139,33 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return modified input source with window scoped references.
    */
   public async preCompilation(code: string): Promise<TransformSourceDescription> {
-    if (isESMFormat(this.outputOptions.format)) {
-      await this.deriveExports(code);
-      const source = new MagicString(code);
-
-      for (const key of this.originalExports.keys()) {
-        const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
-
-        // Remove export statements before Closure Compiler sees the code
-        // This prevents CC from transpiling `export` statements when the language_out is set to a value
-        // where exports were not part of the language.
-        source.remove(...value.range);
-        // Window scoped references for each key are required to ensure Closure Compilre retains the code.
-        if (value.source === null) {
-          source.append(`\nwindow['${value.closureName}'] = ${value.local};`);
-        } else {
-          source.append(`\nwindow['${value.closureName}'] = ${value.exported};`);
-        }
-      }
-
+    if (!isESMFormat(this.outputOptions)) {
       return {
-        code: source.toString(),
-        map: source.generateMap().mappings,
+        code,
       };
     }
 
+    await this.deriveExports(code);
+    const source = new MagicString(code);
+
+    for (const key of this.originalExports.keys()) {
+      const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
+
+      // Remove export statements before Closure Compiler sees the code
+      // This prevents CC from transpiling `export` statements when the language_out is set to a value
+      // where exports were not part of the language.
+      source.remove(...value.range);
+      // Window scoped references for each key are required to ensure Closure Compilre retains the code.
+      if (value.source === null) {
+        source.append(`\nwindow['${value.local}'] = ${value.local};`);
+      } else {
+        source.append(`\nwindow['${value.exported}'] = ${value.exported};`);
+      }
+    }
+
     return {
-      code,
+      code: source.toString(),
+      map: source.generateMap().mappings,
     };
   }
 
@@ -167,166 +178,89 @@ export default class ExportTransform extends Transform implements TransformInter
    * @return Promise containing the repaired source
    */
   public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    if (isESMFormat(this.outputOptions.format)) {
-      const source = new MagicString(code);
-      const program = parse(code);
-      let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
-      const { originalExports, currentSourceExportCount } = this;
-
-      source.trimEnd();
-
-      walk.ancestor(program, {
-        // We inserted window scoped assignments for all the export statements during `preCompilation`
-        // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
-        // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
-        Identifier(node: Identifier, ancestors: Array<Node>) {
-          if (node.name === 'window') {
-            ancestors.forEach((ancestor: Node) => {
-              if (
-                ancestor.type === 'ExpressionStatement' &&
-                ancestor.expression.type === 'AssignmentExpression' &&
-                ancestor.expression.left.type === 'MemberExpression' &&
-                ancestor.expression.left.object.type === 'Identifier' &&
-                ancestor.expression.left.object.name === 'window'
-              ) {
-                const { property: leftProperty } = ancestor.expression.left;
-                let exportName: string | null = null;
-                if (leftProperty.type === 'Identifier') {
-                  exportName = leftProperty.name;
-                } else if (
-                  leftProperty.type === 'Literal' &&
-                  typeof leftProperty.value === 'string'
-                ) {
-                  exportName = leftProperty.value;
-                }
-
-                if (exportName !== null && originalExports.get(exportName)) {
-                  const exportDetails: ExportDetails = originalExports.get(
-                    exportName,
-                  ) as ExportDetails;
-                  switch (exportDetails.type) {
-                    case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
-                    case ExportClosureMapping.DEFAULT:
-                      if (ancestor.expression.left.range) {
-                        source.overwrite(
-                          ancestor.expression.left.range[0],
-                          ancestor.expression.left.range[1] + ancestor.expression.operator.length,
-                          'export default ',
-                        );
-                      }
-                      break;
-                    case ExportClosureMapping.NAMED_CONSTANT:
-                      const exportFromCurrentSource: boolean = exportDetails.source === null;
-                      const inlineExport: boolean =
-                        exportFromCurrentSource && currentSourceExportCount === 1;
-                      let exportCollected: boolean = false;
-                      if (exportFromCurrentSource) {
-                        const { object: leftObject } = ancestor.expression.left;
-                        if (leftObject.range) {
-                          const { left, right } = ancestor.expression;
-                          switch (right.type) {
-                            case 'FunctionExpression':
-                              // Function Expressions can be inlined instead of preserved as variable references.
-                              // window['foo'] = function(){}; => export function foo(){} / function foo(){}
-                              if (right.params.length > 0) {
-                                // FunctionExpression has parameters.
-                                source.overwrite(
-                                  (leftObject.range as Range)[0],
-                                  (right.params[0].range as Range)[0],
-                                  `${inlineExport ? 'export ' : ''}function ${
-                                    exportDetails.exported
-                                  }(`,
-                                );
-                              } else {
-                                source.overwrite(
-                                  (leftObject.range as Range)[0],
-                                  (right.body.range as Range)[0],
-                                  `${inlineExport ? 'export ' : ''}function ${
-                                    exportDetails.exported
-                                  }()`,
-                                );
-                              }
-                              break;
-                            case 'Identifier':
-                              if (left.property.type === 'Identifier') {
-                                // Identifiers are present when a complex object (class) has been saved as an export.
-                                // In this case we currently opt out of inline exporting, since the identifier
-                                // is a mangled name for the export.
-                                exportDetails.local = right.name;
-                                exportDetails.closureName = left.property.name;
-
-                                source.remove(
-                                  (ancestor.expression.left.range as Range)[0],
-                                  (ancestor.expression.right.range as Range)[1] + 1,
-                                );
-
-                                // Since we're manually mapping the name back from the changes done by Closure
-                                // Ensure the export isn't stored for insertion here and later on.
-                                collectedExportsToAppend = ExportTransform.storeExportToAppend(
-                                  collectedExportsToAppend,
-                                  exportDetails,
-                                );
-                                exportCollected = true;
-                              }
-                              break;
-                            default:
-                              const statement = inlineExport ? 'export var ' : 'var ';
-                              source.overwrite(
-                                leftObject.range[0],
-                                leftObject.range[1] + 1,
-                                statement,
-                              );
-                              break;
-                          }
-                        }
-                        if (exportDetails.local !== exportDetails.exported) {
-                          exportDetails.local = exportDetails.exported;
-                          exportDetails.closureName = exportDetails.local;
-                        }
-                      } else if (
-                        ancestor.expression.left.range &&
-                        ancestor.expression.right.range
-                      ) {
-                        source.remove(
-                          ancestor.expression.left.range[0],
-                          ancestor.expression.right.range[1] + 1,
-                        );
-                      }
-
-                      if (!inlineExport && !exportCollected) {
-                        collectedExportsToAppend = ExportTransform.storeExportToAppend(
-                          collectedExportsToAppend,
-                          exportDetails,
-                        );
-                      }
-                      break;
-                  }
-                }
-              }
-            });
-          }
-        },
-      });
-
-      for (const exportSource of collectedExportsToAppend.keys()) {
-        const toAppend = collectedExportsToAppend.get(exportSource);
-        if (toAppend && toAppend.length > 0) {
-          if (exportSource === null) {
-            source.append(`export{${toAppend.join(',')}}`);
-          } else {
-            source.prepend(`export{${toAppend.join(',')}}from'${exportSource}';`);
-          }
-        }
-      }
-
+    if (!isESMFormat(this.outputOptions)) {
       return {
-        code: source.toString(),
-        map: source.generateMap().mappings,
+        code,
       };
     }
 
+    const source = new MagicString(code);
+    const program = parse(code);
+    const { originalExports, currentSourceExportCount } = this;
+    let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
+
+    source.trimEnd();
+
+    walk.ancestor(program, {
+      // We inserted window scoped assignments for all the export statements during `preCompilation`
+      // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
+      // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
+      Identifier(node: Identifier, ancestors: Array<Node>) {
+        if (node.name !== 'window') {
+          return;
+        }
+
+        for (const ancestor of ancestors) {
+          if (!NodeIsPreservedExport(ancestor)) {
+            continue;
+          }
+          // Can cast these since they were validated with the `NodeIsPreservedExport` test.
+          const expression: AssignmentExpression = ancestor.expression as AssignmentExpression;
+          const left: MemberExpression = expression.left as MemberExpression;
+          const exportName: string | null = PreservedExportName(left);
+
+          if (exportName !== null && originalExports.get(exportName)) {
+            const exportDetails: ExportDetails = originalExports.get(exportName) as ExportDetails;
+            const exportIsLocal: boolean = exportDetails.source === null;
+            const exportInline: boolean =
+              exportIsLocal &&
+              currentSourceExportCount === 1 &&
+              exportDetails.local === exportDetails.exported;
+
+            switch (exportDetails.type) {
+              case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
+              case ExportClosureMapping.DEFAULT:
+                if (PreserveDefault(code, source, ancestor, exportDetails, exportInline)) {
+                  collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                    collectedExportsToAppend,
+                    exportDetails,
+                  );
+                }
+                break;
+              case ExportClosureMapping.NAMED_CONSTANT:
+                if (PreserveNamedConstant(code, source, ancestor, exportDetails, exportInline)) {
+                  collectedExportsToAppend = ExportTransform.storeExportToAppend(
+                    collectedExportsToAppend,
+                    exportDetails,
+                  );
+                }
+                break;
+            }
+
+            if (!exportIsLocal) {
+              source.remove((left.range as Range)[0], (expression.right.range as Range)[1] + 1);
+            }
+          }
+        }
+      },
+    });
+
+    for (const exportSource of collectedExportsToAppend.keys()) {
+      const toAppend = collectedExportsToAppend.get(exportSource);
+      if (toAppend && toAppend.length > 0) {
+        const names = toAppend.join(',');
+
+        if (exportSource === null) {
+          source.append(`export{${names}}`);
+        } else {
+          source.prepend(`export{${names}}from'${exportSource}';`);
+        }
+      }
+    }
+
     return {
-      code,
+      code: source.toString(),
+      map: source.generateMap().mappings,
     };
   }
 }

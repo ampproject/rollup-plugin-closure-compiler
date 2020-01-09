@@ -17,6 +17,5 @@
 import { Literal, SimpleLiteral } from 'estree';
 
 export function literalName(literal: Literal): string {
-  const literalValue = (literal as SimpleLiteral).value;
-  return typeof literalValue === 'string' ? literalValue : '';
+  return (literal as SimpleLiteral).value as string;
 }

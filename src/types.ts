@@ -37,6 +37,8 @@ export const ALL_EXPORT_DECLARATIONS = [
 
 export type Range = [number, number];
 
+export type CollectedExports = Map<string | null, Array<string>>;
+
 export enum ExportClosureMapping {
   NAMED_FUNCTION = 0,
   NAMED_CLASS = 1,
@@ -53,7 +55,6 @@ export enum ExportClosureMapping {
 export interface ExportDetails {
   local: string;
   exported: string;
-  closureName: string;
   type: ExportClosureMapping;
   range: Range;
   source: string | null;
