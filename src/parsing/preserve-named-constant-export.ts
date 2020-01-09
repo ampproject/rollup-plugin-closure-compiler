@@ -94,29 +94,6 @@ function PreserveIdentifier(
   return !exportInline;
 }
 
-/*
-if (left.property.type === 'Identifier') {
-  // Identifiers are present when a complex object (class) has been saved as an export.
-  // In this case we currently opt out of inline exporting, since the identifier
-  // is a mangled name for the export.
-  exportDetails.local = right.name;
-  exportDetails.exported = left.property.name;
-
-  source.remove(
-    (ancestor.expression.left.range as Range)[0],
-    (ancestor.expression.right.range as Range)[1] + 1,
-  );
-
-  // Since we're manually mapping the name back from the changes done by Closure
-  // Ensure the export isn't stored for insertion here and later on.
-  collectedExportsToAppend = ExportTransform.storeExportToAppend(
-    collectedExportsToAppend,
-    exportDetails,
-  );
-  exportCollected = true;
-}
-*/
-
 export function PreserveNamedConstant(
   code: string,
   source: MagicString,

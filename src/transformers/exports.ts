@@ -248,10 +248,12 @@ export default class ExportTransform extends Transform implements TransformInter
     for (const exportSource of collectedExportsToAppend.keys()) {
       const toAppend = collectedExportsToAppend.get(exportSource);
       if (toAppend && toAppend.length > 0) {
+        const names = toAppend.join(',');
+
         if (exportSource === null) {
-          source.append(`export{${toAppend.join(',')}}`);
+          source.append(`export{${names}}`);
         } else {
-          source.prepend(`export{${toAppend.join(',')}}from'${exportSource}';`);
+          source.prepend(`export{${names}}from'${exportSource}';`);
         }
       }
     }

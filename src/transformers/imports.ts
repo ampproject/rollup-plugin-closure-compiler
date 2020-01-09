@@ -87,7 +87,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
       ImportDeclaration(node: ImportDeclaration) {
         const name = literalName(node.source);
         const range: Range = node.range as Range;
-        const specifiers: Specifiers = Specifiers(node.specifiers);
+        const specifiers = Specifiers(node.specifiers);
 
         self.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
         self.importedExternalsLocalNames.push(...specifiers.local);
