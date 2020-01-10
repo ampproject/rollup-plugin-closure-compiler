@@ -41,10 +41,10 @@ export default class LiteralComputedKeys extends Transform {
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {
         for (const property of node.properties) {
-          const [propertyStart]: Range = property.range as Range;
-          const [valueStart]: Range = property.value.range as Range;
-
           if (property.computed && property.key.type === 'Literal') {
+            const [propertyStart]: Range = property.range as Range;
+            const [valueStart]: Range = property.value.range as Range;
+
             source.overwrite(
               propertyStart,
               valueStart,
