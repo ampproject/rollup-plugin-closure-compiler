@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-import { generator, DEFAULT_CLOSURE_OPTIONS, ES5_STRICT_CLOSURE_OPTIONS } from '../generator';
+import {
+  generator,
+  failureGenerator,
+  DEFAULT_CLOSURE_OPTIONS,
+  ADVANCED_CLOSURE_OPTIONS,
+  ES5_STRICT_CLOSURE_OPTIONS,
+} from '../generator';
 
 generator('import', 'utf8', true, undefined, {
   ...DEFAULT_CLOSURE_OPTIONS,
   ...ES5_STRICT_CLOSURE_OPTIONS,
+});
+
+generator('import', 'utf8', true, undefined, {
+  ...ADVANCED_CLOSURE_OPTIONS,
 });

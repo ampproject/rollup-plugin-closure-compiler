@@ -57,16 +57,20 @@ export function Specifiers(
 }
 
 export function FormatSpecifiers(specifiers: Specifiers, name: string): string {
-  let formatted: string = 'import ';
+  const hasDefault = specifiers.default !== null;
+  const hasSpecifics = specifiers.specific.length > 0;
+  let formatted: string = 'import';
   let values: Array<string> = [];
 
-  if (specifiers.default !== null) {
-    values.push(specifiers.default);
+  if (hasDefault) {
+    values.push(`${specifiers.default}`);
   }
-  if (specifiers.specific.length > 0) {
+  if (hasSpecifics) {
     values.push(`{${specifiers.specific.join(',')}}`);
   }
-  formatted += `${values.join(',')} from '${name}';`;
+  formatted += `${hasDefault ? ' ' : ''}${values.join(',')}${
+    hasSpecifics ? '' : ' '
+  }from'${name}';`;
 
   return formatted;
 }
