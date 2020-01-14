@@ -14,22 +14,32 @@
  * limitations under the License.
  */
 
-import { generator, ESM_OUTPUT } from '../generator';
+import {
+  generator,
+  DEFAULT_CLOSURE_OPTIONS,
+  PRETTY_PRINT_CLOSURE_OPTIONS,
+  ADVANCED_CLOSURE_OPTIONS,
+  ES5_STRICT_CLOSURE_OPTIONS,
+} from '../generator';
 const path = require('path');
 
 const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js');
 
-generator('provided-externs', 'class', false, [ESM_OUTPUT], {
+generator('provided-externs', 'class', false, undefined, {
   default: {
+    ...DEFAULT_CLOSURE_OPTIONS.default,
+    externs: EXTERNS,
+  },
+  pretty: {
+    ...PRETTY_PRINT_CLOSURE_OPTIONS.pretty,
     externs: EXTERNS,
   },
   advanced: {
+    ...ADVANCED_CLOSURE_OPTIONS.advanced,
     externs: EXTERNS,
-    compilation_level: 'ADVANCED_OPTIMIZATIONS',
-    language_out: 'ECMASCRIPT_2015',
   },
   es5: {
+    ...ES5_STRICT_CLOSURE_OPTIONS.es5,
     externs: EXTERNS,
-    language_out: 'ECMASCRIPT5_STRICT',
   },
 });

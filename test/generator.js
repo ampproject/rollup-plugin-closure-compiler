@@ -21,6 +21,11 @@ const fs = require('fs');
 const path = require('path');
 
 const DEFAULT_CLOSURE_OPTIONS = { default: {} };
+const PRETTY_PRINT_CLOSURE_OPTIONS = {
+  pretty: {
+    formatting: 'PRETTY_PRINT',
+  },
+};
 const ADVANCED_CLOSURE_OPTIONS = {
   advanced: {
     compilation_level: 'ADVANCED_OPTIMIZATIONS',
@@ -34,6 +39,7 @@ const ES5_STRICT_CLOSURE_OPTIONS = {
 };
 const defaultClosureFlags = {
   ...DEFAULT_CLOSURE_OPTIONS,
+  ...PRETTY_PRINT_CLOSURE_OPTIONS,
   ...ADVANCED_CLOSURE_OPTIONS,
   ...ES5_STRICT_CLOSURE_OPTIONS,
 };
@@ -155,6 +161,7 @@ function generator(
 
 module.exports = {
   DEFAULT_CLOSURE_OPTIONS,
+  PRETTY_PRINT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
   ES5_STRICT_CLOSURE_OPTIONS,
   ES_OUTPUT,

@@ -238,7 +238,9 @@ export default class ExportTransform extends Transform implements TransformInter
             }
 
             if (!exportIsLocal) {
-              source.remove((left.range as Range)[0], (expression.right.range as Range)[1] + 1);
+              const [leftStart] = left.range as Range;
+              const { 1: ancestorEnd } = ancestor.range as Range;
+              source.remove(leftStart, ancestorEnd);
             }
           }
         }

@@ -69,6 +69,7 @@ function PreserveIdentifier(
   const left = assignmentExpression.left;
   const right = assignmentExpression.right;
   const [ancestorStart, ancestorEnd]: Range = ancestor.range as Range;
+  const [leftStart] = left.range as Range;
   const [rightStart, rightEnd]: Range = right.range as Range;
 
   if (exportInline) {
@@ -80,10 +81,9 @@ function PreserveIdentifier(
   } else if (exportDetails.source === null && 'name' in right) {
     // This is a locally defined identifier with a name we can use.
     exportDetails.local = right.name;
-    source.remove((left.range as Range)[0], rightEnd + 1);
+    source.remove(leftStart, ancestorEnd);
     return true;
   } else {
-    // exportDetails.local =
     source.overwrite(
       ancestorStart,
       ancestorEnd,

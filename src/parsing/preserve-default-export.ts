@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ExpressionStatement, AssignmentExpression, MemberExpression } from 'estree';
+import { ExpressionStatement, AssignmentExpression } from 'estree';
 import { ExportDetails, Range } from '../types';
 import MagicString from 'magic-string';
 
@@ -26,14 +26,11 @@ export function PreserveDefault(
   exportInline: boolean,
 ): boolean {
   const assignmentExpression = ancestor.expression as AssignmentExpression;
-  const memberExpression = assignmentExpression.left as MemberExpression;
-  const [memberExpressionStart, memberExpressionEnd]: Range = memberExpression.range as Range;
+  const [leftStart]: Range = assignmentExpression.left.range as Range;
+  const [rightStart]: Range = assignmentExpression.right.range as Range;
 
-  source.overwrite(
-    memberExpressionStart,
-    memberExpressionEnd + assignmentExpression.operator.length,
-    'export default ',
-  );
+  // console.log(code.substring(leftStart, rightStart));
+  source.overwrite(leftStart, rightStart, 'export default ');
 
   return false;
 }
