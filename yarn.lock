@@ -764,10 +764,10 @@ builtins@^1.0.3:
   resolved "https://registry.yarnpkg.com/builtins/-/builtins-1.0.3.tgz#cb94faeb61c8696451db36534e1422f94f0aee88"
   integrity sha1-y5T662HIaWRR2zZTThQi+U8K7og=
 
-c8@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/c8/-/c8-7.0.0.tgz#32db156e5a7049bc4a9ab187801be8f3b8045814"
-  integrity sha512-4X920F1QhyHqZKHsmwUuUVA3GrJ5vwqKd1iqnMB/G+KiydNF3TtM3FqNFMzHI0t+pa1xMa6TZwtt67bTlYzVPQ==
+c8@7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/c8/-/c8-7.0.1.tgz#a4f8403ee331a03666aff582a917840f20d2522d"
+  integrity sha512-kItgBaizNmOtRHM0QDRXbHAiatwGM54z+ec8aGxq8GGPC4OehjKkoV0/mADx2Azbl0SK9JdMl03DdUWZUAEyEA==
   dependencies:
     "@bcoe/v8-coverage" "^0.2.3"
     "@istanbuljs/schema" "^0.1.2"
