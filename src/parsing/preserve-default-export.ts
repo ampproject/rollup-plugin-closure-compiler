@@ -29,7 +29,6 @@ export function PreserveDefault(
   const [leftStart]: Range = assignmentExpression.left.range as Range;
   const [rightStart]: Range = assignmentExpression.right.range as Range;
 
-  // console.log(code.substring(leftStart, rightStart));
   source.overwrite(leftStart, rightStart, 'export default ');
 
   return false;
