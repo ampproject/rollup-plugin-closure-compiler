@@ -66,19 +66,15 @@ export interface TransformInterface {
   pre: TransformMethod;
   post: TransformMethod;
 }
-export class ChunkTransform implements TransformInterface {
+export class SourceTransform implements TransformInterface {
   protected context: PluginContext;
   protected inputOptions: InputOptions;
   public outputOptions: OutputOptions;
-  public name: string = 'ChunkTransform';
+  public name: string = 'SourceTransform';
 
   constructor(context: PluginContext, inputOptions: InputOptions) {
     this.context = context;
     this.inputOptions = inputOptions;
-  }
-
-  public extern(options: OutputOptions): string | null {
-    return null;
   }
 
   public async pre(code: string): Promise<TransformSourceDescription> {
@@ -91,5 +87,12 @@ export class ChunkTransform implements TransformInterface {
     return {
       code,
     };
+  }
+}
+export class ChunkTransform extends SourceTransform implements TransformInterface {
+  public name: string = 'ChunkTransform';
+
+  public extern(options: OutputOptions): string | null {
+    return null;
   }
 }
