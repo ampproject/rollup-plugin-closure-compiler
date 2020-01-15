@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform, Range } from '../types';
+import { ChunkTransform, Range, TransformInterface } from '../types';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
@@ -27,14 +27,14 @@ import { parse, walk } from '../acorn';
  * This transform does so only if a computed key is a Literal, and thus easily known to be static.
  * @see https://astexplorer.net/#/gist/d2414b45a81db3a41ee6902bfd09947a/d7176ac33a2733e1a4b1f65ec3ac626e24f7b60d
  */
-export default class LiteralComputedKeys extends Transform {
+export default class LiteralComputedKeys extends ChunkTransform implements TransformInterface {
   public name = 'LiteralComputedKeysTransform';
 
   /**
    * @param code source to parse, and modify
    * @return modified input source with computed literal keys
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = parse(code);
 

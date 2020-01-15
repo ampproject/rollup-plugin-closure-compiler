@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform, Range } from '../types';
+import { ChunkTransform, Range, TransformInterface } from '../types';
 import { isESMFormat } from '../options';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
@@ -22,7 +22,7 @@ import { walk, parse } from '../acorn';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
 
-export default class StrictTransform extends Transform {
+export default class StrictTransform extends ChunkTransform implements TransformInterface {
   public name = 'StrictTransform';
 
   /**
@@ -31,7 +31,7 @@ export default class StrictTransform extends Transform {
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(code: string): Promise<TransformSourceDescription> {
     const { file } = this.outputOptions;
 
     if (isESMFormat(this.outputOptions) || (file && extname(file) === '.mjs')) {

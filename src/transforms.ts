@@ -15,14 +15,14 @@
  */
 
 import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
-import { Transform } from './types';
-import IifeTransform from './transformers/iife';
-import CJSTransform from './transformers/cjs';
-import LiteralComputedKeys from './transformers/literal-computed-keys';
-import ExportTransform from './transformers/exports';
-import ImportTransform from './transformers/imports';
-import StrictTransform from './transformers/strict';
-import ConstTransform from './transformers/const';
+import { ChunkTransform } from './types';
+import IifeTransform from './chunk-transformers/iife';
+import CJSTransform from './chunk-transformers/cjs';
+import LiteralComputedKeys from './chunk-transformers/literal-computed-keys';
+import ExportTransform from './chunk-transformers/exports';
+import ImportTransform from './chunk-transformers/imports';
+import StrictTransform from './chunk-transformers/strict';
+import ConstTransform from './chunk-transformers/const';
 import { logTransformChain } from './debug';
 
 /**
@@ -34,17 +34,15 @@ import { logTransformChain } from './debug';
 export const createTransforms = (
   context: PluginContext,
   options: InputOptions,
-): Array<Transform> => {
-  return [
-    new ConstTransform(context, options),
-    new IifeTransform(context, options),
-    new CJSTransform(context, options),
-    new LiteralComputedKeys(context, options),
-    new StrictTransform(context, options),
-    new ExportTransform(context, options),
-    new ImportTransform(context, options),
-  ];
-};
+): Array<ChunkTransform> => [
+  new ConstTransform(context, options),
+  new IifeTransform(context, options),
+  new CJSTransform(context, options),
+  new LiteralComputedKeys(context, options),
+  new StrictTransform(context, options),
+  new ExportTransform(context, options),
+  new ImportTransform(context, options),
+];
 
 /**
  * Run each transform's `preCompilation` phase.
@@ -57,7 +55,7 @@ export async function preCompilation(
   code: string,
   outputOptions: OutputOptions,
   chunk: RenderedChunk,
-  transforms: Array<Transform>,
+  transforms: Array<ChunkTransform>,
 ): Promise<string> {
   // Each transform has a 'preCompilation' step that must complete before passing
   // the resulting code to Closure Compiler.
@@ -66,7 +64,7 @@ export async function preCompilation(
   log.push(['before', code]);
   for (const transform of transforms) {
     transform.outputOptions = outputOptions;
-    const result = await transform.preCompilation(code);
+    const result = await transform.pre(code);
     if (result && result.code) {
       log.push([transform.name, code]);
       code = result.code;
@@ -88,7 +86,7 @@ export async function preCompilation(
 export async function postCompilation(
   code: string,
   chunk: RenderedChunk,
-  transforms: Array<Transform>,
+  transforms: Array<ChunkTransform>,
 ): Promise<string> {
   // Following successful Closure Compiler compilation, each transform needs an opportunity
   // to clean up work is performed in preCompilation via postCompilation.
@@ -97,7 +95,7 @@ export async function postCompilation(
   try {
     log.push(['before', code]);
     for (const transform of transforms) {
-      const result = await transform.postCompilation(code);
+      const result = await transform.post(code);
       if (result && result.code) {
         log.push([transform.name, result.code]);
         code = result.code;

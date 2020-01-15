@@ -19,7 +19,7 @@ const {
   getNativeImagePath,
   getFirstSupportedPlatform,
 } = require('google-closure-compiler/lib/utils.js');
-import { Transform } from './types';
+import { ChunkTransform } from './types';
 import { postCompilation } from './transforms';
 import { RenderedChunk } from 'rollup';
 
@@ -73,7 +73,7 @@ function orderPlatforms(platformPreference: Platform | string): Array<Platform> 
 export default function(
   compileOptions: CompileOptions,
   chunk: RenderedChunk,
-  transforms: Array<Transform>,
+  transforms: Array<ChunkTransform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
     const [config, platform] = filterContent(compileOptions);

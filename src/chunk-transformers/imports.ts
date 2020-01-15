@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform, Range } from '../types';
+import { ChunkTransform, Range, TransformInterface } from '../types';
 import { literalName } from '../parsing/literal-name';
 import { FormatSpecifiers, Specifiers } from '../parsing/import-specifiers';
 import { TransformSourceDescription } from 'rollup';
@@ -37,7 +37,7 @@ interface RangedImport {
   range: Range;
 }
 
-export default class ImportTransform extends Transform {
+export default class ImportTransform extends ChunkTransform implements TransformInterface {
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
   private dynamicImportPresent: boolean = false;
@@ -74,11 +74,9 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * Before Closure Compiler modifies the source, we need to ensure external imports have been removed
    * since Closure will error out when it encounters them.
    * @param code source to parse, and modify
-   * @param chunk OutputChunk from Rollup for this code.
-   * @param id Rollup id reference to the source
    * @return modified input source with external imports removed.
    */
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
+  public async pre(code: string): Promise<TransformSourceDescription> {
     const self = this;
     const source = new MagicString(code);
     const program = parse(code);
@@ -117,7 +115,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = parse(code);
 

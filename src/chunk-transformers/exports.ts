@@ -33,15 +33,15 @@ import {
 import { PreserveNamedConstant } from '../parsing/preserve-named-constant-export';
 import { PreserveDefault } from '../parsing/preserve-default-export';
 import { isESMFormat } from '../options';
+import MagicString from 'magic-string';
+import { parse, walk } from '../acorn';
 import {
-  Transform,
-  TransformInterface,
+  ChunkTransform,
   ExportClosureMapping,
   ExportDetails,
   Range,
+  TransformInterface,
 } from '../types';
-import MagicString from 'magic-string';
-import { parse, walk } from '../acorn';
 
 const EXTERN_OVERVIEW = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -56,7 +56,7 @@ const EXTERN_OVERVIEW = `/**
  * 2. Insert additional JS referencing the exported names on the window scope
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
-export default class ExportTransform extends Transform implements TransformInterface {
+export default class ExportTransform extends ChunkTransform implements TransformInterface {
   public name = 'ExportTransform';
   private originalExports: Map<string, ExportDetails> = new Map();
   private currentSourceExportCount: number = 0;
@@ -138,11 +138,9 @@ export default class ExportTransform extends Transform implements TransformInter
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
+  public async pre(code: string): Promise<TransformSourceDescription> {
     if (!isESMFormat(this.outputOptions)) {
-      return {
-        code,
-      };
+      return super.pre(code);
     }
 
     await this.deriveExports(code);
@@ -173,15 +171,11 @@ export default class ExportTransform extends Transform implements TransformInter
    * After Closure Compiler has modified the source, we need to replace the window scoped
    * references we added with the intended export statements
    * @param code source post Closure Compiler Compilation
-   * @param chunk OutputChunk from Rollup for this code.
-   * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(code: string): Promise<TransformSourceDescription> {
     if (!isESMFormat(this.outputOptions)) {
-      return {
-        code,
-      };
+      return super.post(code);
     }
 
     const source = new MagicString(code);

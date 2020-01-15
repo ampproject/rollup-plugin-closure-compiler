@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { Transform, TransformInterface, Range } from '../types';
+import { ChunkTransform, Range } from '../types';
 import { parse, walk } from '../acorn';
 import { VariableDeclaration } from 'estree';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 
-export default class ConstTransform extends Transform implements TransformInterface {
+export default class ConstTransform extends ChunkTransform {
   public name = 'ConstTransform';
 
   /**
@@ -29,7 +29,7 @@ export default class ConstTransform extends Transform implements TransformInterf
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
+  public async pre(code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = parse(code);
 

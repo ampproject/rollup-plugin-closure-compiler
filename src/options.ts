@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform } from './types';
+import { ChunkTransform } from './types';
 import { OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { writeTempFile } from './temp-file';
@@ -58,7 +58,7 @@ function validateCompileOptions(compileOptions: CompileOptions): void {
 export const defaults = async (
   options: OutputOptions,
   providedExterns: Array<string>,
-  transformers: Array<Transform> | null,
+  transformers: Array<ChunkTransform> | null,
 ): Promise<CompileOptions> => {
   // Defaults for Rollup Projects are slightly different than Closure Compiler defaults.
   // - Users of Rollup tend to transpile their code before handing it to a minifier,
@@ -97,7 +97,7 @@ export default async function(
   incomingCompileOptions: CompileOptions,
   outputOptions: OutputOptions,
   code: string,
-  transforms: Array<Transform> | null,
+  transforms: Array<ChunkTransform> | null,
 ): Promise<[CompileOptions, string]> {
   const mapFile: string = await writeTempFile('');
   const compileOptions: CompileOptions = { ...incomingCompileOptions };
