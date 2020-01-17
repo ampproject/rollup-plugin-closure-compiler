@@ -44,7 +44,7 @@ const renderChunk = async (
   outputOptions: OutputOptions,
   chunk: RenderedChunk,
 ): Promise<{ code: string; map: SourceMapInput } | void> => {
-  const code = await preCompilation(sourceCode, outputOptions, chunk, transforms);
+  const code = await preCompilation(sourceCode, chunk, transforms);
   const [compileOptions, mapFile] = await options(
     requestedCompileOptions,
     outputOptions,
@@ -82,7 +82,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       }
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const transforms = createTransforms(context, inputOptions);
+      const transforms = createTransforms(context, inputOptions, outputOptions);
       const output = await renderChunk(
         transforms,
         requestedCompileOptions,

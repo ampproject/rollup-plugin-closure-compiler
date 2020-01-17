@@ -69,12 +69,13 @@ export interface TransformInterface {
 export class SourceTransform implements TransformInterface {
   protected context: PluginContext;
   protected inputOptions: InputOptions;
-  public outputOptions: OutputOptions;
+  protected outputOptions: OutputOptions;
   public name: string = 'SourceTransform';
 
-  constructor(context: PluginContext, inputOptions: InputOptions) {
+  constructor(context: PluginContext, inputOptions: InputOptions, outputOptions: OutputOptions) {
     this.context = context;
     this.inputOptions = inputOptions;
+    this.outputOptions = outputOptions;
   }
 
   public async pre(code: string): Promise<TransformSourceDescription> {

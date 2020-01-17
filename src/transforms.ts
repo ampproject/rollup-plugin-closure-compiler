@@ -28,20 +28,22 @@ import { logTransformChain } from './debug';
 /**
  * Instantiate transform class instances for the plugin invocation.
  * @param context Plugin context to bind for each transform instance.
- * @param options Rollup input options
+ * @param inputOptions Rollup input options
+ * @param outputOptions Rollup output options
  * @return Instantiated transform class instances for the given entry point.
  */
 export const createTransforms = (
   context: PluginContext,
-  options: InputOptions,
+  inputOptions: InputOptions,
+  outputOptions: OutputOptions,
 ): Array<ChunkTransform> => [
-  new ConstTransform(context, options),
-  new IifeTransform(context, options),
-  new CJSTransform(context, options),
-  new LiteralComputedKeys(context, options),
-  new StrictTransform(context, options),
-  new ExportTransform(context, options),
-  new ImportTransform(context, options),
+  new ConstTransform(context, inputOptions, outputOptions),
+  new IifeTransform(context, inputOptions, outputOptions),
+  new CJSTransform(context, inputOptions, outputOptions),
+  new LiteralComputedKeys(context, inputOptions, outputOptions),
+  new StrictTransform(context, inputOptions, outputOptions),
+  new ExportTransform(context, inputOptions, outputOptions),
+  new ImportTransform(context, inputOptions, outputOptions),
 ];
 
 /**
@@ -53,7 +55,6 @@ export const createTransforms = (
  */
 export async function preCompilation(
   code: string,
-  outputOptions: OutputOptions,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
 ): Promise<string> {
@@ -63,7 +64,6 @@ export async function preCompilation(
 
   log.push(['before', code]);
   for (const transform of transforms) {
-    transform.outputOptions = outputOptions;
     const result = await transform.pre(code);
     if (result && result.code) {
       log.push([transform.name, code]);
