@@ -20,7 +20,7 @@ const {
   getFirstSupportedPlatform,
 } = require('google-closure-compiler/lib/utils.js');
 import { ChunkTransform } from './types';
-import { postCompilation } from './transforms';
+import { postCompilation } from './chunk-transformers/transforms';
 import { RenderedChunk } from 'rollup';
 
 enum Platform {

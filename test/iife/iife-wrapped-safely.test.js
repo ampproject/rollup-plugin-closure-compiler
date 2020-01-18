@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import { createTransforms } from '../../transpile-tests/transforms';
+import { create } from '../../transpile-tests/chunk-transformers/transforms';
 import { defaults } from '../../transpile-tests/options';
 import { promises as fsPromises } from 'fs';
 import { generator } from '../generator';
@@ -30,7 +30,7 @@ test('generate extern for iife name', async t => {
     name: 'wrapper',
   };
 
-  const transforms = createTransforms({});
+  const transforms = create({});
   const options = await defaults(outputOptions, [], transforms);
 
   for (const externFilePath of options.externs) {

@@ -26,7 +26,7 @@ import {
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { preCompilation, createTransforms } from './transforms';
+import { preCompilation, create } from './chunk-transformers/transforms';
 import { ChunkTransform } from './types';
 
 /**
@@ -82,7 +82,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       }
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const transforms = createTransforms(context, inputOptions, outputOptions);
+      const transforms = create(context, inputOptions, outputOptions);
       const output = await renderChunk(
         transforms,
         requestedCompileOptions,
