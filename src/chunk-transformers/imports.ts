@@ -77,23 +77,22 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @return modified input source with external imports removed.
    */
   public async pre(code: string): Promise<TransformSourceDescription> {
-    const self = this;
     const source = new MagicString(code);
     const program = parse(code);
 
     walk.simple(program, {
-      ImportDeclaration(node: ImportDeclaration) {
+      ImportDeclaration: (node: ImportDeclaration) => {
         const name = literalName(node.source);
         const range: Range = node.range as Range;
         const specifiers = Specifiers(node.specifiers);
 
-        self.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
-        self.importedExternalsLocalNames.push(...specifiers.local);
+        this.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
+        this.importedExternalsLocalNames.push(...specifiers.local);
         source.remove(...range);
       },
-      Import(node: RangedImport) {
+      Import: (node: RangedImport) => {
         const [start, end] = node.range;
-        self.dynamicImportPresent = true;
+        this.dynamicImportPresent = true;
         // Rename the `import` method to something we can put in externs.
         // CC doesn't understand dynamic import yet.
         source.overwrite(

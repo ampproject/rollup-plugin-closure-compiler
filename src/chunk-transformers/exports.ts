@@ -17,7 +17,6 @@
 import {
   ExportNamedDeclaration,
   ExportDefaultDeclaration,
-  ExportAllDeclaration,
   Identifier,
   Node,
   AssignmentExpression,
@@ -92,19 +91,18 @@ export default class ExportTransform extends ChunkTransform implements Transform
   }
 
   private async deriveExports(code: string): Promise<void> {
-    const { context, storeExport } = this;
     const program = parse(code);
 
     walk.simple(program, {
-      ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        storeExport(NamedDeclaration(node));
+      ExportNamedDeclaration: (node: ExportNamedDeclaration) => {
+        this.storeExport(NamedDeclaration(node));
       },
-      ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-        storeExport(DefaultDeclaration(node));
+      ExportDefaultDeclaration: (node: ExportDefaultDeclaration) => {
+        this.storeExport(DefaultDeclaration(node));
       },
-      ExportAllDeclaration(node: ExportAllDeclaration) {
+      ExportAllDeclaration: () => {
         // TODO(KB): This case `export * from "./import"` is not currently supported.
-        context.error(
+        this.context.error(
           new Error(
             `Rollup Plugin Closure Compiler does not support export all syntax for externals.`,
           ),
@@ -180,7 +178,6 @@ export default class ExportTransform extends ChunkTransform implements Transform
 
     const source = new MagicString(code);
     const program = parse(code);
-    const { originalExports, currentSourceExportCount } = this;
     let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
 
     source.trimEnd();
@@ -189,7 +186,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
       // We inserted window scoped assignments for all the export statements during `preCompilation`
       // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
       // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
-      Identifier(node: Identifier, ancestors: Array<Node>) {
+      Identifier: (node: Identifier, ancestors: Array<Node>) => {
         if (node.name !== 'window') {
           return;
         }
@@ -203,12 +200,14 @@ export default class ExportTransform extends ChunkTransform implements Transform
           const left: MemberExpression = expression.left as MemberExpression;
           const exportName: string | null = PreservedExportName(left);
 
-          if (exportName !== null && originalExports.get(exportName)) {
-            const exportDetails: ExportDetails = originalExports.get(exportName) as ExportDetails;
+          if (exportName !== null && this.originalExports.get(exportName)) {
+            const exportDetails: ExportDetails = this.originalExports.get(
+              exportName,
+            ) as ExportDetails;
             const exportIsLocal: boolean = exportDetails.source === null;
             const exportInline: boolean =
               exportIsLocal &&
-              currentSourceExportCount === 1 &&
+              this.currentSourceExportCount === 1 &&
               exportDetails.local === exportDetails.exported;
 
             switch (exportDetails.type) {
