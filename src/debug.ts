@@ -16,7 +16,7 @@
 
 import { writeTempFile } from './temp-file';
 
-const DEBUG_ENABLED = false;
+const DEBUG_ENABLED = true;
 
 /* c8 ignore next 15 */
 export async function logTransformChain(

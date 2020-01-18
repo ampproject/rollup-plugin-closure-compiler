@@ -28,19 +28,14 @@ import {
   DefaultDeclaration,
   NodeIsPreservedExport,
   PreservedExportName,
-} from '../parsing/export-details';
-import { PreserveNamedConstant } from '../parsing/preserve-named-constant-export';
-import { PreserveDefault } from '../parsing/preserve-default-export';
-import { isESMFormat } from '../options';
+} from '../../parsing/export-details';
+import { PreserveNamedConstant } from '../../parsing/preserve-named-constant-export';
+import { PreserveDefault } from '../../parsing/preserve-default-export';
+import { isESMFormat } from '../../options';
 import MagicString from 'magic-string';
-import { parse, walk } from '../acorn';
-import {
-  ChunkTransform,
-  ExportClosureMapping,
-  ExportDetails,
-  Range,
-  TransformInterface,
-} from '../types';
+import { parse, walk } from '../../acorn';
+import { ChunkTransform } from '../../transform';
+import { ExportClosureMapping, ExportDetails, Range, TransformInterface } from '../../types';
 
 const EXTERN_OVERVIEW = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.

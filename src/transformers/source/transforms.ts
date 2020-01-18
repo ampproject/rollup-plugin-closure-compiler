@@ -1,0 +1,51 @@
+/**
+ * Copyright 2020 The AMP HTML Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS-IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { SourceTransform, lifecycle } from '../../transform';
+import { ImportTransform } from './imports';
+import { PluginContext, InputOptions, OutputOptions } from 'rollup';
+import * as path from 'path';
+
+const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform];
+
+/**
+ * Instantiate transform class instances for the plugin invocation.
+ * @param context Plugin context to bind for each transform instance.
+ * @param inputOptions Rollup input options
+ * @param outputOptions Rollup output options
+ * @return Instantiated transform class instances for the given entry point.
+ */
+export const create = (
+  context: PluginContext,
+  inputOptions: InputOptions,
+  outputOptions: OutputOptions,
+): Array<SourceTransform> =>
+  TRANSFORMS.map(transform => new transform(context, inputOptions, outputOptions));
+
+/**
+ * Run each transform's `pre` lifecycle.
+ * @param code
+ * @param transforms
+ * @return source code following `preCompilation`
+ */
+export async function pre(
+  source: string,
+  id: string,
+  transforms: Array<SourceTransform>,
+): Promise<string> {
+  const name = path.basename(id);
+  return await lifecycle(name, 'PreTransform', 'pre', source, transforms);
+}

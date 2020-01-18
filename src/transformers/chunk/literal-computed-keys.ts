@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { ChunkTransform, Range, TransformInterface } from '../types';
+import { ChunkTransform } from '../../transform';
+import { Range, TransformInterface } from '../../types';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
-import { parse, walk } from '../acorn';
+import { parse, walk } from '../../acorn';
 
 /**
  * Closure Compiler will not transform computed keys with literal values back to the literal value.

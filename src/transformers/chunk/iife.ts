@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../types';
+import { ChunkTransform } from '../../transform';
 import { OutputOptions } from 'rollup';
 
 const HEADER = `/**

@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import { create } from '../../transpile-tests/chunk-transformers/transforms';
+import { create } from '../../transpile-tests/transformers/chunk/transforms';
 import { defaults } from '../../transpile-tests/options';
 import { promises as fsPromises } from 'fs';
 import { generator } from '../generator';

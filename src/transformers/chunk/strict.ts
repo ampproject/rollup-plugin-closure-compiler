@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { ChunkTransform, Range, TransformInterface } from '../types';
-import { isESMFormat } from '../options';
+import { ChunkTransform } from '../../transform';
+import { Range, TransformInterface } from '../../types';
+import { isESMFormat } from '../../options';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { walk, parse } from '../acorn';
+import { walk, parse } from '../../acorn';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
 

@@ -26,8 +26,9 @@ import {
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { preCompilation, create } from './chunk-transformers/transforms';
-import { ChunkTransform } from './types';
+import { ChunkTransform } from './transform';
+import { pre, create as createSourceTransforms } from './transformers/source/transforms';
+import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
 
 /**
  * Transform the tree-shaken code from Rollup with Closure Compiler (with derived configuration and transforms)
@@ -81,10 +82,16 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         );
       }
     },
+    transform: async (code: string, id: string) => {
+      const transformTransforms = createSourceTransforms(context, inputOptions, {});
+      const output = await pre(code, id, transformTransforms);
+
+      return output || null;
+    },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const transforms = create(context, inputOptions, outputOptions);
+      const renderChunkTransforms = createChunkTransforms(context, inputOptions, outputOptions);
       const output = await renderChunk(
-        transforms,
+        renderChunkTransforms,
         requestedCompileOptions,
         code,
         outputOptions,

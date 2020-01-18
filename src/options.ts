@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from './types';
+import { ChunkTransform } from './transform';
 import { OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { writeTempFile } from './temp-file';

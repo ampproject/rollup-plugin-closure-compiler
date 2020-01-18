@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { ChunkTransform, Range } from '../types';
-import { parse, walk } from '../acorn';
+import { ChunkTransform } from '../../transform';
+import { Range } from '../../types';
+import { parse, walk } from '../../acorn';
 import { VariableDeclaration } from 'estree';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';

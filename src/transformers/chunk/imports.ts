@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { ChunkTransform, Range, TransformInterface } from '../types';
-import { literalName } from '../parsing/literal-name';
-import { FormatSpecifiers, Specifiers } from '../parsing/import-specifiers';
+import { ChunkTransform } from '../../transform';
+import { Range, TransformInterface } from '../../types';
+import { literalName } from '../../parsing/literal-name';
+import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ImportDeclaration, Identifier } from 'estree';
-import { parse, walk } from '../acorn';
+import { parse, walk } from '../../acorn';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;

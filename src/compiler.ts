@@ -19,9 +19,9 @@ const {
   getNativeImagePath,
   getFirstSupportedPlatform,
 } = require('google-closure-compiler/lib/utils.js');
-import { ChunkTransform } from './types';
-import { postCompilation } from './chunk-transformers/transforms';
+import { postCompilation } from './transformers/chunk/transforms';
 import { RenderedChunk } from 'rollup';
+import { ChunkTransform } from './transform';
 
 enum Platform {
   NATIVE = 'native',

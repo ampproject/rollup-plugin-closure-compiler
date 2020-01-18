@@ -14,13 +14,30 @@
  * limitations under the License.
  */
 
-import { SourceTransform } from '../types';
+import { SourceTransform } from '../../transform';
 import { TransformSourceDescription } from 'rollup';
+// import MagicString from 'magic-string';
+import { parse, walk } from '../../acorn';
+import { ImportDeclaration } from 'estree';
+import { literalName } from '../../parsing/literal-name';
+import { Specifiers } from '../../parsing/import-specifiers';
 
 export class ImportTransform extends SourceTransform {
   public name: string = 'ImportTransform';
 
   public async pre(code: string): Promise<TransformSourceDescription> {
+    // const source = new MagicString(code);
+    const program = parse(code);
+
+    walk.simple(program, {
+      ImportDeclaration: (node: ImportDeclaration) => {
+        const name = literalName(node.source);
+        const specifiers = Specifiers(node.specifiers);
+
+        console.log({ name, specifiers });
+      },
+    });
+
     return {
       code,
     };

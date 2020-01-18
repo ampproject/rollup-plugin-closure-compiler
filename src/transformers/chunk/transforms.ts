@@ -15,7 +15,6 @@
  */
 
 import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
-import { ChunkTransform } from '../types';
 import IifeTransform from './iife';
 import CJSTransform from './cjs';
 import LiteralComputedKeys from './literal-computed-keys';
@@ -23,7 +22,7 @@ import ExportTransform from './exports';
 import ImportTransform from './imports';
 import StrictTransform from './strict';
 import ConstTransform from './const';
-import { logTransformChain } from '../debug';
+import { ChunkTransform, lifecycle } from '../../transform';
 
 const TRANSFORMS: Array<typeof ChunkTransform> = [
   ConstTransform,
@@ -49,31 +48,6 @@ export const create = (
 ): Array<ChunkTransform> =>
   TRANSFORMS.map(transform => new transform(context, inputOptions, outputOptions));
 
-type log = Array<[string, string]>;
-
-async function lifecycleTransform(
-  fileName: string,
-  name: 'pre' | 'post',
-  code: string,
-  transforms: Array<ChunkTransform>,
-): Promise<string> {
-  const log: log = [];
-
-  log.push(['before', code]);
-  for (const transform of transforms) {
-    const result = await transform[name](code);
-    if (result && result.code) {
-      log.push([transform.name, code]);
-      code = result.code;
-    }
-  }
-
-  log.push(['after', code]);
-  await logTransformChain(fileName, `${name}Compilation`, log);
-
-  return code;
-}
-
 /**
  * Run each transform's `preCompilation` phase.
  * @param code
@@ -86,7 +60,7 @@ export async function preCompilation(
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
 ): Promise<string> {
-  return await lifecycleTransform(chunk.fileName, 'pre', source, transforms);
+  return await lifecycle(chunk.fileName, 'PreCompilation', 'pre', source, transforms);
 }
 
 /**
@@ -101,5 +75,5 @@ export async function postCompilation(
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
 ): Promise<string> {
-  return await lifecycleTransform(chunk.fileName, 'post', code, transforms);
+  return await lifecycle(chunk.fileName, 'PostCompilation', 'post', code, transforms);
 }

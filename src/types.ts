@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { OutputOptions, TransformSourceDescription, PluginContext, InputOptions } from 'rollup';
+import { TransformSourceDescription } from 'rollup';
 const dynamicImport = require('acorn-dynamic-import');
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
@@ -65,35 +65,4 @@ export interface TransformInterface {
   name: string;
   pre: TransformMethod;
   post: TransformMethod;
-}
-export class SourceTransform implements TransformInterface {
-  protected context: PluginContext;
-  protected inputOptions: InputOptions;
-  protected outputOptions: OutputOptions;
-  public name: string = 'SourceTransform';
-
-  constructor(context: PluginContext, inputOptions: InputOptions, outputOptions: OutputOptions) {
-    this.context = context;
-    this.inputOptions = inputOptions;
-    this.outputOptions = outputOptions;
-  }
-
-  public async pre(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
-
-  public async post(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
-}
-export class ChunkTransform extends SourceTransform implements TransformInterface {
-  public name: string = 'ChunkTransform';
-
-  public extern(options: OutputOptions): string | null {
-    return null;
-  }
 }
