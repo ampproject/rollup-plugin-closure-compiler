@@ -16,52 +16,11 @@
 
 import { CompileOptions } from 'google-closure-compiler';
 import { promises as fsPromises } from 'fs';
-import {
-  OutputOptions,
-  Plugin,
-  InputOptions,
-  PluginContext,
-  RenderedChunk,
-  SourceMapInput,
-} from 'rollup';
+import { OutputOptions, Plugin, InputOptions, PluginContext, RenderedChunk } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { ChunkTransform } from './transform';
 import { pre, create as createSourceTransforms } from './transformers/source/transforms';
 import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
-
-/**
- * Transform the tree-shaken code from Rollup with Closure Compiler (with derived configuration and transforms)
- * @param compileOptions Closure Compiler compilation options from Rollup configuration.
- * @param transforms Transforms to apply to source followin Closure Compiler completion.
- * @param code Source to compile.
- * @param outputOptions Rollup Output Options.
- * @return Closure Compiled form of the Rollup Chunk
- */
-const renderChunk = async (
-  transforms: Array<ChunkTransform>,
-  requestedCompileOptions: CompileOptions = {},
-  sourceCode: string,
-  outputOptions: OutputOptions,
-  chunk: RenderedChunk,
-): Promise<{ code: string; map: SourceMapInput } | void> => {
-  const code = await preCompilation(sourceCode, chunk, transforms);
-  const [compileOptions, mapFile] = await options(
-    requestedCompileOptions,
-    outputOptions,
-    code,
-    transforms,
-  );
-
-  try {
-    return {
-      code: await compiler(compileOptions, chunk, transforms),
-      map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
-    };
-  } catch (error) {
-    throw error;
-  }
-};
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
   let inputOptions: InputOptions;
@@ -90,14 +49,22 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       const renderChunkTransforms = createChunkTransforms(context, inputOptions, outputOptions);
-      const output = await renderChunk(
-        renderChunkTransforms,
+      const preCompileOutput = await preCompilation(code, chunk, renderChunkTransforms);
+      const [compileOptions, mapFile] = await options(
         requestedCompileOptions,
-        code,
         outputOptions,
-        chunk,
+        preCompileOutput,
+        renderChunkTransforms,
       );
-      return output || null;
+
+      try {
+        return {
+          code: await compiler(compileOptions, chunk, renderChunkTransforms),
+          map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
+        };
+      } catch (error) {
+        throw error;
+      }
     },
   };
 }

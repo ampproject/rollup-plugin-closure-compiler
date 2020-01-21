@@ -22,6 +22,9 @@ import { ImportDeclaration } from 'estree';
 import { literalName } from '../../parsing/literal-name';
 import { Specifiers } from '../../parsing/import-specifiers';
 
+/*
+ * Note: This isn't ready to be used yet, just an example of a SourceTransform
+ */
 export class ImportTransform extends SourceTransform {
   public name: string = 'ImportTransform';
 

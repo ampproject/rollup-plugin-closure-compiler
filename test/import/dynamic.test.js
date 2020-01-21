@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-import {
-  generator,
-  DEFAULT_CLOSURE_OPTIONS,
-  PRETTY_PRINT_CLOSURE_OPTIONS,
-  ES5_STRICT_CLOSURE_OPTIONS,
-} from '../generator';
+import { generator } from '../generator';
 
-generator('import', 'dynamic', true, undefined, {
-  ...DEFAULT_CLOSURE_OPTIONS,
-  ...PRETTY_PRINT_CLOSURE_OPTIONS,
-  ...ES5_STRICT_CLOSURE_OPTIONS,
-});
+generator('import', 'dynamic');
