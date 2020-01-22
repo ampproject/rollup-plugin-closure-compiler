@@ -39,27 +39,27 @@
     "acorn-walk": "7.0.0",
     "google-closure-compiler": "20200112.0.0",
     "magic-string": "0.25.6",
-    "uuid": "3.3.3"
+    "uuid": "3.4.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.42",
-    "@types/node": "12.12.24",
+    "@types/node": "12.12.25",
     "@types/uuid": "3.4.6",
     "ava": "2.4.0",
     "builtins": "3.0.0",
-    "c8": "7.0.0",
+    "c8": "7.0.1",
     "codecov": "3.6.1",
     "estree-walker": "1.0.1",
-    "husky": "4.0.7",
-    "lint-staged": "9.5.0",
+    "husky": "4.2.0",
+    "lint-staged": "10.0.2",
     "np": "5.2.1",
     "npm-run-all": "4.1.5",
     "prettier": "1.19.1",
     "rimraf": "3.0.0",
-    "rollup": "1.29.0",
+    "rollup": "1.29.1",
     "sirv-cli": "0.4.5",
-    "typescript": "3.7.4"
+    "typescript": "3.7.5"
   },
   "lint-staged": {
     "*.ts": [
