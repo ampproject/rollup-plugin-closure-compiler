@@ -63,12 +63,10 @@
   },
   "lint-staged": {
     "*.ts": [
-      "prettier --config .prettierrc --write",
-      "git add"
+      "prettier --config .prettierrc --write"
     ],
     "*.test.js": [
-      "prettier --config .prettierrc --write",
-      "git add"
+      "prettier --config .prettierrc --write"
     ]
   },
   "husky": {
