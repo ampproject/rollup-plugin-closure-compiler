@@ -50,6 +50,7 @@
     "builtins": "3.0.0",
     "c8": "7.0.0",
     "codecov": "3.6.1",
+    "estree-walker": "1.0.1",
     "husky": "4.0.7",
     "lint-staged": "9.5.0",
     "np": "5.2.1",
