@@ -19,12 +19,17 @@ import { promises as fsPromises } from 'fs';
 import { OutputOptions, Plugin, InputOptions, PluginContext, RenderedChunk } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { pre, create as createSourceTransforms } from './transformers/source/transforms';
+import {
+  transform as sourceTransform,
+  create as createSourceTransforms,
+} from './transformers/source/transforms';
 import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
+import { Mangle } from './transformers/mangle';
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
   let inputOptions: InputOptions;
   let context: PluginContext;
+  let mangler: Mangle;
 
   return {
     name: 'closure-compiler',
@@ -42,13 +47,19 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       }
     },
     transform: async (code: string, id: string) => {
-      const transformTransforms = createSourceTransforms(context, inputOptions, {});
-      const output = await pre(code, id, transformTransforms);
+      mangler = new Mangle();
+      const transformTransforms = createSourceTransforms(context, mangler, inputOptions, {});
+      const output = await sourceTransform(code, id, transformTransforms);
 
       return output || null;
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const renderChunkTransforms = createChunkTransforms(context, inputOptions, outputOptions);
+      const renderChunkTransforms = createChunkTransforms(
+        context,
+        mangler,
+        inputOptions,
+        outputOptions,
+      );
       const preCompileOutput = await preCompilation(code, chunk, renderChunkTransforms);
       const [compileOptions, mapFile] = await options(
         requestedCompileOptions,

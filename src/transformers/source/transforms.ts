@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { SourceTransform, lifecycle } from '../../transform';
+import { SourceTransform, sourceLifecycle } from '../../transform';
 import { ImportTransform } from './imports';
+import { ExportTransform } from './exports';
+import { Mangle } from '../mangle';
 import { PluginContext, InputOptions, OutputOptions } from 'rollup';
 import * as path from 'path';
 
-const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform];
+const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform, ExportTransform];
 
 /**
  * Instantiate transform class instances for the plugin invocation.
@@ -30,22 +32,23 @@ const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform];
  */
 export const create = (
   context: PluginContext,
+  mangler: Mangle,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<SourceTransform> =>
-  TRANSFORMS.map(transform => new transform(context, inputOptions, outputOptions));
+  TRANSFORMS.map(transform => new transform(context, mangler, inputOptions, outputOptions));
 
 /**
- * Run each transform's `pre` lifecycle.
+ * Run each transform's `transform` lifecycle.
  * @param code
  * @param transforms
- * @return source code following `preCompilation`
+ * @return source code following `transform`
  */
-export async function pre(
+export async function transform(
   source: string,
   id: string,
   transforms: Array<SourceTransform>,
 ): Promise<string> {
   const name = path.basename(id);
-  return await lifecycle(name, 'PreTransform', 'pre', source, transforms);
+  return await sourceLifecycle(name, 'PreTransform', source, transforms);
 }

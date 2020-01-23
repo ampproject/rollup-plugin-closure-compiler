@@ -21,22 +21,94 @@ import {
   ExpressionStatement,
   MemberExpression,
   Expression,
+  Identifier,
 } from 'estree';
 import { ExportDetails, Range, ExportClosureMapping } from '../types';
+import {
+  isFunctionDeclaration,
+  isVariableDeclaration,
+  isIdentifier,
+  isClassDeclaration,
+} from '../acorn';
 
-export function NamedDeclaration(declaration: ExportNamedDeclaration): Array<ExportDetails> {
+// export function NamedDeclaration(declaration: ExportNamedDeclaration): Array<ExportDetails> {
+//   const exportDetails: Array<ExportDetails> = [];
+//   const source: string | null =
+//     typeof declaration?.source?.value === 'string' ? declaration.source.value : null;
+
+//   for (const specifier of declaration.specifiers) {
+//     exportDetails.push({
+//       local: specifier.local.name,
+//       exported: specifier.exported.name,
+//       type: ExportClosureMapping.NAMED_CONSTANT,
+//       range: declaration.range as Range,
+//       source,
+//     });
+//   }
+
+//   return exportDetails;
+// }
+
+export function NamedDeclaration(node: ExportNamedDeclaration): Array<ExportDetails> {
   const exportDetails: Array<ExportDetails> = [];
-  const source: string | null =
-    typeof declaration?.source?.value === 'string' ? declaration.source.value : null;
+  const range = node.range as Range;
+  const source: string | null = typeof node.source?.value === 'string' ? node.source.value : null;
+  const { specifiers, declaration } = node;
 
-  for (const specifier of declaration.specifiers) {
-    exportDetails.push({
-      local: specifier.local.name,
-      exported: specifier.exported.name,
-      type: ExportClosureMapping.NAMED_CONSTANT,
-      range: declaration.range as Range,
-      source,
-    });
+  // NamedDeclarations either have specifiers or declarations.
+  if (specifiers.length > 0) {
+    for (const specifier of specifiers) {
+      exportDetails.push({
+        local: specifier.local.name,
+        exported: specifier.exported.name,
+        type: ExportClosureMapping.NAMED_CONSTANT,
+        range,
+        source,
+      });
+    }
+
+    return exportDetails;
+  }
+
+  let id: Identifier;
+  if (declaration) {
+    if (isFunctionDeclaration(declaration)) {
+      // Only default exports can be missing an identifier.
+      id = declaration.id as Identifier;
+
+      exportDetails.push({
+        local: id.name,
+        exported: id.name,
+        type: ExportClosureMapping.NAMED_FUNCTION,
+        range,
+        source,
+      });
+    }
+    if (isVariableDeclaration(declaration)) {
+      for (const eachDeclaration of declaration.declarations) {
+        if (isIdentifier(eachDeclaration.id)) {
+          exportDetails.push({
+            local: eachDeclaration.id.name,
+            exported: eachDeclaration.id.name,
+            type: ExportClosureMapping.NAMED_CONSTANT,
+            range,
+            source,
+          });
+        }
+      }
+    }
+    if (isClassDeclaration(declaration)) {
+      // Only default exports can be missing an identifier.
+      id = declaration.id as Identifier;
+
+      exportDetails.push({
+        local: id.name,
+        exported: id.name,
+        type: ExportClosureMapping.NAMED_CLASS,
+        range,
+        source,
+      });
+    }
   }
 
   return exportDetails;

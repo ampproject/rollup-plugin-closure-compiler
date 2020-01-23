@@ -15,23 +15,13 @@
  */
 
 import { IMPORT_SPECIFIER, IMPORT_NAMESPACE_SPECIFIER, IMPORT_DEFAULT_SPECIFIER } from '../types';
-import {
-  ImportSpecifier,
-  ImportDefaultSpecifier,
-  ImportNamespaceSpecifier,
-  BaseNode,
-  ImportDeclaration,
-} from 'estree';
+import { ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier } from 'estree';
 
 interface Specifiers {
   default: string | null;
   specific: Array<string>;
   local: Array<string>;
   namespace: boolean;
-}
-
-export function isImportDeclaration(node: BaseNode): node is ImportDeclaration {
-  return node.type === 'ImportDeclaration';
 }
 
 export function Specifiers(

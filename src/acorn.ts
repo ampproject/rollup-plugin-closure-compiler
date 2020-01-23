@@ -14,7 +14,21 @@
  * limitations under the License.
  */
 
-import { Program } from 'estree';
+import {
+  Program,
+  BaseNode,
+  Identifier,
+  ImportDeclaration,
+  VariableDeclarator,
+  BlockStatement,
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  ExportAllDeclaration,
+  FunctionDeclaration,
+  VariableDeclaration,
+  ClassDeclaration,
+  ExportSpecifier,
+} from 'estree';
 import { DYNAMIC_IMPORT_DECLARATION } from './types';
 const acorn = require('acorn');
 const acornWalk = require('acorn-walk');
@@ -42,4 +56,41 @@ const DEFAULT_ACORN_OPTIONS = {
 
 export function parse(source: string): Program {
   return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
+}
+
+export function isIdentifier(node: BaseNode): node is Identifier {
+  return node.type === 'Identifier';
+}
+export function isImportDeclaration(node: BaseNode): node is ImportDeclaration {
+  return node.type === 'ImportDeclaration';
+}
+export function isVariableDeclarator(node: BaseNode): node is VariableDeclarator {
+  return node.type === 'VariableDeclarator';
+}
+export function isBlockStatement(node: BaseNode): node is BlockStatement {
+  return node.type === 'BlockStatement';
+}
+export function isProgram(node: BaseNode): node is Program {
+  return node.type === 'Program';
+}
+export function isExportNamedDeclaration(node: BaseNode): node is ExportNamedDeclaration {
+  return node.type === 'ExportNamedDeclaration';
+}
+export function isExportDefaultDeclaration(node: BaseNode): node is ExportDefaultDeclaration {
+  return node.type === 'ExportDefaultDeclaration';
+}
+export function isExportAllDeclaration(node: BaseNode): node is ExportAllDeclaration {
+  return node.type === 'ExportAllDeclaration';
+}
+export function isFunctionDeclaration(node: BaseNode): node is FunctionDeclaration {
+  return node.type === 'FunctionDeclaration';
+}
+export function isVariableDeclaration(node: BaseNode): node is VariableDeclaration {
+  return node.type === 'VariableDeclaration';
+}
+export function isClassDeclaration(node: BaseNode): node is ClassDeclaration {
+  return node.type === 'ClassDeclaration';
+}
+export function isExportSpecifier(node: BaseNode): node is ExportSpecifier {
+  return node.type === 'ExportSpecifier';
 }

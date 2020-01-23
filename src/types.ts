@@ -60,9 +60,7 @@ export interface ExportDetails {
   source: string | null;
 }
 
-type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
+export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
 export interface TransformInterface {
   name: string;
-  pre: TransformMethod;
-  post: TransformMethod;
 }

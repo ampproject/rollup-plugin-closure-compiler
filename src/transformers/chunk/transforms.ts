@@ -22,7 +22,8 @@ import ExportTransform from './exports';
 import ImportTransform from './imports';
 import StrictTransform from './strict';
 import ConstTransform from './const';
-import { ChunkTransform, lifecycle } from '../../transform';
+import { ChunkTransform, chunkLifecycle } from '../../transform';
+import { Mangle } from '../mangle';
 
 const TRANSFORMS: Array<typeof ChunkTransform> = [
   ConstTransform,
@@ -43,10 +44,11 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
  */
 export const create = (
   context: PluginContext,
+  mangler: Mangle,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<ChunkTransform> =>
-  TRANSFORMS.map(transform => new transform(context, inputOptions, outputOptions));
+  TRANSFORMS.map(transform => new transform(context, mangler, inputOptions, outputOptions));
 
 /**
  * Run each transform's `preCompilation` phase.
@@ -60,7 +62,7 @@ export async function preCompilation(
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
 ): Promise<string> {
-  return await lifecycle(chunk.fileName, 'PreCompilation', 'pre', source, transforms);
+  return await chunkLifecycle(chunk.fileName, 'PreCompilation', 'pre', source, transforms);
 }
 
 /**
@@ -75,5 +77,5 @@ export async function postCompilation(
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
 ): Promise<string> {
-  return await lifecycle(chunk.fileName, 'PostCompilation', 'post', code, transforms);
+  return await chunkLifecycle(chunk.fileName, 'PostCompilation', 'post', code, transforms);
 }

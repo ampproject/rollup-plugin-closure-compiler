@@ -17,13 +17,64 @@
 import { logTransformChain } from './debug';
 import { TransformInterface } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
+import { Mangle } from './transformers/mangle';
 
-export async function lifecycle(
+class Transform implements TransformInterface {
+  protected context: PluginContext;
+  protected mangler: Mangle;
+  protected inputOptions: InputOptions;
+  protected outputOptions: OutputOptions;
+  public name: string = 'Transform';
+
+  constructor(
+    context: PluginContext,
+    mangler: Mangle,
+    inputOptions: InputOptions,
+    outputOptions: OutputOptions,
+  ) {
+    this.context = context;
+    this.mangler = mangler;
+    this.inputOptions = inputOptions;
+    this.outputOptions = outputOptions;
+  }
+}
+
+export class SourceTransform extends Transform {
+  public name: string = 'SourceTransform';
+
+  public async transform(fileName: string, code: string): Promise<TransformSourceDescription> {
+    return {
+      code,
+    };
+  }
+}
+
+export class ChunkTransform extends Transform {
+  public name: string = 'ChunkTransform';
+
+  public extern(options: OutputOptions): string | null {
+    return null;
+  }
+
+  public async pre(code: string): Promise<TransformSourceDescription> {
+    return {
+      code,
+    };
+  }
+
+  public async post(code: string): Promise<TransformSourceDescription> {
+    return {
+      code,
+    };
+  }
+}
+
+export async function chunkLifecycle(
   fileName: string,
   printableName: string,
   method: 'pre' | 'post',
   code: string,
-  transforms: Array<SourceTransform>,
+  transforms: Array<ChunkTransform>,
 ): Promise<string> {
   const log: Array<[string, string]> = [];
 
@@ -42,35 +93,25 @@ export async function lifecycle(
   return code;
 }
 
-export class SourceTransform implements TransformInterface {
-  protected context: PluginContext;
-  protected inputOptions: InputOptions;
-  protected outputOptions: OutputOptions;
-  public name: string = 'SourceTransform';
+export async function sourceLifecycle(
+  fileName: string,
+  printableName: string,
+  code: string,
+  transforms: Array<SourceTransform>,
+): Promise<string> {
+  const log: Array<[string, string]> = [];
 
-  constructor(context: PluginContext, inputOptions: InputOptions, outputOptions: OutputOptions) {
-    this.context = context;
-    this.inputOptions = inputOptions;
-    this.outputOptions = outputOptions;
+  log.push(['before', code]);
+  for (const transform of transforms) {
+    const result = await transform.transform(fileName, code);
+    if (result && result.code) {
+      log.push([transform.name, code]);
+      code = result.code;
+    }
   }
 
-  public async pre(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
+  log.push(['after', code]);
+  await logTransformChain(fileName, printableName, log);
 
-  public async post(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
-}
-
-export class ChunkTransform extends SourceTransform implements TransformInterface {
-  public name: string = 'ChunkTransform';
-
-  public extern(options: OutputOptions): string | null {
-    return null;
-  }
+  return code;
 }
