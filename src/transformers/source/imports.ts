@@ -23,8 +23,11 @@ import {
   isIdentifier,
   isVariableDeclarator,
   isBlockStatement,
+  isExportAllDeclaration,
+  isExportNamedDeclaration,
+  isExportDefaultDeclaration,
 } from '../../acorn';
-import { walk } from 'estree-walker';
+import { walk } from '@kristoferbaxter/estree-walker';
 import { literalName } from '../../parsing/literal-name';
 import { Specifiers, FormatSpecifiers } from '../../parsing/import-specifiers';
 import { Range } from '../../types';
@@ -33,17 +36,30 @@ import { Identifier, ImportDeclaration } from 'estree';
 export class ImportTransform extends SourceTransform {
   public name: string = 'ImportTransform';
 
-  private mangleImportDeclaration = (node: ImportDeclaration, source: MagicString): void => {
+  private mangleImportDeclaration = async (
+    node: ImportDeclaration,
+    id: string,
+    source: MagicString,
+  ): Promise<void> => {
     const [start, end] = node.range as Range;
     const name = literalName(node.source);
-    const sourceId = this.mangler.sourceId(name);
+    const sourceId = this.mangler.sourceId((await this.context.resolve(name, id))?.id || name);
     let specifiers = Specifiers(node.specifiers);
 
     specifiers = {
       ...specifiers,
       default:
         specifiers.default !== null ? this.mangler.mangle(specifiers.default, sourceId) : null,
-      specific: specifiers.specific.map(specific => this.mangler.mangle(specific, sourceId)),
+      specific: specifiers.specific.map(specific => {
+        if (specific.includes(' as ')) {
+          const split = specific.split(' as ');
+          return `${this.mangler.mangle(split[0], sourceId)} as ${this.mangler.mangle(
+            split[1],
+            sourceId,
+          )}`;
+        }
+        return this.mangler.mangle(specific, sourceId);
+      }),
       local: specifiers.local.map(local => this.mangler.mangle(local, sourceId)),
     };
 
@@ -54,11 +70,12 @@ export class ImportTransform extends SourceTransform {
     const [start, end] = node.range as Range;
     const mangledIdentifier = this.mangler.getMangledName(node.name);
     if (mangledIdentifier) {
+      console.log('mangle overwrite', mangledIdentifier);
       source.overwrite(start, end, mangledIdentifier);
     }
   };
 
-  public async transform(fileName: string, code: string): Promise<TransformSourceDescription> {
+  public async transform(id: string, code: string): Promise<TransformSourceDescription> {
     const source = new MagicString(code);
     const program = parse(code);
     const { mangleImportDeclaration, mangleIdentifier, mangler } = this;
@@ -71,10 +88,18 @@ export class ImportTransform extends SourceTransform {
 
     // Importantly, do not rename identifiers that share a name with an import,
     //    but are defined locally within a BlockStatement.
-    walk(program, {
-      enter: function(node) {
+    await walk(program, {
+      enter: async function(node) {
+        if (
+          isExportAllDeclaration(node) ||
+          isExportNamedDeclaration(node) ||
+          isExportDefaultDeclaration(node)
+        ) {
+          // All exports are handled by the export source transform.
+          this.skip();
+        }
         if (isImportDeclaration(node)) {
-          mangleImportDeclaration(node, source);
+          await mangleImportDeclaration(node, id, source);
           this.skip();
         }
         if (isBlockStatement(node)) {
@@ -102,13 +127,15 @@ export class ImportTransform extends SourceTransform {
           mangleIdentifier(node, source);
         }
       },
-      leave: function(node) {
+      leave: async function(node) {
         if (isBlockStatement(node)) {
           insideBlockStatement = false;
           ignoreIdentfiersInBlockStatement = [];
         }
       },
     });
+
+    console.log('imports done', source.toString());
 
     return {
       code: source.toString(),

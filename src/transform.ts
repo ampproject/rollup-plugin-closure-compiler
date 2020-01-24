@@ -18,6 +18,7 @@ import { logTransformChain } from './debug';
 import { TransformInterface } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
+import * as path from 'path';
 
 class Transform implements TransformInterface {
   protected context: PluginContext;
@@ -42,7 +43,7 @@ class Transform implements TransformInterface {
 export class SourceTransform extends Transform {
   public name: string = 'SourceTransform';
 
-  public async transform(fileName: string, code: string): Promise<TransformSourceDescription> {
+  public async transform(id: string, code: string): Promise<TransformSourceDescription> {
     return {
       code,
     };
@@ -94,16 +95,17 @@ export async function chunkLifecycle(
 }
 
 export async function sourceLifecycle(
-  fileName: string,
+  id: string,
   printableName: string,
   code: string,
   transforms: Array<SourceTransform>,
 ): Promise<string> {
+  const fileName = path.basename(id);
   const log: Array<[string, string]> = [];
 
   log.push(['before', code]);
   for (const transform of transforms) {
-    const result = await transform.transform(fileName, code);
+    const result = await transform.transform(id, code);
     if (result && result.code) {
       log.push([transform.name, code]);
       code = result.code;

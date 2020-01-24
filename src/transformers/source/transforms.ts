@@ -19,7 +19,6 @@ import { ImportTransform } from './imports';
 import { ExportTransform } from './exports';
 import { Mangle } from '../mangle';
 import { PluginContext, InputOptions, OutputOptions } from 'rollup';
-import * as path from 'path';
 
 const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform, ExportTransform];
 
@@ -49,6 +48,5 @@ export async function transform(
   id: string,
   transforms: Array<SourceTransform>,
 ): Promise<string> {
-  const name = path.basename(id);
-  return await sourceLifecycle(name, 'PreTransform', source, transforms);
+  return await sourceLifecycle(id, 'PreTransform', source, transforms);
 }

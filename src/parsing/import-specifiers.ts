@@ -17,7 +17,7 @@
 import { IMPORT_SPECIFIER, IMPORT_NAMESPACE_SPECIFIER, IMPORT_DEFAULT_SPECIFIER } from '../types';
 import { ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier } from 'estree';
 
-interface Specifiers {
+export interface Specifiers {
   default: string | null;
   specific: Array<string>;
   local: Array<string>;

@@ -27,9 +27,9 @@ import { preCompilation, create as createChunkTransforms } from './transformers/
 import { Mangle } from './transformers/mangle';
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+  const mangler: Mangle = new Mangle();
   let inputOptions: InputOptions;
   let context: PluginContext;
-  let mangler: Mangle;
 
   return {
     name: 'closure-compiler',
@@ -47,13 +47,14 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       }
     },
     transform: async (code: string, id: string) => {
-      mangler = new Mangle();
       const transformTransforms = createSourceTransforms(context, mangler, inputOptions, {});
       const output = await sourceTransform(code, id, transformTransforms);
 
       return output || null;
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
+      mangler.debug();
+
       const renderChunkTransforms = createChunkTransforms(
         context,
         mangler,

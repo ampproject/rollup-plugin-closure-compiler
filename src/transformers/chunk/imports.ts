@@ -20,8 +20,9 @@ import { literalName } from '../../parsing/literal-name';
 import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
-import { ImportDeclaration, Identifier } from 'estree';
-import { parse, walk } from '../../acorn';
+import { Identifier } from 'estree';
+import { parse, walk, isIdentifier, isImportDeclaration } from '../../acorn';
+import { walk as estreeWalk } from '@kristoferbaxter/estree-walker';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
@@ -33,15 +34,15 @@ const HEADER = `/**
 */
 `;
 
-interface RangedImport {
-  type: string;
-  range: Range;
-}
+// interface RangedImport {
+//   type: string;
+//   range: Range;
+// }
 
 export default class ImportTransform extends ChunkTransform implements TransformInterface {
   private importedExternalsSyntax: { [key: string]: string } = {};
   private importedExternalsLocalNames: Array<string> = [];
-  private dynamicImportPresent: boolean = false;
+  public dynamicImportPresent: boolean = false;
   public name = 'ImportTransform';
 
   /**
@@ -71,44 +72,148 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     return extern === HEADER ? null : extern;
   }
 
+  // private foundImportDeclaration = (node: ImportDeclaration, source: MagicString, skip: () => void) => {
+  //   const [importDeclarationStart, importDeclarationEnd]: Range = node.range as Range;
+  //   const originalName = literalName(node.source);
+
+  //   let specifiers = Specifiers(node.specifiers);
+  //   specifiers = {
+  //     ...specifiers,
+  //     default: this.mangler.getName(specifiers.default || '') || specifiers.default,
+  //     specific: specifiers.specific.map(specific => {
+  //       if (specific.includes(' as ')) {
+  //         const split = specific.split(' as ');
+  //         return `${this.mangler.getName(split[0])} as ${this.mangler.getName(split[1])}`;
+  //       }
+  //       return this.mangler.getName(specific) as string;
+  //     }),
+  //     local: specifiers.local.map(local => this.mangler.getName(local) as string),
+  //   };
+
+  //   const unmangledName = this.mangler.getName(originalName) || originalName;
+  //   this.importedExternalsSyntax[unmangledName] = FormatSpecifiers(specifiers, unmangledName);
+  //   this.importedExternalsLocalNames.push(...specifiers.local);
+  //   source.remove(importDeclarationStart, importDeclarationEnd);
+
+  //   skip();
+  // };
+
   /**
    * Before Closure Compiler modifies the source, we need to ensure external imports have been removed
    * since Closure will error out when it encounters them.
    * @param code source to parse, and modify
    * @return modified input source with external imports removed.
    */
-  public async pre(code: string): Promise<TransformSourceDescription> {
-    const source = new MagicString(code);
-    const program = parse(code);
+  public pre = async (code: string): Promise<TransformSourceDescription> => {
+    let source = new MagicString(code);
+    let program = parse(code);
+    let dynamicImportPresent: boolean = false;
+    let { mangler, importedExternalsSyntax, importedExternalsLocalNames } = this;
 
-    walk.simple(program, {
-      ImportDeclaration: (node: ImportDeclaration) => {
-        const name = literalName(node.source);
-        const range: Range = node.range as Range;
-        const specifiers = Specifiers(node.specifiers);
-
-        this.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
-        this.importedExternalsLocalNames.push(...specifiers.local);
-        source.remove(...range);
-      },
-      Import: (node: RangedImport) => {
-        const [start, end] = node.range;
-        this.dynamicImportPresent = true;
-        // Rename the `import` method to something we can put in externs.
-        // CC doesn't understand dynamic import yet.
-        source.overwrite(
-          start,
-          end,
-          code.substring(start, end).replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
+    console.log('PRE!!!!!!', program);
+    await estreeWalk(program, {
+      enter: async function(node) {
+        console.log(
+          `-- ${node.type} --`,
+          code.substring((node.range as Range)[0], (node.range as Range)[1]),
         );
+        if (isImportDeclaration(node)) {
+          const [importDeclarationStart, importDeclarationEnd]: Range = node.range as Range;
+          const originalName = literalName(node.source);
+
+          let specifiers = Specifiers(node.specifiers);
+          specifiers = {
+            ...specifiers,
+            default: mangler.getName(specifiers.default || '') || specifiers.default,
+            specific: specifiers.specific.map(specific => {
+              if (specific.includes(' as ')) {
+                const split = specific.split(' as ');
+                return `${mangler.getName(split[0])} as ${mangler.getName(split[1])}`;
+              }
+              return mangler.getName(specific) as string;
+            }),
+            local: specifiers.local.map(local => mangler.getName(local) as string),
+          };
+
+          const unmangledName = mangler.getName(originalName) || originalName;
+          importedExternalsSyntax[unmangledName] = FormatSpecifiers(specifiers, unmangledName);
+          importedExternalsLocalNames.push(...specifiers.local);
+          console.log('remove', code.substring(importDeclarationStart, importDeclarationEnd));
+          source.remove(importDeclarationStart, importDeclarationEnd);
+
+          this.skip();
+        }
+
+        if (isIdentifier(node)) {
+          const unmangled = mangler.getName(node.name);
+          if (unmangled) {
+            const [identifierStart, identifierEnd] = node.range as Range;
+            source.overwrite(identifierStart, identifierEnd, unmangled);
+          }
+        }
+
+        if (node.type === 'Import') {
+          const [dynamicImportStart, dynamicImportEnd] = node.range as Range;
+          dynamicImportPresent = true;
+          // Rename the `import` method to something we can put in externs.
+          // CC doesn't understand dynamic import yet.
+          source.overwrite(
+            dynamicImportStart,
+            dynamicImportEnd,
+            code
+              .substring(dynamicImportStart, dynamicImportEnd)
+              .replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
+          );
+        }
       },
     });
+
+    this.dynamicImportPresent = dynamicImportPresent;
+
+    // estreeWalk(program, {
+    //   enter: function(node) {
+
+    //   }
+    // });
+
+    // walk.simple(program, {
+    //   ImportDeclaration: (node: ImportDeclaration) => {
+    //     const name = literalName(node.source);
+    //     const range: Range = node.range as Range;
+    //     const specifiers = Specifiers(node.specifiers);
+
+    //     // console.log('local', specifiers.local.map(local => ({local, unmangled: this.mangler.getName(local)})));
+    //     // console.log(this.mangler.getName(specifiers))
+
+    //     this.importedExternalsSyntax[name] = FormatSpecifiers(specifiers, name);
+    //     this.importedExternalsLocalNames.push(...specifiers.local);
+    //     source.remove(...range);
+    //   },
+    //   Import: (node: RangedImport) => {
+    //     const [start, end] = node.range;
+    //     this.dynamicImportPresent = true;
+    //     // Rename the `import` method to something we can put in externs.
+    //     // CC doesn't understand dynamic import yet.
+    //     source.overwrite(
+    //       start,
+    //       end,
+    //       code.substring(start, end).replace(DYNAMIC_IMPORT_KEYWORD, DYNAMIC_IMPORT_REPLACEMENT),
+    //     );
+    //   },
+    // });
+
+    // console.log(
+    //   'import pre done',
+    //   source.toString(),
+    //   this.importedExternalsSyntax,
+    //   this.importedExternalsLocalNames,
+    // );
 
     return {
       code: source.toString(),
       map: source.generateMap().mappings,
     };
-  }
+  };
 
   /**
    * After Closure Compiler has modified the source, we need to re-add the external imports

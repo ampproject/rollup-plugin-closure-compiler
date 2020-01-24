@@ -26,8 +26,12 @@ import {
   isExportSpecifier,
   isVariableDeclarator,
   isClassDeclaration,
+  isImportDeclaration,
+  isExportAllDeclaration,
 } from '../../acorn';
-import { walk } from 'estree-walker';
+import { walk } from '@kristoferbaxter/estree-walker';
+import { Range } from 'src/types';
+import { Identifier } from 'estree';
 // import { ExportDetails, ExportClosureMapping } from '../../types';
 // import { DefaultDeclaration } from '../../parsing/export-details';
 
@@ -41,11 +45,12 @@ import { walk } from 'estree-walker';
  */
 
 export class ExportTransform extends SourceTransform {
-  public name: string = 'ImportTransform';
+  public name: string = 'ExportTransform';
 
-  public async transform(fileName: string, code: string): Promise<TransformSourceDescription> {
+  public transform = async (id: string, code: string): Promise<TransformSourceDescription> => {
     const source = new MagicString(code);
     const program = parse(code);
+    const { mangler } = this;
 
     // This will need to be two-pass.
     // 1. Find all exports, and mangle their names.
@@ -53,30 +58,41 @@ export class ExportTransform extends SourceTransform {
 
     let insideNamedExport: boolean = false;
     let insideDefaultExport: boolean = false;
-    // let insideAllExport: boolean = false;
-    let exportSource: string | null | undefined = undefined;
-    const toMangle: Array<string> = [];
-    walk(program, {
-      enter: function(node, parent) {
+    let insideAllExport: boolean = false;
+    let exportSource: string = id;
+    await walk(program, {
+      enter: async function(node, parent) {
+        if (isImportDeclaration(node)) {
+          // All import declarations are handledby the import source transform.
+          this.skip();
+        }
+
         if (isExportNamedDeclaration(node)) {
           insideNamedExport = true;
-          exportSource = typeof node.source?.value === 'string' ? node.source.value : null;
+          exportSource = typeof node.source?.value === 'string' ? node.source.value : id;
         }
         if (isExportDefaultDeclaration(node)) {
           insideDefaultExport = true;
-          exportSource = null;
+          exportSource = id;
+          // exportSource = null;
+        } else if (isExportAllDeclaration(node)) {
+          insideAllExport = true;
+          exportSource = typeof node.source?.value === 'string' ? node.source.value : id;
         }
-        // else if (isExportAllDeclaration(node)) {
-        //   insideAllExport = true;
-        //   exportSource = typeof node.source?.value === 'string' ? node.source.value : null;
-        // }
 
         if (isIdentifier(node)) {
+          let toMangle: Identifier | undefined = undefined;
+
           if (insideNamedExport) {
             if (isExportSpecifier(parent)) {
               if (parent.exported.name !== 'defualt') {
                 // Only mangle exports that are not named defaults.
-                toMangle.push(parent.exported.name);
+                // toMangle.push(parent.exported.name);
+                toMangle = parent.exported;
+
+                // const [exportedStart, exportedEnd] = parent.exported.range as Range;
+                // const mangled = mangler.mangle(parent.exported.name, exportSource);
+                // source.overwrite(exportedStart, exportedEnd, mangled);
               }
               this.skip();
             } else if (
@@ -84,35 +100,42 @@ export class ExportTransform extends SourceTransform {
               isVariableDeclarator(parent) ||
               isClassDeclaration(parent)
             ) {
-              toMangle.push(node.name);
+              // toMangle.push(node.name);
+              toMangle = node;
+              // mangler.mangle(node.name, exportSource);
             }
           }
 
           if (insideDefaultExport && isExportDefaultDeclaration(parent)) {
-            toMangle.push(node.name);
+            // toMangle.push(node.name);
+            toMangle = node;
+            // mangler.mangle(node.name, exportSource);
+          }
+
+          if (toMangle !== undefined) {
+            const [exportedStart, exportedEnd] = toMangle.range as Range;
+            const mangled = mangler.mangle(toMangle.name, mangler.sourceId(exportSource));
+            source.overwrite(exportedStart, exportedEnd, mangled);
           }
         }
       },
-      leave: function(node) {
+      leave: async function(node) {
         if (isExportNamedDeclaration(node)) {
           insideNamedExport = false;
-          exportSource = undefined;
+          exportSource = id;
         } else if (isExportDefaultDeclaration(node)) {
           insideDefaultExport = false;
-          exportSource = undefined;
+          exportSource = id;
+        } else if (isExportAllDeclaration(node)) {
+          insideAllExport = false;
+          exportSource = id;
         }
-        // else if (isExportAllDeclaration(node)) {
-        //   insideAllExport = false;
-        //   exportSource = undefined;
-        // }
       },
     });
-
-    console.log('collected to mangle', { toMangle, fileName });
 
     return {
       code: source.toString(),
       map: source.generateMap().mappings,
     };
-  }
+  };
 }

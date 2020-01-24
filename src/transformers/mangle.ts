@@ -15,6 +15,7 @@
  */
 
 import { v4 } from 'uuid';
+import { log } from '../debug';
 
 type OriginalSourcePath = string;
 type SourcePathId = string;
@@ -30,13 +31,25 @@ function mangledValue(name: string, sourceId: string): string {
 }
 
 export class Mangle {
-  private sources: Map<OriginalSourcePath, SourcePathId> = new Map();
-  private mangled: Map<OriginalName, MangledName> = new Map();
+  private sourceToId: Map<OriginalSourcePath, SourcePathId> = new Map();
+  private idToSource: Map<SourcePathId, OriginalSourcePath> = new Map();
+  private nameToMangled: Map<OriginalName, MangledName> = new Map();
+  private mangledToName: Map<MangledName, OriginalName> = new Map();
+
+  public debug = () => {
+    log('mangle state', {
+      sourceToId: this.sourceToId,
+      idToSource: this.idToSource,
+      nameToMangled: this.nameToMangled,
+      mangledToName: this.mangledToName,
+    });
+  };
 
   public sourceId = (source: string): string => {
-    let uuid = this.sources.get(source);
+    let uuid = this.sourceToId.get(source);
     if (!uuid) {
-      this.sources.set(source, (uuid = createId()));
+      this.sourceToId.set(source, (uuid = createId()));
+      this.idToSource.set(uuid, source);
     }
 
     return uuid;
@@ -44,18 +57,27 @@ export class Mangle {
 
   public mangle = (name: string, sourceId: string): string => {
     const mangled = mangledValue(name, sourceId);
-    const stored = this.mangled.get(name);
+    const stored = this.nameToMangled.get(name);
 
     if (stored && stored !== mangled) {
       console.log('SetIdentifier for Mangled Name more than once', { name, sourceId });
     } else {
-      this.mangled.set(name, mangled);
+      this.nameToMangled.set(name, mangled);
+      this.mangledToName.set(mangled, name);
     }
 
     return mangled;
   };
 
   public getMangledName = (originalName: string): string | undefined => {
-    return this.mangled.get(originalName);
+    return this.nameToMangled.get(originalName);
+  };
+
+  public getName = (mangledName: string): string | undefined => {
+    return this.mangledToName.get(mangledName);
+  };
+
+  public getSource = (sourceId: string): string | undefined => {
+    return this.idToSource.get(sourceId);
   };
 }
