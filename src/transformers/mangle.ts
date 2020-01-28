@@ -114,11 +114,8 @@ export class Mangle {
         }
 
         if (isIdentifier(node) && currentlyRewriteable.has(node.name)) {
-          source.overwrite(
-            (node.range as Range)[0],
-            (node.range as Range)[1],
-            getMangledName(node.name) || node.name,
-          );
+          const [start, end] = node.range as Range;
+          source.overwrite(start, end, getMangledName(node.name) || node.name);
         }
       },
       leave: async function(node: BaseNode) {
