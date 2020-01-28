@@ -73,11 +73,11 @@ function PreserveIdentifier(
   const [rightStart, rightEnd]: Range = right.range as Range;
 
   if (exportInline) {
-    source.overwrite(
-      ancestorStart,
-      ancestorEnd,
-      `export var ${exportDetails.exported}=${code.substring(rightStart, rightEnd)};`,
-    );
+    const output =
+      (exportDetails.exported === 'default'
+        ? `export default `
+        : `export var ${exportDetails.exported}=`) + `${code.substring(rightStart, rightEnd)};`;
+    source.overwrite(ancestorStart, ancestorEnd, output);
   } else if (exportDetails.source === null && 'name' in right) {
     // This is a locally defined identifier with a name we can use.
     exportDetails.local = right.name;

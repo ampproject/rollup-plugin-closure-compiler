@@ -1,1 +1,1 @@
-export function exported(){import("./dynamic-imported-67216f69.js").then(a=>a.handleImport())};
+export function exported(){import("./dynamic-imported-4e9a8b89.js").then(a=>a.handleImport())};

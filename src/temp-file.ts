@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-import { join, dirname } from 'path';
+import * as path from 'path';
 import { tmpdir } from 'os';
-import { v4 } from 'uuid';
 import { promises } from 'fs';
+import * as crypto from 'crypto';
 
 export async function writeTempFile(content: string, extension: string = ''): Promise<string> {
-  const path: string = join(tmpdir(), v4() + extension);
-  await promises.mkdir(dirname(path), { recursive: true });
-  await promises.writeFile(path, content, 'utf-8');
+  const stableHash: string = crypto
+    .createHash('sha1')
+    .update(content)
+    .digest('hex');
+  const fullpath: string = path.join(tmpdir(), stableHash + extension);
+  await promises.mkdir(path.dirname(fullpath), { recursive: true });
+  await promises.writeFile(fullpath, content, 'utf-8');
 
-  return path;
+  return fullpath;
 }

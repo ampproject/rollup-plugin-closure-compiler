@@ -21,7 +21,7 @@ import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
 import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { Identifier } from 'estree';
-import { parse, walk, isIdentifier, isImportDeclaration } from '../../acorn';
+import { parse, walk, isIdentifier, isImportDeclaration, isImportExpression } from '../../acorn';
 import { walk as estreeWalk } from '@kristoferbaxter/estree-walker';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
@@ -83,7 +83,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
   //     specific: specifiers.specific.map(specific => {
   //       if (specific.includes(' as ')) {
   //         const split = specific.split(' as ');
-  //         return `${this.mangler.getName(split[0])} as ${this.mangler.getName(split[1])}`;
+  //         return `${this.mangler.getName(split[0]) || split[0]} as ${this.mangler.getName(split[1])}`;
   //       }
   //       return this.mangler.getName(specific) as string;
   //     }),
@@ -110,13 +110,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     let dynamicImportPresent: boolean = false;
     let { mangler, importedExternalsSyntax, importedExternalsLocalNames } = this;
 
-    console.log('PRE!!!!!!', program);
     await estreeWalk(program, {
       enter: async function(node) {
-        console.log(
-          `-- ${node.type} --`,
-          code.substring((node.range as Range)[0], (node.range as Range)[1]),
-        );
         if (isImportDeclaration(node)) {
           const [importDeclarationStart, importDeclarationEnd]: Range = node.range as Range;
           const originalName = literalName(node.source);
@@ -124,11 +119,11 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           let specifiers = Specifiers(node.specifiers);
           specifiers = {
             ...specifiers,
-            default: mangler.getName(specifiers.default || '') || specifiers.default,
+            default: mangler.getName(specifiers.default || '') || null,
             specific: specifiers.specific.map(specific => {
               if (specific.includes(' as ')) {
                 const split = specific.split(' as ');
-                return `${mangler.getName(split[0])} as ${mangler.getName(split[1])}`;
+                return `${mangler.getName(split[0]) || split[0]} as ${mangler.getName(split[1])}`;
               }
               return mangler.getName(specific) as string;
             }),
@@ -138,7 +133,6 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           const unmangledName = mangler.getName(originalName) || originalName;
           importedExternalsSyntax[unmangledName] = FormatSpecifiers(specifiers, unmangledName);
           importedExternalsLocalNames.push(...specifiers.local);
-          console.log('remove', code.substring(importDeclarationStart, importDeclarationEnd));
           source.remove(importDeclarationStart, importDeclarationEnd);
 
           this.skip();
@@ -152,7 +146,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           }
         }
 
-        if (node.type === 'Import') {
+        if (isImportExpression(node)) {
           const [dynamicImportStart, dynamicImportEnd] = node.range as Range;
           dynamicImportPresent = true;
           // Rename the `import` method to something we can put in externs.
@@ -169,12 +163,6 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     });
 
     this.dynamicImportPresent = dynamicImportPresent;
-
-    // estreeWalk(program, {
-    //   enter: function(node) {
-
-    //   }
-    // });
 
     // walk.simple(program, {
     //   ImportDeclaration: (node: ImportDeclaration) => {
@@ -203,8 +191,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     // });
 
     // console.log(
-    //   'import pre done',
-    //   source.toString(),
+    //   'import chunk pre done',
     //   this.importedExternalsSyntax,
     //   this.importedExternalsLocalNames,
     // );

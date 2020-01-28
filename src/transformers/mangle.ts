@@ -14,16 +14,28 @@
  * limitations under the License.
  */
 
-import { v4 } from 'uuid';
+import * as crypto from 'crypto';
+import { walk } from '@kristoferbaxter/estree-walker';
+import { Program, BaseNode } from 'estree';
+import MagicString from 'magic-string';
 import { log } from '../debug';
+import {
+  isBlockStatement,
+  isVariableDeclarator,
+  isIdentifier,
+  isExportNamedDeclaration,
+} from '../acorn';
+import { Range } from '../types';
 
 type OriginalSourcePath = string;
 type SourcePathId = string;
 type OriginalName = string;
 type MangledName = string;
 
-function createId(): string {
-  return v4().replace(/-/g, '$');
+function createId(source: string): string {
+  const hash = crypto.createHash('sha1');
+  hash.update(source);
+  return 'f_' + hash.digest('hex');
 }
 
 function mangledValue(name: string, sourceId: string): string {
@@ -48,7 +60,7 @@ export class Mangle {
   public sourceId = (source: string): string => {
     let uuid = this.sourceToId.get(source);
     if (!uuid) {
-      this.sourceToId.set(source, (uuid = createId()));
+      this.sourceToId.set(source, (uuid = createId(source)));
       this.idToSource.set(uuid, source);
     }
 
@@ -73,11 +85,50 @@ export class Mangle {
     return this.nameToMangled.get(originalName);
   };
 
-  public getName = (mangledName: string): string | undefined => {
-    return this.mangledToName.get(mangledName);
+  public getName = (maybeMangledName: string): string | undefined => {
+    return this.mangledToName.get(maybeMangledName);
   };
 
   public getSource = (sourceId: string): string | undefined => {
     return this.idToSource.get(sourceId);
+  };
+
+  public execute = async (source: MagicString, program: Program): Promise<void> => {
+    const { getMangledName } = this;
+    const mangleable: Array<Set<string>> = [new Set([...this.nameToMangled.keys()])];
+    let insideNamedExport: boolean = false;
+
+    await walk(program, {
+      enter: async function(node: BaseNode) {
+        const currentlyRewriteable = mangleable[mangleable.length - 1];
+        if (isBlockStatement(node)) {
+          mangleable.push(new Set(currentlyRewriteable));
+        }
+
+        if (isExportNamedDeclaration(node)) {
+          insideNamedExport = true;
+        }
+
+        if (!insideNamedExport && isVariableDeclarator(node) && isIdentifier(node.id)) {
+          currentlyRewriteable.delete(node.id.name);
+        }
+
+        if (isIdentifier(node) && currentlyRewriteable.has(node.name)) {
+          source.overwrite(
+            (node.range as Range)[0],
+            (node.range as Range)[1],
+            getMangledName(node.name) || node.name,
+          );
+        }
+      },
+      leave: async function(node: BaseNode) {
+        if (isBlockStatement(node)) {
+          mangleable.pop();
+        }
+        if (isExportNamedDeclaration(node)) {
+          insideNamedExport = false;
+        }
+      },
+    });
   };
 }

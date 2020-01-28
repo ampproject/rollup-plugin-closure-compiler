@@ -19,7 +19,7 @@ import options from '../../transpile-tests/options';
 import { generator } from '../generator';
 
 test('platform unspecified is respected', async t => {
-  const typical = await options({}, 'let x = 1;', []);
+  const typical = await options({}, {}, 'let x = 1;', []);
 
   t.is(typical[0].platform, undefined);
 });
@@ -29,6 +29,7 @@ test('platform javascript is respected', async t => {
     {
       platform: 'javascript',
     },
+    {},
     'let x = 1;',
     [],
   );

@@ -21,19 +21,12 @@ import {
   parse,
   isExportNamedDeclaration,
   isExportDefaultDeclaration,
-  isIdentifier,
-  isFunctionDeclaration,
-  isExportSpecifier,
-  isVariableDeclarator,
-  isClassDeclaration,
-  isImportDeclaration,
   isExportAllDeclaration,
 } from '../../acorn';
-import { walk } from '@kristoferbaxter/estree-walker';
-import { Range } from 'src/types';
-import { Identifier } from 'estree';
-// import { ExportDetails, ExportClosureMapping } from '../../types';
-// import { DefaultDeclaration } from '../../parsing/export-details';
+import { walk as estreeWalk } from '@kristoferbaxter/estree-walker';
+import { ExportDetails } from '../../types';
+import { BaseNode } from 'estree';
+import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-details';
 
 /**
  * Notes for Kris
@@ -50,88 +43,31 @@ export class ExportTransform extends SourceTransform {
   public transform = async (id: string, code: string): Promise<TransformSourceDescription> => {
     const source = new MagicString(code);
     const program = parse(code);
-    const { mangler } = this;
 
     // This will need to be two-pass.
     // 1. Find all exports, and mangle their names.
     // 2. Mangle all internal references
-
-    let insideNamedExport: boolean = false;
-    let insideDefaultExport: boolean = false;
-    let insideAllExport: boolean = false;
-    let exportSource: string = id;
-    await walk(program, {
-      enter: async function(node, parent) {
-        if (isImportDeclaration(node)) {
-          // All import declarations are handledby the import source transform.
-          this.skip();
-        }
-
+    let exportDetails: Array<ExportDetails> = [];
+    await estreeWalk(program, {
+      enter: async function(node: BaseNode) {
         if (isExportNamedDeclaration(node)) {
-          insideNamedExport = true;
-          exportSource = typeof node.source?.value === 'string' ? node.source.value : id;
-        }
-        if (isExportDefaultDeclaration(node)) {
-          insideDefaultExport = true;
-          exportSource = id;
-          // exportSource = null;
-        } else if (isExportAllDeclaration(node)) {
-          insideAllExport = true;
-          exportSource = typeof node.source?.value === 'string' ? node.source.value : id;
-        }
-
-        if (isIdentifier(node)) {
-          let toMangle: Identifier | undefined = undefined;
-
-          if (insideNamedExport) {
-            if (isExportSpecifier(parent)) {
-              if (parent.exported.name !== 'defualt') {
-                // Only mangle exports that are not named defaults.
-                // toMangle.push(parent.exported.name);
-                toMangle = parent.exported;
-
-                // const [exportedStart, exportedEnd] = parent.exported.range as Range;
-                // const mangled = mangler.mangle(parent.exported.name, exportSource);
-                // source.overwrite(exportedStart, exportedEnd, mangled);
-              }
-              this.skip();
-            } else if (
-              isFunctionDeclaration(parent) ||
-              isVariableDeclarator(parent) ||
-              isClassDeclaration(parent)
-            ) {
-              // toMangle.push(node.name);
-              toMangle = node;
-              // mangler.mangle(node.name, exportSource);
-            }
-          }
-
-          if (insideDefaultExport && isExportDefaultDeclaration(parent)) {
-            // toMangle.push(node.name);
-            toMangle = node;
-            // mangler.mangle(node.name, exportSource);
-          }
-
-          if (toMangle !== undefined) {
-            const [exportedStart, exportedEnd] = toMangle.range as Range;
-            const mangled = mangler.mangle(toMangle.name, mangler.sourceId(exportSource));
-            source.overwrite(exportedStart, exportedEnd, mangled);
-          }
-        }
-      },
-      leave: async function(node) {
-        if (isExportNamedDeclaration(node)) {
-          insideNamedExport = false;
-          exportSource = id;
+          exportDetails.push(...NamedDeclaration(node));
         } else if (isExportDefaultDeclaration(node)) {
-          insideDefaultExport = false;
-          exportSource = id;
+          exportDetails.push(...DefaultDeclaration(node));
         } else if (isExportAllDeclaration(node)) {
-          insideAllExport = false;
-          exportSource = id;
+          // TODO
+          exportDetails.push(...[]);
         }
       },
     });
+
+    for (const details of exportDetails) {
+      const sourceId = this.mangler.sourceId(details.source || id);
+      this.mangler.mangle(details.exported, sourceId);
+      this.mangler.mangle(details.local, sourceId);
+    }
+
+    await this.mangler.execute(source, program);
 
     return {
       code: source.toString(),

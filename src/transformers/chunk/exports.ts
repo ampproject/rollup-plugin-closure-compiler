@@ -90,10 +90,10 @@ export default class ExportTransform extends ChunkTransform implements Transform
 
     walk.simple(program, {
       ExportNamedDeclaration: (node: ExportNamedDeclaration) => {
-        this.storeExport(NamedDeclaration(node));
+        this.storeExport(NamedDeclaration(node, this.mangler.getName));
       },
       ExportDefaultDeclaration: (node: ExportDefaultDeclaration) => {
-        this.storeExport(DefaultDeclaration(node));
+        this.storeExport(DefaultDeclaration(node, this.mangler.getName));
       },
       ExportAllDeclaration: () => {
         // TODO(KB): This case `export * from "./import"` is not currently supported.
@@ -201,9 +201,10 @@ export default class ExportTransform extends ChunkTransform implements Transform
             ) as ExportDetails;
             const exportIsLocal: boolean = exportDetails.source === null;
             const exportInline: boolean =
-              exportIsLocal &&
-              this.currentSourceExportCount === 1 &&
-              exportDetails.local === exportDetails.exported;
+              (exportIsLocal &&
+                this.currentSourceExportCount === 1 &&
+                exportDetails.local === exportDetails.exported) ||
+              exportDetails.exported === 'default';
 
             switch (exportDetails.type) {
               case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:

@@ -50,11 +50,13 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
       const transformTransforms = createSourceTransforms(context, mangler, inputOptions, {});
       const output = await sourceTransform(code, id, transformTransforms);
 
+      // console.log('transform done', output);
       return output || null;
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       mangler.debug();
 
+      // console.log('render chunk', code);
       const renderChunkTransforms = createChunkTransforms(
         context,
         mangler,

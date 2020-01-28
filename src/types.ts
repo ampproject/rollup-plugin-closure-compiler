@@ -15,11 +15,11 @@
  */
 
 import { TransformSourceDescription } from 'rollup';
-const dynamicImport = require('acorn-dynamic-import');
+// const dynamicImport = require('acorn-dynamic-import');
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
 export const IMPORT_DECLARATION = 'ImportDeclaration';
-export const DYNAMIC_IMPORT_DECLARATION = dynamicImport.DynamicImportKey;
+// export const DYNAMIC_IMPORT_DECLARATION = dynamicImport.DynamicImportKey;
 export const IMPORT_SPECIFIER = 'ImportSpecifier';
 export const IMPORT_DEFAULT_SPECIFIER = 'ImportDefaultSpecifier';
 export const IMPORT_NAMESPACE_SPECIFIER = 'ImportNamespaceSpecifier';
