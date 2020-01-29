@@ -18,11 +18,10 @@ import { ChunkTransform } from '../../transform';
 import { Range, TransformInterface } from '../../types';
 import { literalName } from '../../parsing/literal-name';
 import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { Identifier } from 'estree';
 import { parse, walk, isIdentifier, isImportDeclaration, isImportExpression } from '../../acorn';
-import { walk as estreeWalk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as estreeWalk } from '@kristoferbaxter/estree-walker';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
@@ -104,8 +103,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source to parse, and modify
    * @return modified input source with external imports removed.
    */
-  public pre = async (code: string): Promise<TransformSourceDescription> => {
-    let source = new MagicString(code);
+  public pre = async (source: MagicString): Promise<MagicString> => {
+    const code = source.toString();
     let program = parse(code);
     let dynamicImportPresent: boolean = false;
     let { mangler, importedExternalsSyntax, importedExternalsLocalNames } = this;
@@ -133,7 +132,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           const unmangledName = mangler.getName(originalName) || originalName;
           importedExternalsSyntax[unmangledName] = FormatSpecifiers(specifiers, unmangledName);
           importedExternalsLocalNames.push(...specifiers.local);
-          source.remove(importDeclarationStart, importDeclarationEnd);
+          // source.remove(importDeclarationStart, importDeclarationEnd);
+          source.overwrite(importDeclarationStart, importDeclarationEnd, '');
 
           this.skip();
         }
@@ -196,10 +196,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     //   this.importedExternalsLocalNames,
     // );
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   };
 
   /**
@@ -207,8 +204,8 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async post(code: string): Promise<TransformSourceDescription> {
-    const source = new MagicString(code);
+  public async post(source: MagicString): Promise<MagicString> {
+    const code = source.toString();
     const program = parse(code);
 
     for (const importedExternalSyntax of Object.values(this.importedExternalsSyntax)) {
@@ -224,9 +221,6 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
       },
     });
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 }

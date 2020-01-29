@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import { OutputOptions, PluginContext, InputOptions, RenderedChunk } from 'rollup';
+import {
+  OutputOptions,
+  PluginContext,
+  InputOptions,
+  RenderedChunk,
+  TransformSourceDescription,
+} from 'rollup';
 import IifeTransform from './iife';
 import CJSTransform from './cjs';
 import LiteralComputedKeys from './literal-computed-keys';
@@ -61,7 +67,7 @@ export async function preCompilation(
   source: string,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
-): Promise<string> {
+): Promise<TransformSourceDescription> {
   return await chunkLifecycle(chunk.fileName, 'PreCompilation', 'pre', source, transforms);
 }
 
@@ -76,6 +82,6 @@ export async function postCompilation(
   code: string,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
-): Promise<string> {
+): Promise<TransformSourceDescription> {
   return await chunkLifecycle(chunk.fileName, 'PostCompilation', 'post', code, transforms);
 }

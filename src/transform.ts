@@ -19,6 +19,8 @@ import { TransformInterface } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
 import * as path from 'path';
+import MagicString, { DecodedSourceMap } from 'magic-string';
+import * as remapping from '@ampproject/remapping';
 
 class Transform implements TransformInterface {
   protected context: PluginContext;
@@ -43,10 +45,8 @@ class Transform implements TransformInterface {
 export class SourceTransform extends Transform {
   public name: string = 'SourceTransform';
 
-  public async transform(id: string, code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
+  public async transform(id: string, source: MagicString): Promise<MagicString> {
+    return source;
   }
 }
 
@@ -57,16 +57,12 @@ export class ChunkTransform extends Transform {
     return null;
   }
 
-  public async pre(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
+  public async pre(source: MagicString): Promise<MagicString> {
+    return source;
   }
 
-  public async post(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
+  public async post(source: MagicString): Promise<MagicString> {
+    return source;
   }
 }
 
@@ -76,22 +72,28 @@ export async function chunkLifecycle(
   method: 'pre' | 'post',
   code: string,
   transforms: Array<ChunkTransform>,
-): Promise<string> {
+): Promise<TransformSourceDescription> {
   const log: Array<[string, string]> = [];
+  const sourcemaps: Array<DecodedSourceMap> = [];
+  let source = new MagicString(code);
 
   log.push(['before', code]);
   for (const transform of transforms) {
-    const result = await transform[method](code);
-    if (result && result.code) {
-      log.push([transform.name, code]);
-      code = result.code;
-    }
+    const transformed = await transform[method](source);
+    const transformedSource = transformed.toString();
+    sourcemaps.push(transformed.generateDecodedMap({ hires: true, source: fileName }));
+    source = new MagicString(transformedSource);
+    log.push([transform.name, transformedSource]);
   }
+  const finalSource = source.toString();
 
-  log.push(['after', code]);
+  log.push(['after', finalSource]);
   await logTransformChain(fileName, printableName, log);
 
-  return code;
+  return {
+    code: finalSource,
+    map: ((remapping as unknown) as any)(sourcemaps, () => null),
+  };
 }
 
 export async function sourceLifecycle(
@@ -99,21 +101,32 @@ export async function sourceLifecycle(
   printableName: string,
   code: string,
   transforms: Array<SourceTransform>,
-): Promise<string> {
+): Promise<TransformSourceDescription> {
   const fileName = path.basename(id);
   const log: Array<[string, string]> = [];
+  const sourcemaps: Array<DecodedSourceMap> = [];
+  let source = new MagicString(code);
 
   log.push(['before', code]);
   for (const transform of transforms) {
-    const result = await transform.transform(id, code);
-    if (result && result.code) {
-      log.push([transform.name, code]);
-      code = result.code;
-    }
+    const transformed = await transform.transform(id, source);
+    const transformedSource = transformed.toString();
+    sourcemaps.push(transformed.generateDecodedMap({ hires: true, source: id }));
+    source = new MagicString(transformedSource);
+    log.push([transform.name, transformedSource]);
   }
+  const finalSource = source.toString();
 
-  log.push(['after', code]);
+  log.push(['after', finalSource]);
   await logTransformChain(fileName, printableName, log);
 
-  return code;
+  // console.log(source.generateMap({hires: true}));
+  // const sourcemap = source.generateDecodedMap({hires: true, source: 'bundle.js'});
+  // source.generateDecodedMap({hires: true, source: id})
+  // console.log((remapping as unknown as any)([sourcemap], () => null));
+
+  return {
+    code: finalSource,
+    map: ((remapping as unknown) as any)(sourcemaps, () => null),
+  };
 }

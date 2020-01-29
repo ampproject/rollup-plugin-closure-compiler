@@ -15,7 +15,6 @@
  */
 
 import { SourceTransform } from '../../transform';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import {
   parse,
@@ -23,7 +22,7 @@ import {
   isExportDefaultDeclaration,
   isExportAllDeclaration,
 } from '../../acorn';
-import { walk as estreeWalk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as estreeWalk } from '@kristoferbaxter/estree-walker';
 import { ExportDetails } from '../../types';
 import { BaseNode } from 'estree';
 import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-details';
@@ -40,9 +39,8 @@ import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-detai
 export class ExportTransform extends SourceTransform {
   public name: string = 'ExportTransform';
 
-  public transform = async (id: string, code: string): Promise<TransformSourceDescription> => {
-    const source = new MagicString(code);
-    const program = parse(code);
+  public transform = async (id: string, source: MagicString): Promise<MagicString> => {
+    const program = parse(source.toString());
 
     // This will need to be two-pass.
     // 1. Find all exports, and mangle their names.
@@ -69,9 +67,6 @@ export class ExportTransform extends SourceTransform {
 
     await this.mangler.execute(source, program);
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   };
 }

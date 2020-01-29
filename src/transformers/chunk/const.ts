@@ -18,7 +18,6 @@ import { ChunkTransform } from '../../transform';
 import { Range } from '../../types';
 import { parse, walk } from '../../acorn';
 import { VariableDeclaration } from 'estree';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 
 export default class ConstTransform extends ChunkTransform {
@@ -30,9 +29,9 @@ export default class ConstTransform extends ChunkTransform {
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async pre(code: string): Promise<TransformSourceDescription> {
-    const source = new MagicString(code);
-    const program = parse(code);
+  public async pre(source: MagicString): Promise<MagicString> {
+    const code = source.toString();
+    const program = parse(source.toString());
 
     walk.simple(program, {
       VariableDeclaration(node: VariableDeclaration) {
@@ -43,9 +42,6 @@ export default class ConstTransform extends ChunkTransform {
       },
     });
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 }

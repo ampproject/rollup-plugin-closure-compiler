@@ -22,7 +22,6 @@ import {
   AssignmentExpression,
   MemberExpression,
 } from 'estree';
-import { TransformSourceDescription } from 'rollup';
 import {
   NamedDeclaration,
   DefaultDeclaration,
@@ -131,13 +130,13 @@ export default class ExportTransform extends ChunkTransform implements Transform
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async pre(code: string): Promise<TransformSourceDescription> {
+  public async pre(source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return super.pre(code);
+      return super.pre(source);
     }
 
+    const code = source.toString();
     await this.deriveExports(code);
-    const source = new MagicString(code);
 
     for (const key of this.originalExports.keys()) {
       const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
@@ -145,7 +144,8 @@ export default class ExportTransform extends ChunkTransform implements Transform
       // Remove export statements before Closure Compiler sees the code
       // This prevents CC from transpiling `export` statements when the language_out is set to a value
       // where exports were not part of the language.
-      source.remove(...value.range);
+      // source.remove(...value.range);
+      source.overwrite(value.range[0], value.range[1], '');
       // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       if (value.source === null) {
         source.append(`\nwindow['${value.local}'] = ${value.local};`);
@@ -154,10 +154,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
       }
     }
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 
   /**
@@ -166,12 +163,12 @@ export default class ExportTransform extends ChunkTransform implements Transform
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async post(code: string): Promise<TransformSourceDescription> {
+  public async post(source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return super.post(code);
+      return super.post(source);
     }
 
-    const source = new MagicString(code);
+    const code = source.toString();
     const program = parse(code);
     let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
 
@@ -229,7 +226,8 @@ export default class ExportTransform extends ChunkTransform implements Transform
             if (!exportIsLocal) {
               const [leftStart] = left.range as Range;
               const { 1: ancestorEnd } = ancestor.range as Range;
-              source.remove(leftStart, ancestorEnd);
+              // source.remove(leftStart, ancestorEnd);
+              source.overwrite(leftStart, ancestorEnd, '');
             }
           }
         }
@@ -249,9 +247,6 @@ export default class ExportTransform extends ChunkTransform implements Transform
       }
     }
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 }

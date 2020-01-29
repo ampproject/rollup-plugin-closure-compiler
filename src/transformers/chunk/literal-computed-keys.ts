@@ -16,7 +16,6 @@
 
 import { ChunkTransform } from '../../transform';
 import { Range, TransformInterface } from '../../types';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
 import { parse, walk } from '../../acorn';
@@ -35,9 +34,8 @@ export default class LiteralComputedKeys extends ChunkTransform implements Trans
    * @param code source to parse, and modify
    * @return modified input source with computed literal keys
    */
-  public async post(code: string): Promise<TransformSourceDescription> {
-    const source = new MagicString(code);
-    const program = parse(code);
+  public async post(source: MagicString): Promise<MagicString> {
+    const program = parse(source.toString());
 
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {
@@ -56,9 +54,6 @@ export default class LiteralComputedKeys extends ChunkTransform implements Trans
       },
     });
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 }

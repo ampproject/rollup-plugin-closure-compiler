@@ -97,7 +97,8 @@ export default function(
       } else if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
-        resolve(await postCompilation(code, chunk, transforms));
+        const postCompiled = await postCompilation(code, chunk, transforms);
+        resolve(postCompiled.code);
       }
     });
   });

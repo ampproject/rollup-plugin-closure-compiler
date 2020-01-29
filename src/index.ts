@@ -16,7 +16,14 @@
 
 import { CompileOptions } from 'google-closure-compiler';
 import { promises as fsPromises } from 'fs';
-import { OutputOptions, Plugin, InputOptions, PluginContext, RenderedChunk } from 'rollup';
+import {
+  OutputOptions,
+  Plugin,
+  InputOptions,
+  PluginContext,
+  RenderedChunk,
+  TransformSourceDescription,
+} from 'rollup';
 import compiler from './compiler';
 import options from './options';
 import {
@@ -46,7 +53,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         );
       }
     },
-    transform: async (code: string, id: string) => {
+    transform: async (code: string, id: string): Promise<TransformSourceDescription> => {
       const transformTransforms = createSourceTransforms(context, mangler, inputOptions, {});
       const output = await sourceTransform(code, id, transformTransforms);
 
@@ -61,7 +68,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         inputOptions,
         outputOptions,
       );
-      const preCompileOutput = await preCompilation(code, chunk, renderChunkTransforms);
+      const preCompileOutput = (await preCompilation(code, chunk, renderChunkTransforms)).code;
       const [compileOptions, mapFile] = await options(
         requestedCompileOptions,
         outputOptions,

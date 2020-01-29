@@ -17,7 +17,6 @@
 import { ChunkTransform } from '../../transform';
 import { Range, TransformInterface } from '../../types';
 import { isESMFormat } from '../../options';
-import { TransformSourceDescription } from 'rollup';
 import MagicString from 'magic-string';
 import { walk, parse } from '../../acorn';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
@@ -32,12 +31,11 @@ export default class StrictTransform extends ChunkTransform implements Transform
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async post(code: string): Promise<TransformSourceDescription> {
+  public async post(source: MagicString): Promise<MagicString> {
     const { file } = this.outputOptions;
 
     if (isESMFormat(this.outputOptions) || (file && extname(file) === '.mjs')) {
-      const source = new MagicString(code);
-      const program = parse(code);
+      const program = parse(source.toString());
 
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {
@@ -45,19 +43,15 @@ export default class StrictTransform extends ChunkTransform implements Transform
           const range: Range = node.range as Range;
 
           if (type === 'Literal' && value === 'use strict') {
-            source.remove(...range);
+            //source.remove(...range);
+            source.overwrite(range[0], range[1], '');
           }
         },
       });
 
-      return {
-        code: source.toString(),
-        map: source.generateMap().mappings,
-      };
+      return source;
     }
 
-    return {
-      code,
-    };
+    return source;
   }
 }
