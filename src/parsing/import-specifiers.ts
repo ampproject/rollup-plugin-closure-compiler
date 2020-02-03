@@ -68,6 +68,8 @@ export function FormatSpecifiers(specifiers: Specifiers, name: string): string {
   const hasDefault = specifiers.default !== null;
   const hasNamespace = specifiers.namespace === true;
   const hasSpecifics = !hasNamespace && specifiers.specific.length > 0;
+  const hasLocals = specifiers.local.length > 0;
+  const includesFrom = hasNamespace || hasNamespace || hasSpecifics || hasLocals;
   let formatted: string = 'import';
   let values: Array<string> = [];
 
@@ -82,7 +84,7 @@ export function FormatSpecifiers(specifiers: Specifiers, name: string): string {
   }
   formatted += `${hasDefault || hasNamespace ? ' ' : ''}${values.join(',')}${
     hasSpecifics ? '' : ' '
-  }from'${name}';`;
+  }${includesFrom ? 'from' : ''}'${name}';`;
 
   return formatted;
 }
