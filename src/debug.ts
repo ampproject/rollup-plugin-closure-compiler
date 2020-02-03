@@ -18,30 +18,28 @@ import { writeTempFile } from './temp-file';
 
 const DEBUG_ENABLED = false;
 
-/* c8 ignore next 16 */
+/* c8 ignore next 15 */
 export async function logTransformChain(
   file: string,
   stage: string,
   messages: Array<[string, string]>,
 ): Promise<void> {
-  if (DEBUG_ENABLED) {
-    let output: string = `\n${file} - ${stage}`;
-    for (const [message, source] of messages) {
-      output += `\n${message.substr(0, 15).padEnd(18, '.')} - file://${await writeTempFile(
-        source,
-        '.js',
-      )}`;
-    }
-    console.log(output);
+  if (!DEBUG_ENABLED) return;
+  let output: string = `\n${file} - ${stage}`;
+  for (const [message, source] of messages) {
+    output += `\n${message.substr(0, 15).padEnd(18, '.')} - file://${await writeTempFile(
+      source,
+      '.js',
+    )}`;
   }
+  console.log(output);
 }
 
-/* c8 ignore next 8 */
+/* c8 ignore next 7 */
 export const log = (preamble: string | undefined, message: string | object): void | null => {
-  if (DEBUG_ENABLED) {
-    if (preamble) {
-      console.log(preamble);
-    }
-    console.log(message);
+  if (!DEBUG_ENABLED) return;
+  if (preamble) {
+    console.log(preamble);
   }
+  console.log(message);
 };

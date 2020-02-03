@@ -25,11 +25,11 @@ import {
 
 generator('import', 'utf8', true, undefined, {
   ...DEFAULT_CLOSURE_OPTIONS,
-  ...PRETTY_PRINT_CLOSURE_OPTIONS,
-  ...ES5_STRICT_CLOSURE_OPTIONS,
+  // ...PRETTY_PRINT_CLOSURE_OPTIONS,
+  // ...ES5_STRICT_CLOSURE_OPTIONS,
 });
 
-// Seperate the Advanced Compilation as we work on it.
-generator('import', 'utf8', true, undefined, {
-  ...ADVANCED_CLOSURE_OPTIONS,
-});
+// // Seperate the Advanced Compilation as we work on it.
+// generator('import', 'utf8', true, undefined, {
+//   ...ADVANCED_CLOSURE_OPTIONS,
+// });

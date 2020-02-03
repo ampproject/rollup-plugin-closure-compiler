@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { Transform, Range } from '../types';
-import { isESMFormat } from '../options';
-import { TransformSourceDescription } from 'rollup';
+import { ChunkTransform } from '../../transform';
+import { Range, TransformInterface } from '../../types';
+import { isESMFormat } from '../../options';
 import MagicString from 'magic-string';
-import { walk, parse } from '../acorn';
+import { walk, parse } from '../../acorn';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
 
-export default class StrictTransform extends Transform {
+export default class StrictTransform extends ChunkTransform implements TransformInterface {
   public name = 'StrictTransform';
 
   /**
@@ -31,12 +31,11 @@ export default class StrictTransform extends Transform {
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(source: MagicString): Promise<MagicString> {
     const { file } = this.outputOptions;
 
     if (isESMFormat(this.outputOptions) || (file && extname(file) === '.mjs')) {
-      const source = new MagicString(code);
-      const program = parse(code);
+      const program = parse(source.toString());
 
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {
@@ -49,14 +48,9 @@ export default class StrictTransform extends Transform {
         },
       });
 
-      return {
-        code: source.toString(),
-        map: source.generateMap().mappings,
-      };
+      return source;
     }
 
-    return {
-      code,
-    };
+    return source;
   }
 }

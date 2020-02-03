@@ -19,9 +19,9 @@ const {
   getNativeImagePath,
   getFirstSupportedPlatform,
 } = require('google-closure-compiler/lib/utils.js');
-import { Transform } from './types';
-import { postCompilation } from './transforms';
+import { postCompilation } from './transformers/chunk/transforms';
 import { RenderedChunk } from 'rollup';
+import { ChunkTransform } from './transform';
 
 enum Platform {
   NATIVE = 'native',
@@ -73,7 +73,7 @@ function orderPlatforms(platformPreference: Platform | string): Array<Platform> 
 export default function(
   compileOptions: CompileOptions,
   chunk: RenderedChunk,
-  transforms: Array<Transform>,
+  transforms: Array<ChunkTransform>,
 ): Promise<string> {
   return new Promise((resolve: (stdOut: string) => void, reject: (error: any) => void) => {
     const [config, platform] = filterContent(compileOptions);
@@ -97,7 +97,8 @@ export default function(
       } else if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));
       } else {
-        resolve(await postCompilation(code, chunk, transforms));
+        const postCompiled = await postCompilation(code, chunk, transforms);
+        resolve(postCompiled.code);
       }
     });
   });

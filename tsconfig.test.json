@@ -3,5 +3,6 @@
   "compilerOptions": {
     "module": "commonjs",
     "outDir": "transpile-tests",
+    "esModuleInterop": true
   }
 }

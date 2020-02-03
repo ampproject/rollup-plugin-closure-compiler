@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { OutputOptions, TransformSourceDescription, PluginContext, InputOptions } from 'rollup';
-const dynamicImport = require('acorn-dynamic-import');
+import MagicString from 'magic-string';
 
 // @see https://github.com/estree/estree/blob/master/es2015.md#imports
 export const IMPORT_DECLARATION = 'ImportDeclaration';
-export const DYNAMIC_IMPORT_DECLARATION = dynamicImport.DynamicImportKey;
 export const IMPORT_SPECIFIER = 'ImportSpecifier';
 export const IMPORT_DEFAULT_SPECIFIER = 'ImportDefaultSpecifier';
 export const IMPORT_NAMESPACE_SPECIFIER = 'ImportNamespaceSpecifier';
@@ -60,37 +58,7 @@ export interface ExportDetails {
   source: string | null;
 }
 
-export type TransformMethod = (code: string) => Promise<TransformSourceDescription>;
+export type TransformMethod = (code: string) => Promise<MagicString>;
 export interface TransformInterface {
   name: string;
-  extern: (options: OutputOptions) => string | null;
-  preCompilation: TransformMethod;
-  postCompilation: TransformMethod;
-}
-export class Transform implements TransformInterface {
-  protected context: PluginContext;
-  protected inputOptions: InputOptions;
-  public outputOptions: OutputOptions;
-  public name: string = 'Transform';
-
-  constructor(context: PluginContext, inputOptions: InputOptions) {
-    this.context = context;
-    this.inputOptions = inputOptions;
-  }
-
-  public extern(options: OutputOptions): string | null {
-    return null;
-  }
-
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
-
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
-    return {
-      code,
-    };
-  }
 }

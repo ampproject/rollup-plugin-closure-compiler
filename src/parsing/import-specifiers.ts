@@ -17,10 +17,11 @@
 import { IMPORT_SPECIFIER, IMPORT_NAMESPACE_SPECIFIER, IMPORT_DEFAULT_SPECIFIER } from '../types';
 import { ImportSpecifier, ImportDefaultSpecifier, ImportNamespaceSpecifier } from 'estree';
 
-interface Specifiers {
+export interface Specifiers {
   default: string | null;
   specific: Array<string>;
   local: Array<string>;
+  namespace: boolean;
 }
 
 export function Specifiers(
@@ -30,6 +31,7 @@ export function Specifiers(
     default: null,
     specific: [],
     local: [],
+    namespace: false,
   };
 
   for (const specifier of specifiers) {
@@ -37,15 +39,21 @@ export function Specifiers(
 
     switch (specifier.type) {
       case IMPORT_SPECIFIER:
-      case IMPORT_NAMESPACE_SPECIFIER:
         const { name: local } = (specifier as ImportSpecifier).local;
-        const { name: imported } = (specifier as ImportSpecifier).imported;
+        const { name: imported } = (specifier as ImportSpecifier)?.imported || {
+          name: specifier.local,
+        };
 
         if (local === imported) {
           returnable.specific.push(local);
         } else {
           returnable.specific.push(`${imported} as ${local}`);
         }
+        break;
+      case IMPORT_NAMESPACE_SPECIFIER:
+        const { name: namespace } = specifier.local;
+        returnable.specific.push(namespace);
+        returnable.namespace = true;
         break;
       case IMPORT_DEFAULT_SPECIFIER:
         returnable.default = specifier.local.name;
@@ -58,17 +66,21 @@ export function Specifiers(
 
 export function FormatSpecifiers(specifiers: Specifiers, name: string): string {
   const hasDefault = specifiers.default !== null;
-  const hasSpecifics = specifiers.specific.length > 0;
+  const hasNamespace = specifiers.namespace === true;
+  const hasSpecifics = !hasNamespace && specifiers.specific.length > 0;
   let formatted: string = 'import';
   let values: Array<string> = [];
 
   if (hasDefault) {
     values.push(`${specifiers.default}`);
   }
+  if (hasNamespace) {
+    values.push(`* as ${specifiers.specific[0]}`);
+  }
   if (hasSpecifics) {
     values.push(`{${specifiers.specific.join(',')}}`);
   }
-  formatted += `${hasDefault ? ' ' : ''}${values.join(',')}${
+  formatted += `${hasDefault || hasNamespace ? ' ' : ''}${values.join(',')}${
     hasSpecifics ? '' : ' '
   }from'${name}';`;
 

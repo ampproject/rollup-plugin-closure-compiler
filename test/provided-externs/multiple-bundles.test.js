@@ -20,19 +20,15 @@ const rollup = require('rollup');
 const { default: compiler } = require('../../transpile-tests/index');
 
 const options = {
-  externs: [
-    path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js'),
-  ],
+  externs: [path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js')],
   compilation_level: 'ADVANCED',
 };
-const optionsCopy = {...options};
+const optionsCopy = { ...options };
 
 async function compile() {
   const bundle = await rollup.rollup({
-    input: `test/provided-externs/fixtures/class.js`,
-    plugins: [
-      compiler(options),
-    ],
+    input: 'test/provided-externs/fixtures/class.js',
+    plugins: [compiler(options)],
   });
 
   await bundle.generate({

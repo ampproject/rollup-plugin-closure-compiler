@@ -17,31 +17,24 @@
 import {
   ExportNamedDeclaration,
   ExportDefaultDeclaration,
-  ExportAllDeclaration,
   Identifier,
   Node,
   AssignmentExpression,
   MemberExpression,
 } from 'estree';
-import { TransformSourceDescription } from 'rollup';
 import {
   NamedDeclaration,
   DefaultDeclaration,
   NodeIsPreservedExport,
   PreservedExportName,
-} from '../parsing/export-details';
-import { PreserveNamedConstant } from '../parsing/preserve-named-constant-export';
-import { PreserveDefault } from '../parsing/preserve-default-export';
-import { isESMFormat } from '../options';
-import {
-  Transform,
-  TransformInterface,
-  ExportClosureMapping,
-  ExportDetails,
-  Range,
-} from '../types';
+} from '../../parsing/export-details';
+import { PreserveNamedConstant } from '../../parsing/preserve-named-constant-export';
+import { PreserveDefault } from '../../parsing/preserve-default-export';
+import { isESMFormat } from '../../options';
 import MagicString from 'magic-string';
-import { parse, walk } from '../acorn';
+import { parse, walk } from '../../acorn';
+import { ChunkTransform } from '../../transform';
+import { ExportClosureMapping, ExportDetails, Range, TransformInterface } from '../../types';
 
 const EXTERN_OVERVIEW = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -56,7 +49,7 @@ const EXTERN_OVERVIEW = `/**
  * 2. Insert additional JS referencing the exported names on the window scope
  * 3. After Closure Compilation is complete, replace the window scope references with the original export statements.
  */
-export default class ExportTransform extends Transform implements TransformInterface {
+export default class ExportTransform extends ChunkTransform implements TransformInterface {
   public name = 'ExportTransform';
   private originalExports: Map<string, ExportDetails> = new Map();
   private currentSourceExportCount: number = 0;
@@ -92,19 +85,18 @@ export default class ExportTransform extends Transform implements TransformInter
   }
 
   private async deriveExports(code: string): Promise<void> {
-    const { context, storeExport } = this;
     const program = parse(code);
 
     walk.simple(program, {
-      ExportNamedDeclaration(node: ExportNamedDeclaration) {
-        storeExport(NamedDeclaration(node));
+      ExportNamedDeclaration: (node: ExportNamedDeclaration) => {
+        this.storeExport(NamedDeclaration(node, this.mangler.getName));
       },
-      ExportDefaultDeclaration(node: ExportDefaultDeclaration) {
-        storeExport(DefaultDeclaration(node));
+      ExportDefaultDeclaration: (node: ExportDefaultDeclaration) => {
+        this.storeExport(DefaultDeclaration(node, this.mangler.getName));
       },
-      ExportAllDeclaration(node: ExportAllDeclaration) {
+      ExportAllDeclaration: () => {
         // TODO(KB): This case `export * from "./import"` is not currently supported.
-        context.error(
+        this.context.error(
           new Error(
             `Rollup Plugin Closure Compiler does not support export all syntax for externals.`,
           ),
@@ -138,15 +130,13 @@ export default class ExportTransform extends Transform implements TransformInter
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async preCompilation(code: string): Promise<TransformSourceDescription> {
+  public async pre(source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return {
-        code,
-      };
+      return super.pre(source);
     }
 
+    const code = source.toString();
     await this.deriveExports(code);
-    const source = new MagicString(code);
 
     for (const key of this.originalExports.keys()) {
       const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
@@ -163,30 +153,22 @@ export default class ExportTransform extends Transform implements TransformInter
       }
     }
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 
   /**
    * After Closure Compiler has modified the source, we need to replace the window scoped
    * references we added with the intended export statements
    * @param code source post Closure Compiler Compilation
-   * @param chunk OutputChunk from Rollup for this code.
-   * @param id Rollup identifier for the source
    * @return Promise containing the repaired source
    */
-  public async postCompilation(code: string): Promise<TransformSourceDescription> {
+  public async post(source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return {
-        code,
-      };
+      return super.post(source);
     }
 
-    const source = new MagicString(code);
+    const code = source.toString();
     const program = parse(code);
-    const { originalExports, currentSourceExportCount } = this;
     let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
 
     source.trimEnd();
@@ -195,7 +177,7 @@ export default class ExportTransform extends Transform implements TransformInter
       // We inserted window scoped assignments for all the export statements during `preCompilation`
       // Now we need to find where Closure Compiler moved them, and restore the exports of their name.
       // ASTExporer Link: https://astexplorer.net/#/gist/94f185d06a4105d64828f1b8480bddc8/0fc5885ae5343f964d0cdd33c7d392a70cf5fcaf
-      Identifier(node: Identifier, ancestors: Array<Node>) {
+      Identifier: (node: Identifier, ancestors: Array<Node>) => {
         if (node.name !== 'window') {
           return;
         }
@@ -209,13 +191,16 @@ export default class ExportTransform extends Transform implements TransformInter
           const left: MemberExpression = expression.left as MemberExpression;
           const exportName: string | null = PreservedExportName(left);
 
-          if (exportName !== null && originalExports.get(exportName)) {
-            const exportDetails: ExportDetails = originalExports.get(exportName) as ExportDetails;
+          if (exportName !== null && this.originalExports.get(exportName)) {
+            const exportDetails: ExportDetails = this.originalExports.get(
+              exportName,
+            ) as ExportDetails;
             const exportIsLocal: boolean = exportDetails.source === null;
             const exportInline: boolean =
-              exportIsLocal &&
-              currentSourceExportCount === 1 &&
-              exportDetails.local === exportDetails.exported;
+              (exportIsLocal &&
+                this.currentSourceExportCount === 1 &&
+                exportDetails.local === exportDetails.exported) ||
+              exportDetails.exported === 'default';
 
             switch (exportDetails.type) {
               case ExportClosureMapping.NAMED_DEFAULT_FUNCTION:
@@ -260,9 +245,6 @@ export default class ExportTransform extends Transform implements TransformInter
       }
     }
 
-    return {
-      code: source.toString(),
-      map: source.generateMap().mappings,
-    };
+    return source;
   }
 }

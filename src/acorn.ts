@@ -14,32 +14,92 @@
  * limitations under the License.
  */
 
-import { Program } from 'estree';
-import { DYNAMIC_IMPORT_DECLARATION } from './types';
-const acorn = require('acorn');
+import {
+  Program,
+  BaseNode,
+  Identifier,
+  ImportDeclaration,
+  VariableDeclarator,
+  BlockStatement,
+  ExportNamedDeclaration,
+  ExportDefaultDeclaration,
+  ExportAllDeclaration,
+  FunctionDeclaration,
+  VariableDeclaration,
+  ClassDeclaration,
+  ExportSpecifier,
+} from 'estree';
+// import { DYNAMIC_IMPORT_DECLARATION } from './types';
+import * as acorn from 'acorn';
+// const acorn = require('acorn');
 const acornWalk = require('acorn-walk');
-const dynamicImport = require('acorn-dynamic-import');
+// const dynamicImport = require('acorn-dynamic-import');
 
-const DYNAMIC_IMPORT_BASEVISITOR = Object.assign({}, acornWalk.base, {
-  [DYNAMIC_IMPORT_DECLARATION]: () => {},
-});
+// const DYNAMIC_IMPORT_BASEVISITOR = Object.assign({}, acornWalk.base, {
+//   [DYNAMIC_IMPORT_DECLARATION]: () => {},
+// });
 
 export const walk = {
-  simple(node: Program, visitors: any): void {
-    acornWalk.simple(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
-  },
-  ancestor(node: Program, visitors: any): void {
-    acornWalk.ancestor(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
-  },
+  simple: acornWalk.simple,
+  ancestor: acornWalk.ancestor,
+  // simple(node: Program, visitors: any): void {
+  //   acornWalk.simple(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
+  // },
+  // ancestor(node: Program, visitors: any): void {
+  //   acornWalk.ancestor(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
+  // },
 };
 
 const DEFAULT_ACORN_OPTIONS = {
-  ecmaVersion: 2019,
-  sourceType: 'module',
+  ecmaVersion: 2020 as any,
+  sourceType: 'module' as any,
   preserveParens: false,
   ranges: true,
 };
 
 export function parse(source: string): Program {
-  return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
+  return (acorn.parse(source, DEFAULT_ACORN_OPTIONS) as unknown) as Program;
+  // return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
+}
+
+export function isIdentifier(node: BaseNode): node is Identifier {
+  return node.type === 'Identifier';
+}
+export function isImportDeclaration(node: BaseNode): node is ImportDeclaration {
+  return node.type === 'ImportDeclaration';
+}
+export function isImportExpression(node: BaseNode): boolean {
+  // @types/estree does not yet support 2020 addons to ECMA.
+  // This includes ImportExpression ... import("thing")
+  return node.type === 'ImportExpression';
+}
+export function isVariableDeclarator(node: BaseNode): node is VariableDeclarator {
+  return node.type === 'VariableDeclarator';
+}
+export function isBlockStatement(node: BaseNode): node is BlockStatement {
+  return node.type === 'BlockStatement';
+}
+export function isProgram(node: BaseNode): node is Program {
+  return node.type === 'Program';
+}
+export function isExportNamedDeclaration(node: BaseNode): node is ExportNamedDeclaration {
+  return node.type === 'ExportNamedDeclaration';
+}
+export function isExportDefaultDeclaration(node: BaseNode): node is ExportDefaultDeclaration {
+  return node.type === 'ExportDefaultDeclaration';
+}
+export function isExportAllDeclaration(node: BaseNode): node is ExportAllDeclaration {
+  return node.type === 'ExportAllDeclaration';
+}
+export function isFunctionDeclaration(node: BaseNode): node is FunctionDeclaration {
+  return node.type === 'FunctionDeclaration';
+}
+export function isVariableDeclaration(node: BaseNode): node is VariableDeclaration {
+  return node.type === 'VariableDeclaration';
+}
+export function isClassDeclaration(node: BaseNode): node is ClassDeclaration {
+  return node.type === 'ClassDeclaration';
+}
+export function isExportSpecifier(node: BaseNode): node is ExportSpecifier {
+  return node.type === 'ExportSpecifier';
 }

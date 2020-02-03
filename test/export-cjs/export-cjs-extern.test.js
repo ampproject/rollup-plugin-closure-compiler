@@ -15,17 +15,20 @@
  */
 
 import test from 'ava';
-import { createTransforms } from '../../transpile-tests/transforms';
+import { create } from '../../transpile-tests/transformers/chunk/transforms';
 import { defaults } from '../../transpile-tests/options';
 import { promises as fsPromises } from 'fs';
 
 test('generate extern for cjs export pattern', async t => {
-  const externFixtureContent = await fsPromises.readFile('test/export-cjs/fixtures/export.extern.js', 'utf8');
+  const externFixtureContent = await fsPromises.readFile(
+    'test/export-cjs/fixtures/export.extern.js',
+    'utf8',
+  );
   const outputOptions = {
     format: 'cjs',
   };
 
-  const transforms = createTransforms({});
+  const transforms = create({});
   const options = await defaults(outputOptions, [], transforms);
 
   for (const externFilePath of options.externs) {

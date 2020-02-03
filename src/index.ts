@@ -22,55 +22,30 @@ import {
   InputOptions,
   PluginContext,
   RenderedChunk,
-  SourceMapInput,
+  TransformResult,
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
-import { preCompilation, createTransforms } from './transforms';
-import { Transform } from './types';
-
-/**
- * Transform the tree-shaken code from Rollup with Closure Compiler (with derived configuration and transforms)
- * @param compileOptions Closure Compiler compilation options from Rollup configuration.
- * @param transforms Transforms to apply to source followin Closure Compiler completion.
- * @param code Source to compile.
- * @param outputOptions Rollup Output Options.
- * @return Closure Compiled form of the Rollup Chunk
- */
-const renderChunk = async (
-  transforms: Array<Transform>,
-  requestedCompileOptions: CompileOptions = {},
-  sourceCode: string,
-  outputOptions: OutputOptions,
-  chunk: RenderedChunk,
-): Promise<{ code: string; map: SourceMapInput } | void> => {
-  const code = await preCompilation(sourceCode, outputOptions, chunk, transforms);
-  const [compileOptions, mapFile] = await options(
-    requestedCompileOptions,
-    outputOptions,
-    code,
-    transforms,
-  );
-
-  try {
-    return {
-      code: await compiler(compileOptions, chunk, transforms),
-      map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
-    };
-  } catch (error) {
-    throw error;
-  }
-};
+import {
+  transform as sourceTransform,
+  create as createSourceTransforms,
+} from './transformers/source/transforms';
+import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
+import { Mangle } from './transformers/mangle';
+import { SourceTransform } from './transform';
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
+  const mangler: Mangle = new Mangle();
   let inputOptions: InputOptions;
   let context: PluginContext;
+  let sourceTransforms: Array<SourceTransform>;
 
   return {
     name: 'closure-compiler',
     options: options => (inputOptions = options),
     buildStart() {
       context = this;
+      sourceTransforms = createSourceTransforms(context, mangler, inputOptions, {});
       if (
         'compilation_level' in requestedCompileOptions &&
         requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
@@ -81,16 +56,38 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         );
       }
     },
+    transform: async (code: string, id: string): Promise<TransformResult> => {
+      if (sourceTransforms.length > 0) {
+        const output = await sourceTransform(code, id, sourceTransforms);
+        return output || null;
+      }
+      return null;
+    },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
-      const transforms = createTransforms(context, inputOptions);
-      const output = await renderChunk(
-        transforms,
-        requestedCompileOptions,
-        code,
+      mangler.debug();
+
+      const renderChunkTransforms = createChunkTransforms(
+        context,
+        mangler,
+        inputOptions,
         outputOptions,
-        chunk,
       );
-      return output || null;
+      const preCompileOutput = (await preCompilation(code, chunk, renderChunkTransforms)).code;
+      const [compileOptions, mapFile] = await options(
+        requestedCompileOptions,
+        outputOptions,
+        preCompileOutput,
+        renderChunkTransforms,
+      );
+
+      try {
+        return {
+          code: await compiler(compileOptions, chunk, renderChunkTransforms),
+          map: JSON.parse(await fsPromises.readFile(mapFile, 'utf8')),
+        };
+      } catch (error) {
+        throw error;
+      }
     },
   };
 }

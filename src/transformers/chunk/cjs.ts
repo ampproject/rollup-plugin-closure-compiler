@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transform } from '../types';
+import { ChunkTransform } from '../../transform';
 import { OutputOptions } from 'rollup';
 
 const HEADER = `/**
@@ -35,7 +35,7 @@ var exports;`;
  *
  * In order to preserve the __esModules boolean on an Object, this typedef needs to be present.
  */
-export default class CJSTransform extends Transform {
+export default class CJSTransform extends ChunkTransform {
   public name = 'CJSTransform';
 
   public extern(options: OutputOptions): string | null {
