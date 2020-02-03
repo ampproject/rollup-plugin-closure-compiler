@@ -15,12 +15,14 @@
  */
 
 import { SourceTransform, sourceLifecycle } from '../../transform';
-import { ImportTransform } from './imports';
-import { ExportTransform } from './exports';
+// import { ImportTransform } from './imports';
+// import { ExportTransform } from './exports';
 import { Mangle } from '../mangle';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 
-const TRANSFORMS: Array<typeof SourceTransform> = [ImportTransform, ExportTransform];
+const TRANSFORMS: Array<typeof SourceTransform> = [];
+// Temporarily disabling SourceTransforms, aligning for future release.
+// ImportTransform, ExportTransform
 
 /**
  * Instantiate transform class instances for the plugin invocation.

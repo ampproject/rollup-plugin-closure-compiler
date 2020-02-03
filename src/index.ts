@@ -22,7 +22,7 @@ import {
   InputOptions,
   PluginContext,
   RenderedChunk,
-  TransformSourceDescription,
+  TransformResult,
 } from 'rollup';
 import compiler from './compiler';
 import options from './options';
@@ -32,17 +32,20 @@ import {
 } from './transformers/source/transforms';
 import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
 import { Mangle } from './transformers/mangle';
+import { SourceTransform } from './transform';
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
   const mangler: Mangle = new Mangle();
   let inputOptions: InputOptions;
   let context: PluginContext;
+  let sourceTransforms: Array<SourceTransform>;
 
   return {
     name: 'closure-compiler',
     options: options => (inputOptions = options),
     buildStart() {
       context = this;
+      sourceTransforms = createSourceTransforms(context, mangler, inputOptions, {});
       if (
         'compilation_level' in requestedCompileOptions &&
         requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
@@ -53,11 +56,12 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         );
       }
     },
-    transform: async (code: string, id: string): Promise<TransformSourceDescription> => {
-      const transformTransforms = createSourceTransforms(context, mangler, inputOptions, {});
-      const output = await sourceTransform(code, id, transformTransforms);
-
-      return output || null;
+    transform: async (code: string, id: string): Promise<TransformResult> => {
+      if (sourceTransforms.length > 0) {
+        const output = await sourceTransform(code, id, sourceTransforms);
+        return output || null;
+      }
+      return null;
     },
     renderChunk: async (code: string, chunk: RenderedChunk, outputOptions: OutputOptions) => {
       mangler.debug();

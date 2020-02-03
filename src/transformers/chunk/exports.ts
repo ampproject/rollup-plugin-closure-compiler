@@ -144,8 +144,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
       // Remove export statements before Closure Compiler sees the code
       // This prevents CC from transpiling `export` statements when the language_out is set to a value
       // where exports were not part of the language.
-      // source.remove(...value.range);
-      source.overwrite(value.range[0], value.range[1], '');
+      source.remove(...value.range);
       // Window scoped references for each key are required to ensure Closure Compilre retains the code.
       if (value.source === null) {
         source.append(`\nwindow['${value.local}'] = ${value.local};`);
@@ -226,8 +225,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
             if (!exportIsLocal) {
               const [leftStart] = left.range as Range;
               const { 1: ancestorEnd } = ancestor.range as Range;
-              // source.remove(leftStart, ancestorEnd);
-              source.overwrite(leftStart, ancestorEnd, '');
+              source.remove(leftStart, ancestorEnd);
             }
           }
         }

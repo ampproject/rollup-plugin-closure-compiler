@@ -18,13 +18,24 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { promises } from 'fs';
 import * as crypto from 'crypto';
+import { v4 } from 'uuid';
 
-export async function writeTempFile(content: string, extension: string = ''): Promise<string> {
-  const stableHash: string = crypto
-    .createHash('sha1')
-    .update(content)
-    .digest('hex');
-  const fullpath: string = path.join(tmpdir(), stableHash + extension);
+export async function writeTempFile(
+  content: string,
+  extension: string = '',
+  stableName: boolean = true,
+): Promise<string> {
+  let hash: string;
+
+  if (stableName) {
+    hash = crypto
+      .createHash('sha1')
+      .update(content)
+      .digest('hex');
+  } else {
+    hash = v4();
+  }
+  const fullpath: string = path.join(tmpdir(), hash + extension);
   await promises.mkdir(path.dirname(fullpath), { recursive: true });
   await promises.writeFile(fullpath, content, 'utf-8');
 

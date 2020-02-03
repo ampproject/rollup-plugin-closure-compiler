@@ -81,8 +81,7 @@ function PreserveIdentifier(
   } else if (exportDetails.source === null && 'name' in right) {
     // This is a locally defined identifier with a name we can use.
     exportDetails.local = right.name;
-    // source.remove(leftStart, ancestorEnd);
-    source.overwrite(leftStart, ancestorEnd, '');
+    source.remove(leftStart, ancestorEnd);
     return true;
   } else {
     source.overwrite(

@@ -43,8 +43,7 @@ export default class StrictTransform extends ChunkTransform implements Transform
           const range: Range = node.range as Range;
 
           if (type === 'Literal' && value === 'use strict') {
-            //source.remove(...range);
-            source.overwrite(range[0], range[1], '');
+            source.remove(...range);
           }
         },
       });

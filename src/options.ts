@@ -99,7 +99,7 @@ export default async function(
   code: string,
   transforms: Array<ChunkTransform> | null,
 ): Promise<[CompileOptions, string]> {
-  const mapFile: string = await writeTempFile('');
+  const mapFile: string = await writeTempFile('', '', false);
   const compileOptions: CompileOptions = { ...incomingCompileOptions };
   let externs: Array<string> = [];
 

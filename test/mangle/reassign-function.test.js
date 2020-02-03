@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
-import { generator } from '../generator';
+import { generator, DEFAULT_CLOSURE_OPTIONS } from '../generator';
 
-generator('mangle', 'reassign-function');
+generator('mangle', 'reassign-arrow', undefined, undefined, {
+  ...DEFAULT_CLOSURE_OPTIONS,
+});

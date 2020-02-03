@@ -30,7 +30,20 @@ import {
   isIdentifier,
   isClassDeclaration,
 } from '../acorn';
-import { Mangle } from 'src/transformers/mangle';
+import { Mangle } from '../transformers/mangle';
+
+/**
+ * Locally within exporting we always need a name
+ * If value passed is not present in the mangler then use original name.
+ * @param input
+ * @param unmangle
+ */
+function getName(input: string, unmangle?: Mangle['getName']): string {
+  if (unmangle) {
+    return unmangle(input) || input;
+  }
+  return input;
+}
 
 export function NamedDeclaration(
   node: ExportNamedDeclaration,
@@ -39,15 +52,14 @@ export function NamedDeclaration(
   const exportDetails: Array<ExportDetails> = [];
   const range = node.range as Range;
   const source: string | null = typeof node.source?.value === 'string' ? node.source.value : null;
-  const value = (input: string) => (unmangle ? unmangle(input) || input : input);
   const { specifiers, declaration } = node;
 
   // NamedDeclarations either have specifiers or declarations.
   if (specifiers.length > 0) {
     for (const specifier of specifiers) {
-      const exported = value(specifier.exported.name);
+      const exported = getName(specifier.exported.name, unmangle);
       exportDetails.push({
-        local: value(specifier.local.name),
+        local: getName(specifier.local.name, unmangle),
         exported,
         type: ExportClosureMapping.NAMED_CONSTANT,
         range,
@@ -62,8 +74,8 @@ export function NamedDeclaration(
     if (isFunctionDeclaration(declaration)) {
       // Only default exports can be missing an identifier.
       exportDetails.push({
-        local: value((declaration.id as Identifier).name),
-        exported: value((declaration.id as Identifier).name),
+        local: getName((declaration.id as Identifier).name, unmangle),
+        exported: getName((declaration.id as Identifier).name, unmangle),
         type: ExportClosureMapping.NAMED_FUNCTION,
         range,
         source,
@@ -73,8 +85,8 @@ export function NamedDeclaration(
       for (const eachDeclaration of declaration.declarations) {
         if (isIdentifier(eachDeclaration.id)) {
           exportDetails.push({
-            local: value(eachDeclaration.id.name),
-            exported: value(eachDeclaration.id.name),
+            local: getName(eachDeclaration.id.name, unmangle),
+            exported: getName(eachDeclaration.id.name, unmangle),
             type: ExportClosureMapping.NAMED_CONSTANT,
             range,
             source,
@@ -85,8 +97,8 @@ export function NamedDeclaration(
     if (isClassDeclaration(declaration)) {
       // Only default exports can be missing an identifier.
       exportDetails.push({
-        local: value((declaration.id as Identifier).name),
-        exported: value((declaration.id as Identifier).name),
+        local: getName((declaration.id as Identifier).name, unmangle),
+        exported: getName((declaration.id as Identifier).name, unmangle),
         type: ExportClosureMapping.NAMED_CLASS,
         range,
         source,
@@ -102,13 +114,12 @@ export function DefaultDeclaration(
   unmangle?: Mangle['getName'],
 ): Array<ExportDetails> {
   const { declaration } = defaultDeclaration;
-  const value = (input: string) => (unmangle ? unmangle(input) || input : input);
 
   if (declaration.type === 'Identifier' && declaration.name) {
     return [
       {
-        local: value(declaration.name),
-        exported: value(declaration.name),
+        local: getName(declaration.name, unmangle),
+        exported: getName(declaration.name, unmangle),
         type: ExportClosureMapping.NAMED_DEFAULT_FUNCTION,
         range: defaultDeclaration.range as Range,
         source: null,
