@@ -25,7 +25,7 @@
     "precoverage": "yarn pretest && c8 ava",
     "coverage": "c8 report --reporter=html",
     "postcoverage": "sirv coverage/",
-    "build": "rimraf dist transpile && tsc -p tsconfig.json & wait",
+    "build": "rimraf dist transpile transpile-tests && tsc -p tsconfig.json & wait",
     "postbuild": "rollup -c",
     "release": "np",
     "prepublishOnly": "npm-run-all build"

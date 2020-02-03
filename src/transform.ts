@@ -19,8 +19,9 @@ import { TransformInterface } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
 import * as path from 'path';
-import MagicString, { DecodedSourceMap } from 'magic-string';
-import * as remapping from '@ampproject/remapping';
+import MagicString from 'magic-string';
+import { DecodedSourceMap as RemappingDecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { createDecodedSourceMap, createExistingRawSourceMap } from './source-map';
 
 class Transform implements TransformInterface {
   protected context: PluginContext;
@@ -74,14 +75,14 @@ export async function chunkLifecycle(
   transforms: Array<ChunkTransform>,
 ): Promise<TransformSourceDescription> {
   const log: Array<[string, string]> = [];
-  const sourcemaps: Array<DecodedSourceMap> = [];
+  const sourcemaps: Array<RemappingDecodedSourceMap> = [];
   let source = new MagicString(code);
 
   log.push(['before', code]);
   for (const transform of transforms) {
     const transformed = await transform[method](source);
     const transformedSource = transformed.toString();
-    sourcemaps.push(transformed.generateDecodedMap({ hires: true, source: fileName }));
+    sourcemaps.push(createDecodedSourceMap(transformed, fileName));
     source = new MagicString(transformedSource);
     log.push([transform.name, transformedSource]);
   }
@@ -92,7 +93,7 @@ export async function chunkLifecycle(
 
   return {
     code: finalSource,
-    map: ((remapping as unknown) as any)(sourcemaps, () => null),
+    map: createExistingRawSourceMap(sourcemaps, fileName),
   };
 }
 
@@ -104,14 +105,14 @@ export async function sourceLifecycle(
 ): Promise<TransformSourceDescription> {
   const fileName = path.basename(id);
   const log: Array<[string, string]> = [];
-  const sourcemaps: Array<DecodedSourceMap> = [];
+  const sourcemaps: Array<RemappingDecodedSourceMap> = [];
   let source = new MagicString(code);
 
   log.push(['before', code]);
   for (const transform of transforms) {
     const transformed = await transform.transform(id, source);
     const transformedSource = transformed.toString();
-    sourcemaps.push(transformed.generateDecodedMap({ hires: true, source: id }));
+    sourcemaps.push(createDecodedSourceMap(transformed, id));
     source = new MagicString(transformedSource);
     log.push([transform.name, transformedSource]);
   }
@@ -120,13 +121,8 @@ export async function sourceLifecycle(
   log.push(['after', finalSource]);
   await logTransformChain(fileName, printableName, log);
 
-  // console.log(source.generateMap({hires: true}));
-  // const sourcemap = source.generateDecodedMap({hires: true, source: 'bundle.js'});
-  // source.generateDecodedMap({hires: true, source: id})
-  // console.log((remapping as unknown as any)([sourcemap], () => null));
-
   return {
     code: finalSource,
-    map: ((remapping as unknown) as any)(sourcemaps, () => null),
+    map: createExistingRawSourceMap(sourcemaps, fileName),
   };
 }
