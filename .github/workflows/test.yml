@@ -16,7 +16,4 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: yarn install
-    - run: yarn pretest
-    - run: yarn c8 ava
-    - run: yarn c8 report --reporter=lcovonly
-    - run: yarn codecov
+    - run: yarn test
