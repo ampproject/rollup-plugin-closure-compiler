@@ -21,20 +21,24 @@ import MagicString from 'magic-string';
 /**
  * Closure Compiler will not compile code that is prefixed with a hashbang (common to rollup output for CLIs).
  *
- * This transform will restore the hashbang if Ebbinghaus knows it exists.
+ * This transform will remove the hashbang (if present) and ask Ebbinghaus to remember if for after compilation.
  */
-export default class HashbangTransform extends ChunkTransform implements TransformInterface {
-  public name = 'HashbangTransform';
+export default class HashbangRemoveTransform extends ChunkTransform implements TransformInterface {
+  public name = 'HashbangRemoveTransform';
 
   /**
    * @param source MagicString of source to process post Closure Compilation.
    */
-  public async post(source: MagicString): Promise<MagicString> {
-    if (this.memory.hashbang === null) {
+  public async pre(source: MagicString): Promise<MagicString> {
+    const stringified = source.trim().toString();
+    const match = /^#!.*/.exec(stringified);
+
+    if (!match) {
       return source;
     }
 
-    source.prepend(this.memory.hashbang + '\n');
+    this.memory.hashbang = match[0];
+    source.remove(0, match[0].length);
     return source;
   }
 }

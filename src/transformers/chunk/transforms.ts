@@ -21,7 +21,8 @@ import {
   RenderedChunk,
   TransformSourceDescription,
 } from 'rollup';
-import HashbangTransform from './hashbang';
+import HashbangRemoveTransform from './hashbang-remove';
+import HashbangApplyTransform from './hashbang-apply';
 import IifeTransform from './iife';
 import CJSTransform from './cjs';
 import LiteralComputedKeys from './literal-computed-keys';
@@ -36,6 +37,8 @@ import { CompileOptions } from 'google-closure-compiler';
 import { pluckPluginOptions } from '../../options';
 
 const TRANSFORMS: Array<typeof ChunkTransform> = [
+  HashbangRemoveTransform,
+  // Acorn can parse content starting here
   ConstTransform,
   IifeTransform,
   CJSTransform,
@@ -43,9 +46,8 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
   StrictTransform,
   ExportTransform,
   ImportTransform,
-  // After this point Transforms cannot use Acorn to parse source.
-  // Hashbangs are added back, which makes the content unparseable.
-  HashbangTransform,
+  // Acorn cannot parse content starting here.
+  HashbangApplyTransform,
 ];
 
 /**

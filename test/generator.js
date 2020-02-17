@@ -56,7 +56,7 @@ const fixtureLocation = (category, name, format, optionsKey, minified = false) =
       : `${name}.js`
   }`;
 
-async function compile(category, name, codeSplit, closureFlags, optionKey, format, wrapper) {
+async function compile(category, name, codeSplit, closureFlags, optionKey, format, wrapper, banner) {
   const bundle = await rollup.rollup({
     input: fixtureLocation(category, name, format, optionKey, false),
     plugins: [compiler(closureFlags[optionKey])],
@@ -69,6 +69,7 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
     format,
     name: wrapper,
     sourcemap: true,
+    banner,
   });
 
   const output = [];
@@ -107,7 +108,7 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
   return output;
 }
 
-function generate(shouldFail, category, name, codeSplit, formats, closureFlags, wrapper) {
+function generate(shouldFail, category, name, codeSplit, formats, closureFlags, wrapper, banner) {
   const targetLength = longest(formats);
   const optionLength = longest(Object.keys(closureFlags));
 
@@ -125,6 +126,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags, 
             optionKey,
             format,
             wrapper,
+            banner,
           );
 
           t.plan(output.length);
@@ -144,8 +146,9 @@ function failureGenerator(
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
   wrapper = null,
+  banner = null,
 ) {
-  generate(true, category, name, codeSplit, formats, closureFlags, wrapper);
+  generate(true, category, name, codeSplit, formats, closureFlags, wrapper, banner);
 }
 
 function generator(
@@ -155,8 +158,9 @@ function generator(
   formats = [ESM_OUTPUT],
   closureFlags = defaultClosureFlags,
   wrapper = null,
+  banner = null,
 ) {
-  generate(false, category, name, codeSplit, formats, closureFlags, wrapper);
+  generate(false, category, name, codeSplit, formats, closureFlags, wrapper, banner);
 }
 
 module.exports = {
