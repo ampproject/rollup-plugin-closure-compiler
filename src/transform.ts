@@ -18,6 +18,7 @@ import { logTransformChain } from './debug';
 import { TransformInterface, PluginOptions } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
+import { Ebbinghaus } from './transformers/ebbinghaus';
 import * as path from 'path';
 import MagicString from 'magic-string';
 import { DecodedSourceMap as RemappingDecodedSourceMap } from '@ampproject/remapping/dist/types/types';
