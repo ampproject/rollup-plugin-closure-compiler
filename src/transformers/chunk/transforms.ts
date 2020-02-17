@@ -21,6 +21,7 @@ import {
   RenderedChunk,
   TransformSourceDescription,
 } from 'rollup';
+import HashbangTransform from './hashbang';
 import IifeTransform from './iife';
 import CJSTransform from './cjs';
 import LiteralComputedKeys from './literal-computed-keys';
@@ -30,6 +31,7 @@ import StrictTransform from './strict';
 import ConstTransform from './const';
 import { ChunkTransform, chunkLifecycle } from '../../transform';
 import { Mangle } from '../mangle';
+import { Ebbinghaus } from '../ebbinghaus';
 import { CompileOptions } from 'google-closure-compiler';
 import { pluckPluginOptions } from '../../options';
 
@@ -41,6 +43,9 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
   StrictTransform,
   ExportTransform,
   ImportTransform,
+  // After this point Transforms cannot use Acorn to parse source.
+  // Hashbangs are added back, which makes the content unparseable.
+  HashbangTransform,
 ];
 
 /**
@@ -48,6 +53,7 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
  * @param context Plugin context to bind for each transform instance.
  * @param requestedCompileOptions Originally requested compile options from configuration.
  * @param mangler Mangle instance used for this transform instance.
+ * @param memory Ebbinghaus instance used to store information that could be lost from source.
  * @param inputOptions Rollup input options
  * @param outputOptions Rollup output options
  * @return Instantiated transform class instances for the given entry point.
@@ -56,12 +62,14 @@ export function create(
   context: PluginContext,
   requestedCompileOptions: CompileOptions,
   mangler: Mangle,
+  memory: Ebbinghaus,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<ChunkTransform> {
   const pluginOptions = pluckPluginOptions(requestedCompileOptions);
   return TRANSFORMS.map(
-    transform => new transform(context, pluginOptions, mangler, inputOptions, outputOptions),
+    transform =>
+      new transform(context, pluginOptions, mangler, memory, inputOptions, outputOptions),
   );
 }
 
