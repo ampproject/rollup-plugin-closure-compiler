@@ -1,1 +1,1 @@
-export{exportedFunction as a}from'y.js';a("1");
+export{exportedFunction as a}from'y.js';a("1")

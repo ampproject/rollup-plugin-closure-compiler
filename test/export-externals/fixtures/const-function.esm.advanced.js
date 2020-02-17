@@ -1,1 +1,1 @@
-export{constFunction}from'./external.js';
+export{constFunction}from'./external.js'

@@ -1,1 +1,1 @@
-export{exportedFunction}from'./external.js';
+export{exportedFunction}from'./external.js'

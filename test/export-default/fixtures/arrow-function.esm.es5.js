@@ -1,1 +1,1 @@
-export default function(a){return console.log(a)};
+export default function(a){return console.log(a)}

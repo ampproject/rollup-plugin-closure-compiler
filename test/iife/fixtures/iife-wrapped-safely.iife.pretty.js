@@ -4,5 +4,5 @@ var wrapper = function(a) {
     document.body.innerHTML = "hello " + a;
   };
   return a;
-}({});
+}({})
 

@@ -1,1 +1,1 @@
-var a={};console.log((a[0]="value",a));
+var a={};console.log((a[0]="value",a))

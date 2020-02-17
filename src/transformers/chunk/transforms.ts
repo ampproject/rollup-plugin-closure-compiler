@@ -30,6 +30,7 @@ import ExportTransform from './exports';
 import ImportTransform from './imports';
 import StrictTransform from './strict';
 import ConstTransform from './const';
+import ASITransform from './asi';
 import { ChunkTransform, chunkLifecycle } from '../../transform';
 import { Mangle } from '../mangle';
 import { Ebbinghaus } from '../ebbinghaus';
@@ -46,6 +47,7 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
   StrictTransform,
   ExportTransform,
   ImportTransform,
+  ASITransform,
   // Acorn cannot parse content starting here.
   HashbangApplyTransform,
 ];

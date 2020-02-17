@@ -1,1 +1,1 @@
-export{exportedArray}from'./external.js';
+export{exportedArray}from'./external.js'
