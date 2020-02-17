@@ -15,14 +15,14 @@
  */
 
 import { SourceTransform, sourceLifecycle } from '../../transform';
-// import { ImportTransform } from './imports';
-// import { ExportTransform } from './exports';
 import { Mangle } from '../mangle';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
+import HashbangTransform from './hashbang';
+import { Ebbinghaus } from '../ebbinghaus';
 
-const TRANSFORMS: Array<typeof SourceTransform> = [];
-// Temporarily disabling SourceTransforms, aligning for future release.
+const TRANSFORMS: Array<typeof SourceTransform> = [HashbangTransform];
+// Temporarily disabling many SourceTransforms, aligning for future release.
 // ImportTransform, ExportTransform
 
 /**
@@ -30,6 +30,7 @@ const TRANSFORMS: Array<typeof SourceTransform> = [];
  * @param context Plugin context to bind for each transform instance.
  * @param requestedCompileOptions Originally requested compile options from configuration.
  * @param mangler Mangle instance used for this transform instance.
+ * @param memory Ebbinghaus instance used to store information that could be lost from source.
  * @param inputOptions Rollup input options
  * @param outputOptions Rollup output options
  * @return Instantiated transform class instances for the given entry point.
@@ -38,10 +39,13 @@ export const create = (
   context: PluginContext,
   requestedCompileOptions: CompileOptions,
   mangler: Mangle,
+  memory: Ebbinghaus,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<SourceTransform> =>
-  TRANSFORMS.map(transform => new transform(context, {}, mangler, inputOptions, outputOptions));
+  TRANSFORMS.map(
+    transform => new transform(context, {}, mangler, memory, inputOptions, outputOptions),
+  );
 
 /**
  * Run each transform's `transform` lifecycle.

@@ -32,10 +32,12 @@ import {
 } from './transformers/source/transforms';
 import { preCompilation, create as createChunkTransforms } from './transformers/chunk/transforms';
 import { Mangle } from './transformers/mangle';
+import { Ebbinghaus } from './transformers/ebbinghaus';
 import { SourceTransform } from './transform';
 
 export default function closureCompiler(requestedCompileOptions: CompileOptions = {}): Plugin {
   const mangler: Mangle = new Mangle();
+  const memory: Ebbinghaus = new Ebbinghaus();
   let inputOptions: InputOptions;
   let context: PluginContext;
   let sourceTransforms: Array<SourceTransform>;
@@ -49,6 +51,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         context,
         requestedCompileOptions,
         mangler,
+        memory,
         inputOptions,
         {},
       );
@@ -76,6 +79,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
         context,
         requestedCompileOptions,
         mangler,
+        memory,
         inputOptions,
         outputOptions,
       );

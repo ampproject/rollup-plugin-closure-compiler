@@ -18,6 +18,7 @@ import { logTransformChain } from './debug';
 import { TransformInterface, PluginOptions } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
+import { Ebbinghaus } from './transformers/ebbinghaus';
 import * as path from 'path';
 import MagicString from 'magic-string';
 import { DecodedSourceMap as RemappingDecodedSourceMap } from '@ampproject/remapping/dist/types/types';
@@ -27,6 +28,7 @@ class Transform implements TransformInterface {
   protected context: PluginContext;
   protected pluginOptions: PluginOptions;
   protected mangler: Mangle;
+  protected memory: Ebbinghaus;
   protected inputOptions: InputOptions;
   protected outputOptions: OutputOptions;
   public name: string = 'Transform';
@@ -35,12 +37,14 @@ class Transform implements TransformInterface {
     context: PluginContext,
     pluginOptions: PluginOptions,
     mangler: Mangle,
+    memory: Ebbinghaus,
     inputOptions: InputOptions,
     outputOptions: OutputOptions,
   ) {
     this.context = context;
     this.pluginOptions = pluginOptions;
     this.mangler = mangler;
+    this.memory = memory;
     this.inputOptions = inputOptions;
     this.outputOptions = outputOptions;
   }
