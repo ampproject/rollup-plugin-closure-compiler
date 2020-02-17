@@ -19,6 +19,7 @@ import { SourceTransform, sourceLifecycle } from '../../transform';
 // import { ExportTransform } from './exports';
 import { Mangle } from '../mangle';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
+import { CompileOptions } from 'google-closure-compiler';
 
 const TRANSFORMS: Array<typeof SourceTransform> = [];
 // Temporarily disabling SourceTransforms, aligning for future release.
@@ -27,17 +28,20 @@ const TRANSFORMS: Array<typeof SourceTransform> = [];
 /**
  * Instantiate transform class instances for the plugin invocation.
  * @param context Plugin context to bind for each transform instance.
+ * @param requestedCompileOptions Originally requested compile options from configuration.
+ * @param mangler Mangle instance used for this transform instance.
  * @param inputOptions Rollup input options
  * @param outputOptions Rollup output options
  * @return Instantiated transform class instances for the given entry point.
  */
 export const create = (
   context: PluginContext,
+  requestedCompileOptions: CompileOptions,
   mangler: Mangle,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<SourceTransform> =>
-  TRANSFORMS.map(transform => new transform(context, mangler, inputOptions, outputOptions));
+  TRANSFORMS.map(transform => new transform(context, {}, mangler, inputOptions, outputOptions));
 
 /**
  * Run each transform's `transform` lifecycle.

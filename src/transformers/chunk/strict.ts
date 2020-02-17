@@ -15,12 +15,33 @@
  */
 
 import { ChunkTransform } from '../../transform';
-import { Range, TransformInterface } from '../../types';
+import { Range, TransformInterface, PluginOptions } from '../../types';
 import { isESMFormat } from '../../options';
 import MagicString from 'magic-string';
 import { walk, parse } from '../../acorn';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
+import { OutputOptions } from 'rollup';
+
+/**
+ * Determines if Strict Mode should be removed from output.
+ * @param pluginOptions
+ * @param outputOptions
+ * @param path
+ */
+function shouldRemoveStrictModeDeclarations(
+  pluginOptions: PluginOptions,
+  outputOptions: OutputOptions,
+  path: string | undefined,
+): boolean {
+  if ('remove_strict_directive' in pluginOptions) {
+    const removeDirective = pluginOptions['remove_strict_directive'];
+    return removeDirective === undefined || removeDirective === true;
+  }
+
+  const isESMOutput: boolean = !!(path && extname(path) === '.mjs');
+  return isESMFormat(outputOptions) || isESMOutput;
+}
 
 export default class StrictTransform extends ChunkTransform implements TransformInterface {
   public name = 'StrictTransform';
@@ -34,7 +55,7 @@ export default class StrictTransform extends ChunkTransform implements Transform
   public async post(source: MagicString): Promise<MagicString> {
     const { file } = this.outputOptions;
 
-    if (isESMFormat(this.outputOptions) || (file && extname(file) === '.mjs')) {
+    if (shouldRemoveStrictModeDeclarations(this.pluginOptions, this.outputOptions, file)) {
       const program = parse(source.toString());
 
       walk.simple(program, {

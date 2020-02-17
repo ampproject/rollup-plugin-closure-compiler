@@ -62,3 +62,7 @@ export type TransformMethod = (code: string) => Promise<MagicString>;
 export interface TransformInterface {
   name: string;
 }
+
+export interface PluginOptions {
+  [key: string]: string | boolean;
+}

@@ -15,7 +15,7 @@
  */
 
 import { logTransformChain } from './debug';
-import { TransformInterface } from './types';
+import { TransformInterface, PluginOptions } from './types';
 import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
 import * as path from 'path';
@@ -25,6 +25,7 @@ import { createDecodedSourceMap, createExistingRawSourceMap } from './source-map
 
 class Transform implements TransformInterface {
   protected context: PluginContext;
+  protected pluginOptions: PluginOptions;
   protected mangler: Mangle;
   protected inputOptions: InputOptions;
   protected outputOptions: OutputOptions;
@@ -32,11 +33,13 @@ class Transform implements TransformInterface {
 
   constructor(
     context: PluginContext,
+    pluginOptions: PluginOptions,
     mangler: Mangle,
     inputOptions: InputOptions,
     outputOptions: OutputOptions,
   ) {
     this.context = context;
+    this.pluginOptions = pluginOptions;
     this.mangler = mangler;
     this.inputOptions = inputOptions;
     this.outputOptions = outputOptions;

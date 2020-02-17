@@ -30,6 +30,8 @@ import StrictTransform from './strict';
 import ConstTransform from './const';
 import { ChunkTransform, chunkLifecycle } from '../../transform';
 import { Mangle } from '../mangle';
+import { CompileOptions } from 'google-closure-compiler';
+import { pluckPluginOptions } from '../../options';
 
 const TRANSFORMS: Array<typeof ChunkTransform> = [
   ConstTransform,
@@ -44,17 +46,24 @@ const TRANSFORMS: Array<typeof ChunkTransform> = [
 /**
  * Instantiate transform class instances for the plugin invocation.
  * @param context Plugin context to bind for each transform instance.
+ * @param requestedCompileOptions Originally requested compile options from configuration.
+ * @param mangler Mangle instance used for this transform instance.
  * @param inputOptions Rollup input options
  * @param outputOptions Rollup output options
  * @return Instantiated transform class instances for the given entry point.
  */
-export const create = (
+export function create(
   context: PluginContext,
+  requestedCompileOptions: CompileOptions,
   mangler: Mangle,
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
-): Array<ChunkTransform> =>
-  TRANSFORMS.map(transform => new transform(context, mangler, inputOptions, outputOptions));
+): Array<ChunkTransform> {
+  const pluginOptions = pluckPluginOptions(requestedCompileOptions);
+  return TRANSFORMS.map(
+    transform => new transform(context, pluginOptions, mangler, inputOptions, outputOptions),
+  );
+}
 
 /**
  * Run each transform's `preCompilation` phase.
