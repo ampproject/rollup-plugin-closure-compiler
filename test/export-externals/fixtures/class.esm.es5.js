@@ -1,1 +1,1 @@
-export{exportedClass}from'./external.js';
+export{exportedClass}from'./external.js'

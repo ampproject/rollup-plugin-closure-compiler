@@ -1,1 +1,1 @@
-export var multipleArguments=(a,b)=>console.log(a,b);
+export var multipleArguments=(a,b)=>console.log(a,b)

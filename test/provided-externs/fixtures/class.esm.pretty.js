@@ -7,4 +7,4 @@ class a {
     console.log(this.name_);
   }
 }
-export var ExportThis=a;
+export var ExportThis=a

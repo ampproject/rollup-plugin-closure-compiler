@@ -1,2 +1,2 @@
 
-export var thing=1;
+export var thing=1

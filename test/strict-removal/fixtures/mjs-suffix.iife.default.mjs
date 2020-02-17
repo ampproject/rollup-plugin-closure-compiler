@@ -1,1 +1,1 @@
-var modular=function(a){a.thing=1;return a}({});
+var modular=function(a){a.thing=1;return a}({})

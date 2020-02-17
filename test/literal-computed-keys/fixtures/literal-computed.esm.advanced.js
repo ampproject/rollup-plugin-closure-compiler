@@ -1,1 +1,1 @@
-console.log({0:"value"});
+console.log({0:"value"})

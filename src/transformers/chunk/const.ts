@@ -31,7 +31,7 @@ export default class ConstTransform extends ChunkTransform {
    */
   public async pre(source: MagicString): Promise<MagicString> {
     const code = source.toString();
-    const program = parse(source.toString());
+    const program = parse(code);
 
     walk.simple(program, {
       VariableDeclaration(node: VariableDeclaration) {

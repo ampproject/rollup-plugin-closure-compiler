@@ -1,1 +1,1 @@
-export var singleArgument=a=>console.log(a);
+export var singleArgument=a=>console.log(a)

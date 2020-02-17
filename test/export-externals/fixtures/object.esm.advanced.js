@@ -1,1 +1,1 @@
-export{constObject}from'./external.js';
+export{constObject}from'./external.js'

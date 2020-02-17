@@ -1,1 +1,1 @@
-export default {key:"value"};
+export default {key:"value"}

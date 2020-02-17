@@ -1,1 +1,1 @@
-export{constNumber}from'./external.js';
+export{constNumber}from'./external.js'
