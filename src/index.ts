@@ -45,7 +45,13 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
     options: options => (inputOptions = options),
     buildStart() {
       context = this;
-      sourceTransforms = createSourceTransforms(context, mangler, inputOptions, {});
+      sourceTransforms = createSourceTransforms(
+        context,
+        requestedCompileOptions,
+        mangler,
+        inputOptions,
+        {},
+      );
       if (
         'compilation_level' in requestedCompileOptions &&
         requestedCompileOptions.compilation_level === 'ADVANCED_OPTIMIZATIONS' &&
@@ -68,6 +74,7 @@ export default function closureCompiler(requestedCompileOptions: CompileOptions 
 
       const renderChunkTransforms = createChunkTransforms(
         context,
+        requestedCompileOptions,
         mangler,
         inputOptions,
         outputOptions,

@@ -19,11 +19,13 @@ import { OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import { writeTempFile } from './temp-file';
 import { log } from './debug';
+import { PluginOptions } from './types';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID =
   'Providing the warning_level=VERBOSE and language_out=NO_TRANSPILE compile options will remove warnings.';
+const OPTIONS_TO_REMOVE_FOR_CLOSURE = ['remove_strict_directive'];
 
 /**
  * Checks if output format is ESM
@@ -46,6 +48,61 @@ function validateCompileOptions(compileOptions: CompileOptions): void {
       throw new Error(ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID);
     }
   }
+}
+
+/**
+ * Normalize the compile options given by the user into something usable.
+ * @param compileOptions
+ */
+function normalizeExternOptions(compileOptions: CompileOptions): [Array<string>, CompileOptions] {
+  validateCompileOptions(compileOptions);
+  let externs: Array<string> = [];
+
+  if ('externs' in compileOptions) {
+    switch (typeof compileOptions.externs) {
+      case 'boolean':
+        externs = [];
+        break;
+      case 'string':
+        externs = [compileOptions.externs as string];
+        break;
+      default:
+        externs = compileOptions.externs as Array<string>;
+        break;
+    }
+
+    delete compileOptions.externs;
+  }
+
+  if (compileOptions) {
+    for (const optionToDelete of OPTIONS_TO_REMOVE_FOR_CLOSURE) {
+      if (optionToDelete in compileOptions) {
+        // @ts-ignore
+        delete compileOptions[optionToDelete];
+      }
+    }
+  }
+
+  return [externs, compileOptions];
+}
+
+/**
+ * Pluck the PluginOptions from the CompileOptions
+ * @param compileOptions
+ */
+export function pluckPluginOptions(compileOptions: CompileOptions): PluginOptions {
+  const pluginOptions: PluginOptions = {};
+  if (!compileOptions) {
+    return pluginOptions;
+  }
+
+  for (const optionToDelete of OPTIONS_TO_REMOVE_FOR_CLOSURE) {
+    if (optionToDelete in compileOptions) {
+      // @ts-ignore
+      pluginOptions[optionToDelete] = compileOptions[optionToDelete];
+    }
+  }
+  return pluginOptions;
 }
 
 /**
@@ -100,25 +157,7 @@ export default async function(
   transforms: Array<ChunkTransform> | null,
 ): Promise<[CompileOptions, string]> {
   const mapFile: string = await writeTempFile('', '', false);
-  const compileOptions: CompileOptions = { ...incomingCompileOptions };
-  let externs: Array<string> = [];
-
-  validateCompileOptions(compileOptions);
-  if ('externs' in compileOptions) {
-    switch (typeof compileOptions.externs) {
-      case 'boolean':
-        externs = [];
-        break;
-      case 'string':
-        externs = [compileOptions.externs as string];
-        break;
-      default:
-        externs = compileOptions.externs as Array<string>;
-        break;
-    }
-
-    delete compileOptions.externs;
-  }
+  const [externs, compileOptions] = normalizeExternOptions({ ...incomingCompileOptions });
 
   const options = {
     ...(await defaults(outputOptions, externs, transforms)),
