@@ -82,7 +82,7 @@
     "verbose": true
   },
   "volta": {
-    "node": "12.16.0",
+    "node": "12.16.1",
     "yarn": "1.22.0"
   }
 }
