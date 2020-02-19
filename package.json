@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.42",
-    "@types/node": "12.12.27",
+    "@types/node": "12.12.28",
     "@types/uuid": "3.4.7",
     "ava": "2.4.0",
     "builtins": "3.0.0",
