@@ -40,7 +40,7 @@
     "acorn-walk": "7.1.1",
     "google-closure-compiler": "20200204.0.0",
     "magic-string": "0.25.6",
-    "uuid": "3.4.0"
+    "uuid": "7.0.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
