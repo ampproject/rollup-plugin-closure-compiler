@@ -779,10 +779,10 @@ buffer-from@^1.0.0:
   resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.1.tgz#32713bc028f75c02fdb710d7c7bcec1f2c6070ef"
   integrity sha512-MQcXEUbCKtEo7bhqEs6560Hyd4XaovZlO/k9V3hjVUF/zwW7KBVdSK4gIt/bzwS9MbR5qob+F5jusZsb0YQK2A==
 
-builtins@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/builtins/-/builtins-3.0.0.tgz#d50c7467cf1b993ee58b389001e3476da78fb000"
-  integrity sha512-WxD4J/Uer15eE0IAGHLjz4xhs74+n9Mr6/deYOUaUL4QS3IJyv6jlamqR4SBluP1tkvEZ8My4jh1DEzpnMeBWw==
+builtins@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/builtins/-/builtins-3.0.1.tgz#38c55022f40a752f61de255eabd41892278032ea"
+  integrity sha512-JxlnRUmQpQReAt5mUshMNQpHe7MEZuy1qH+Eck31mc4GBBM9AmGX9oBrzQH/zAOIRM/CAqNA0J2692a/yJiGQQ==
   dependencies:
     semver "^7.0.0"
 
