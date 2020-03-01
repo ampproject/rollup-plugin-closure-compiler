@@ -36,7 +36,7 @@
   "dependencies": {
     "@ampproject/remapping": "0.2.0",
     "@kristoferbaxter/estree-walker": "2.0.0",
-    "acorn": "7.1.0",
+    "acorn": "7.1.1",
     "acorn-walk": "7.1.1",
     "google-closure-compiler": "20200204.0.0",
     "magic-string": "0.25.6",
