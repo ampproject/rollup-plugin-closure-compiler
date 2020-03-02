@@ -63,10 +63,10 @@
   },
   "lint-staged": {
     "*.ts": [
-      "prettier --config .prettierrc --write"
+      "prettier --write"
     ],
     "*.test.js": [
-      "prettier --config .prettierrc --write"
+      "prettier --write"
     ]
   },
   "husky": {
@@ -80,6 +80,12 @@
       "test/**/*.test.js"
     ],
     "verbose": true
+  },
+  "prettier": {
+    "printWidth": 100,
+    "trailingComma": "all",
+    "parser": "typescript",
+    "singleQuote": true
   },
   "volta": {
     "node": "12.16.1",
