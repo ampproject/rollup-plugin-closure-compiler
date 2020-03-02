@@ -21,7 +21,7 @@ import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
 import MagicString from 'magic-string';
 import { Identifier } from 'estree';
 import { parse, walk, isIdentifier, isImportDeclaration, isImportExpression } from '../../acorn';
-import { asyncWalk as estreeWalk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as estreeWalk } from 'estree-walker';
 import { Mangle } from '../mangle';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';

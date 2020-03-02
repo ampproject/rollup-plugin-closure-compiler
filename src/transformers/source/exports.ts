@@ -22,7 +22,7 @@ import {
   isExportDefaultDeclaration,
   isExportAllDeclaration,
 } from '../../acorn';
-import { asyncWalk as estreeWalk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as estreeWalk } from 'estree-walker';
 import { ExportDetails } from '../../types';
 import { BaseNode } from 'estree';
 import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-details';

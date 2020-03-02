@@ -15,7 +15,7 @@
  */
 
 import * as crypto from 'crypto';
-import { asyncWalk as walk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as walk } from 'estree-walker';
 import { Program, BaseNode } from 'estree';
 import MagicString from 'magic-string';
 import { log } from '../debug';

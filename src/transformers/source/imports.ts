@@ -17,7 +17,7 @@
 import { SourceTransform } from '../../transform';
 import MagicString from 'magic-string';
 import { parse, isImportDeclaration } from '../../acorn';
-import { asyncWalk as walk } from '@kristoferbaxter/estree-walker';
+import { asyncWalk as walk } from 'estree-walker';
 import { literalName } from '../../parsing/literal-name';
 import { Specifiers } from '../../parsing/import-specifiers';
 import { ImportDeclaration } from 'estree';
