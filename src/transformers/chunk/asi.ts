@@ -26,9 +26,9 @@ export default class ASITransform extends ChunkTransform {
    * Small reduction in semi-colons, removing from end of block statements.
    * @param source source following closure compiler minification
    */
-  public async post(source: MagicString): Promise<MagicString> {
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
     const code = source.toString();
-    const program = parse(code);
+    const program = await parse(fileName, code);
 
     if (program.body) {
       const lastStatement = program.body[program.body.length - 1];

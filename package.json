@@ -82,7 +82,7 @@
     "verbose": true
   },
   "prettier": {
-    "printWidth": 100,
+    "printWidth": 120,
     "trailingComma": "all",
     "parser": "typescript",
     "singleQuote": true

@@ -29,7 +29,7 @@ export default class HashbangRemoveTransform extends ChunkTransform implements T
   /**
    * @param source MagicString of source to process post Closure Compilation.
    */
-  public async pre(source: MagicString): Promise<MagicString> {
+  public async pre(fileName: string, source: MagicString): Promise<MagicString> {
     const stringified = source.trim().toString();
     const match = /^#!.*/.exec(stringified);
 

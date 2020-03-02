@@ -86,9 +86,9 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source to parse, and modify
    * @return modified input source with external imports removed.
    */
-  public pre = async (source: MagicString): Promise<MagicString> => {
+  public pre = async (fileName: string, source: MagicString): Promise<MagicString> => {
     const code = source.toString();
-    let program = parse(code);
+    let program = await parse(fileName, code);
     let dynamicImportPresent: boolean = false;
     let { mangler, importedExternalsSyntax, importedExternalsLocalNames } = this;
 
@@ -154,9 +154,9 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async post(source: MagicString): Promise<MagicString> {
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
     const code = source.toString();
-    const program = parse(code);
+    const program = await parse(fileName, code);
 
     for (const importedExternalSyntax of Object.values(this.importedExternalsSyntax)) {
       source.prepend(importedExternalSyntax);

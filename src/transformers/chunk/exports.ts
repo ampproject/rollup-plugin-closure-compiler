@@ -84,8 +84,8 @@ export default class ExportTransform extends ChunkTransform implements Transform
     return collected;
   }
 
-  private async deriveExports(code: string): Promise<void> {
-    const program = parse(code);
+  private async deriveExports(fileName: string, code: string): Promise<void> {
+    const program = await parse(fileName, code);
 
     walk.simple(program, {
       ExportNamedDeclaration: (node: ExportNamedDeclaration) => {
@@ -97,9 +97,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
       ExportAllDeclaration: () => {
         // TODO(KB): This case `export * from "./import"` is not currently supported.
         this.context.error(
-          new Error(
-            `Rollup Plugin Closure Compiler does not support export all syntax for externals.`,
-          ),
+          new Error(`Rollup Plugin Closure Compiler does not support export all syntax for externals.`),
         );
       },
     });
@@ -130,13 +128,13 @@ export default class ExportTransform extends ChunkTransform implements Transform
    * @param id Rollup id reference to the source
    * @return modified input source with window scoped references.
    */
-  public async pre(source: MagicString): Promise<MagicString> {
+  public async pre(fileName: string, source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return super.pre(source);
+      return super.pre(fileName, source);
     }
 
     const code = source.toString();
-    await this.deriveExports(code);
+    await this.deriveExports(fileName, code);
 
     for (const key of this.originalExports.keys()) {
       const value: ExportDetails = this.originalExports.get(key) as ExportDetails;
@@ -162,13 +160,13 @@ export default class ExportTransform extends ChunkTransform implements Transform
    * @param code source post Closure Compiler Compilation
    * @return Promise containing the repaired source
    */
-  public async post(source: MagicString): Promise<MagicString> {
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
     if (!isESMFormat(this.outputOptions)) {
-      return super.post(source);
+      return super.post(fileName, source);
     }
 
     const code = source.toString();
-    const program = parse(code);
+    const program = await parse(fileName, code);
     let collectedExportsToAppend: Map<string | null, Array<string>> = new Map();
 
     source.trimEnd();
@@ -192,9 +190,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
           const exportName: string | null = PreservedExportName(left);
 
           if (exportName !== null && this.originalExports.get(exportName)) {
-            const exportDetails: ExportDetails = this.originalExports.get(
-              exportName,
-            ) as ExportDetails;
+            const exportDetails: ExportDetails = this.originalExports.get(exportName) as ExportDetails;
             const exportIsLocal: boolean = exportDetails.source === null;
             const exportInline: boolean =
               (exportIsLocal &&
@@ -227,6 +223,9 @@ export default class ExportTransform extends ChunkTransform implements Transform
               const { 1: ancestorEnd } = ancestor.range as Range;
               source.remove(leftStart, ancestorEnd);
             }
+
+            // An Export can only be processed once.
+            this.originalExports.delete(exportName);
           }
         }
       },

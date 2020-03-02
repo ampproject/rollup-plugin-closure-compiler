@@ -65,11 +65,11 @@ export class ChunkTransform extends Transform {
     return null;
   }
 
-  public async pre(source: MagicString): Promise<MagicString> {
+  public async pre(fileName: string, source: MagicString): Promise<MagicString> {
     return source;
   }
 
-  public async post(source: MagicString): Promise<MagicString> {
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
     return source;
   }
 }
@@ -84,16 +84,24 @@ export async function chunkLifecycle(
   const log: Array<[string, string]> = [];
   const sourcemaps: Array<RemappingDecodedSourceMap> = [];
   let source = new MagicString(code);
+  let finalSource: string = '';
 
   log.push(['before', code]);
-  for (const transform of transforms) {
-    const transformed = await transform[method](source);
-    const transformedSource = transformed.toString();
-    sourcemaps.push(createDecodedSourceMap(transformed, fileName));
-    source = new MagicString(transformedSource);
-    log.push([transform.name, transformedSource]);
+  try {
+    for (const transform of transforms) {
+      const transformed = await transform[method](fileName, source);
+      const transformedSource = transformed.toString();
+      sourcemaps.push(createDecodedSourceMap(transformed, fileName));
+      source = new MagicString(transformedSource);
+      log.push([transform.name, transformedSource]);
+    }
+    finalSource = source.toString();
+  } catch (e) {
+    log.push(['after', finalSource]);
+    await logTransformChain(fileName, printableName, log);
+
+    throw e;
   }
-  const finalSource = source.toString();
 
   log.push(['after', finalSource]);
   await logTransformChain(fileName, printableName, log);

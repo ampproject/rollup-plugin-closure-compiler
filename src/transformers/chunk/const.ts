@@ -29,9 +29,9 @@ export default class ConstTransform extends ChunkTransform {
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async pre(source: MagicString): Promise<MagicString> {
+  public async pre(fileName: string, source: MagicString): Promise<MagicString> {
     const code = source.toString();
-    const program = parse(code);
+    const program = await parse(fileName, code);
 
     walk.simple(program, {
       VariableDeclaration(node: VariableDeclaration) {

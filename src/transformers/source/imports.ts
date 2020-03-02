@@ -48,7 +48,7 @@ export class ImportTransform extends SourceTransform {
   };
 
   public async transform(id: string, source: MagicString): Promise<MagicString> {
-    const program = parse(source.toString());
+    const program = await parse(id, source.toString());
     const { mangle } = this;
 
     // This is a two-part walk

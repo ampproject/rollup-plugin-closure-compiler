@@ -52,11 +52,11 @@ export default class StrictTransform extends ChunkTransform implements Transform
    * @param code source following closure compiler minification
    * @return code after removing the strict mode declaration (when safe to do so)
    */
-  public async post(source: MagicString): Promise<MagicString> {
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
     const { file } = this.outputOptions;
 
     if (shouldRemoveStrictModeDeclarations(this.pluginOptions, this.outputOptions, file)) {
-      const program = parse(source.toString());
+      const program = await parse(fileName, source.toString());
 
       walk.simple(program, {
         ExpressionStatement(node: ExpressionStatement) {

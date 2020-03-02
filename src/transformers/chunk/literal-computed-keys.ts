@@ -34,8 +34,8 @@ export default class LiteralComputedKeys extends ChunkTransform implements Trans
    * @param code source to parse, and modify
    * @return modified input source with computed literal keys
    */
-  public async post(source: MagicString): Promise<MagicString> {
-    const program = parse(source.toString());
+  public async post(fileName: string, source: MagicString): Promise<MagicString> {
+    const program = await parse(fileName, source.toString());
 
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {

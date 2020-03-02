@@ -29,25 +29,14 @@ import {
   ClassDeclaration,
   ExportSpecifier,
 } from 'estree';
-// import { DYNAMIC_IMPORT_DECLARATION } from './types';
 import * as acorn from 'acorn';
-// const acorn = require('acorn');
+import { log } from './debug';
+import { writeTempFile } from './temp-file';
 const acornWalk = require('acorn-walk');
-// const dynamicImport = require('acorn-dynamic-import');
-
-// const DYNAMIC_IMPORT_BASEVISITOR = Object.assign({}, acornWalk.base, {
-//   [DYNAMIC_IMPORT_DECLARATION]: () => {},
-// });
 
 export const walk = {
   simple: acornWalk.simple,
   ancestor: acornWalk.ancestor,
-  // simple(node: Program, visitors: any): void {
-  //   acornWalk.simple(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
-  // },
-  // ancestor(node: Program, visitors: any): void {
-  //   acornWalk.ancestor(node, visitors, DYNAMIC_IMPORT_BASEVISITOR);
-  // },
 };
 
 const DEFAULT_ACORN_OPTIONS = {
@@ -57,9 +46,13 @@ const DEFAULT_ACORN_OPTIONS = {
   ranges: true,
 };
 
-export function parse(source: string): Program {
-  return (acorn.parse(source, DEFAULT_ACORN_OPTIONS) as unknown) as Program;
-  // return acorn.Parser.extend(dynamicImport.default).parse(source, DEFAULT_ACORN_OPTIONS);
+export async function parse(fileName: string, source: string): Promise<Program> {
+  try {
+    return (acorn.parse(source, DEFAULT_ACORN_OPTIONS) as unknown) as Program;
+  } catch (e) {
+    log(`parse exception in ${fileName}`, `file://${await writeTempFile(source, '.js')}`);
+    throw e;
+  }
 }
 
 export function isIdentifier(node: BaseNode): node is Identifier {

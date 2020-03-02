@@ -16,12 +16,7 @@
 
 import { SourceTransform } from '../../transform';
 import MagicString from 'magic-string';
-import {
-  parse,
-  isExportNamedDeclaration,
-  isExportDefaultDeclaration,
-  isExportAllDeclaration,
-} from '../../acorn';
+import { parse, isExportNamedDeclaration, isExportDefaultDeclaration, isExportAllDeclaration } from '../../acorn';
 import { asyncWalk as estreeWalk } from 'estree-walker';
 import { ExportDetails } from '../../types';
 import { BaseNode } from 'estree';
@@ -40,7 +35,7 @@ export class ExportTransform extends SourceTransform {
   public name: string = 'ExportTransform';
 
   public transform = async (id: string, source: MagicString): Promise<MagicString> => {
-    const program = parse(source.toString());
+    const program = await parse(id, source.toString());
 
     // This will need to be two-pass.
     // 1. Find all exports, and mangle their names.
