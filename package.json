@@ -59,7 +59,7 @@
     "rimraf": "3.0.2",
     "rollup": "1.31.1",
     "sirv-cli": "0.4.5",
-    "typescript": "3.8.2"
+    "typescript": "3.8.3"
   },
   "lint-staged": {
     "*.ts": [
