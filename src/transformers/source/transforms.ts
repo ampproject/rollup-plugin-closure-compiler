@@ -16,7 +16,7 @@
 
 import { SourceTransform, sourceLifecycle } from '../../transform';
 import { Mangle } from '../mangle';
-import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
+import { PluginContext, InputOptions, OutputOptions, SourceDescription } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
 import HashbangTransform from './hashbang';
 import { Ebbinghaus } from '../ebbinghaus';
@@ -43,9 +43,7 @@ export const create = (
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<SourceTransform> =>
-  TRANSFORMS.map(
-    transform => new transform(context, {}, mangler, memory, inputOptions, outputOptions),
-  );
+  TRANSFORMS.map(transform => new transform(context, {}, mangler, memory, inputOptions, outputOptions));
 
 /**
  * Run each transform's `transform` lifecycle.
@@ -57,6 +55,6 @@ export async function transform(
   source: string,
   id: string,
   transforms: Array<SourceTransform>,
-): Promise<TransformSourceDescription> {
+): Promise<SourceDescription> {
   return await sourceLifecycle(id, 'Transform', source, transforms);
 }

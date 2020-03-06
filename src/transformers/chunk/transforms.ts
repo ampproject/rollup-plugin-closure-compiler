@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  OutputOptions,
-  PluginContext,
-  InputOptions,
-  RenderedChunk,
-  TransformSourceDescription,
-} from 'rollup';
+import { OutputOptions, PluginContext, InputOptions, RenderedChunk, SourceDescription } from 'rollup';
 import HashbangRemoveTransform from './hashbang-remove';
 import HashbangApplyTransform from './hashbang-apply';
 import IifeTransform from './iife';
@@ -72,8 +66,7 @@ export function create(
 ): Array<ChunkTransform> {
   const pluginOptions = pluckPluginOptions(requestedCompileOptions);
   return TRANSFORMS.map(
-    transform =>
-      new transform(context, pluginOptions, mangler, memory, inputOptions, outputOptions),
+    transform => new transform(context, pluginOptions, mangler, memory, inputOptions, outputOptions),
   );
 }
 
@@ -88,7 +81,7 @@ export async function preCompilation(
   source: string,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
-): Promise<TransformSourceDescription> {
+): Promise<SourceDescription> {
   return await chunkLifecycle(chunk.fileName, 'PreCompilation', 'pre', source, transforms);
 }
 
@@ -103,6 +96,6 @@ export async function postCompilation(
   code: string,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
-): Promise<TransformSourceDescription> {
+): Promise<SourceDescription> {
   return await chunkLifecycle(chunk.fileName, 'PostCompilation', 'post', code, transforms);
 }

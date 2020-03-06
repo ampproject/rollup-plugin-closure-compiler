@@ -16,7 +16,7 @@
 
 import { logTransformChain } from './debug';
 import { TransformInterface, PluginOptions } from './types';
-import { PluginContext, InputOptions, OutputOptions, TransformSourceDescription } from 'rollup';
+import { PluginContext, InputOptions, OutputOptions, SourceDescription } from 'rollup';
 import { Mangle } from './transformers/mangle';
 import { Ebbinghaus } from './transformers/ebbinghaus';
 import * as path from 'path';
@@ -80,7 +80,7 @@ export async function chunkLifecycle(
   method: 'pre' | 'post',
   code: string,
   transforms: Array<ChunkTransform>,
-): Promise<TransformSourceDescription> {
+): Promise<SourceDescription> {
   const log: Array<[string, string]> = [];
   const sourcemaps: Array<RemappingDecodedSourceMap> = [];
   let source = new MagicString(code);
@@ -117,7 +117,7 @@ export async function sourceLifecycle(
   printableName: string,
   code: string,
   transforms: Array<SourceTransform>,
-): Promise<TransformSourceDescription> {
+): Promise<SourceDescription> {
   const fileName = path.basename(id);
   const log: Array<[string, string]> = [];
   const sourcemaps: Array<RemappingDecodedSourceMap> = [];
