@@ -38,7 +38,7 @@
     "acorn": "7.1.1",
     "acorn-walk": "7.1.1",
     "estree-walker": "2.0.1",
-    "google-closure-compiler": "20200224.0.0",
+    "google-closure-compiler": "20200315.0.0",
     "magic-string": "0.25.7",
     "uuid": "7.0.2"
   },
