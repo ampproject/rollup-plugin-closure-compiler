@@ -40,7 +40,7 @@
     "estree-walker": "2.0.1",
     "google-closure-compiler": "20200224.0.0",
     "magic-string": "0.25.7",
-    "uuid": "7.0.2"
+    "uuid": "7.0.3"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
