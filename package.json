@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.42",
-    "@types/node": "12.12.34",
+    "@types/node": "12.12.35",
     "@types/uuid": "7.0.2",
     "ava": "2.4.0",
     "builtins": "3.0.1",
@@ -88,7 +88,7 @@
     "singleQuote": true
   },
   "volta": {
-    "node": "12.16.1",
+    "node": "12.16.2",
     "yarn": "1.22.4"
   },
   "publishConfig": {
