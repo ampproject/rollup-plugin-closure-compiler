@@ -28,6 +28,7 @@ import {
   VariableDeclaration,
   ClassDeclaration,
   ExportSpecifier,
+  Property,
 } from 'estree';
 import * as acorn from 'acorn';
 import { log } from './debug';
@@ -95,4 +96,7 @@ export function isClassDeclaration(node: BaseNode): node is ClassDeclaration {
 }
 export function isExportSpecifier(node: BaseNode): node is ExportSpecifier {
   return node.type === 'ExportSpecifier';
+}
+export function isProperty(node: BaseNode): node is Property {
+  return node.type === 'Property';
 }

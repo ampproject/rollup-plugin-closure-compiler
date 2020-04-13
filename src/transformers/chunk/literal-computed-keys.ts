@@ -18,7 +18,7 @@ import { ChunkTransform } from '../../transform';
 import { Range, TransformInterface } from '../../types';
 import MagicString from 'magic-string';
 import { ObjectExpression } from 'estree';
-import { parse, walk } from '../../acorn';
+import { parse, walk, isProperty } from '../../acorn';
 
 /**
  * Closure Compiler will not transform computed keys with literal values back to the literal value.
@@ -40,7 +40,7 @@ export default class LiteralComputedKeys extends ChunkTransform implements Trans
     walk.simple(program, {
       ObjectExpression(node: ObjectExpression) {
         for (const property of node.properties) {
-          if (property.computed && property.key.type === 'Literal') {
+          if (isProperty(property) && property.computed && property.key.type === 'Literal') {
             const [propertyStart]: Range = property.range as Range;
             const [valueStart]: Range = property.value.range as Range;
 
