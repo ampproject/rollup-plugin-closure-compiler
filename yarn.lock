@@ -786,10 +786,10 @@ builtins@^1.0.3:
   resolved "https://registry.yarnpkg.com/builtins/-/builtins-1.0.3.tgz#cb94faeb61c8696451db36534e1422f94f0aee88"
   integrity sha1-y5T662HIaWRR2zZTThQi+U8K7og=
 
-c8@7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/c8/-/c8-7.1.0.tgz#3978192fd94b0349bffd0ffd12b87b3219386c38"
-  integrity sha512-r4ba14DehwROz7Sm/JpwqL+s2FGGMiVmgnhAtYJ/jQcPpR7L+yEO3MUoQXHOFBetqd+mpTY5XiNY79QY6bYpnw==
+c8@7.1.2:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/c8/-/c8-7.1.2.tgz#3fd785e8d264175ceffe92c74607f5cfb12f018d"
+  integrity sha512-lCEwL9lbvWOQLxoLw8RF7PM8Cdj+rKxRp/PyWC9S8xASvYHRwXQ2gxzsNTgLhQM1Utc1YDAjzQYPQIxVEyelGg==
   dependencies:
     "@bcoe/v8-coverage" "^0.2.3"
     "@istanbuljs/schema" "^0.1.2"
@@ -798,12 +798,12 @@ c8@7.1.0:
     furi "^2.0.0"
     istanbul-lib-coverage "^3.0.0"
     istanbul-lib-report "^3.0.0"
-    istanbul-reports "^3.0.0"
+    istanbul-reports "^3.0.2"
     rimraf "^3.0.0"
     test-exclude "^6.0.0"
     v8-to-istanbul "^4.1.2"
     yargs "^15.0.0"
-    yargs-parser "^16.0.0"
+    yargs-parser "^18.0.0"
 
 cacheable-request@^6.0.0:
   version "6.1.0"
@@ -2335,10 +2335,10 @@ istanbul-lib-report@^3.0.0:
     make-dir "^3.0.0"
     supports-color "^7.1.0"
 
-istanbul-reports@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/istanbul-reports/-/istanbul-reports-3.0.0.tgz#d4d16d035db99581b6194e119bbf36c963c5eb70"
-  integrity sha512-2osTcC8zcOSUkImzN2EWQta3Vdi4WjjKw99P2yWx5mLnigAM0Rd5uYFn1cf2i/Ois45GkNjaoTqc5CxgMSX80A==
+istanbul-reports@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/istanbul-reports/-/istanbul-reports-3.0.2.tgz#d593210e5000683750cb09fc0644e4b6e27fd53b"
+  integrity sha512-9tZvz7AiR3PEDNGiV9vIouQ/EAcqMXFmkcA1CDFTwOB98OZVDL0PH9glHotf5Ugp6GCOTypfzGWI/OqjWNCRUw==
   dependencies:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
@@ -4528,10 +4528,18 @@ yargs-parser@^10.0.0:
   dependencies:
     camelcase "^4.1.0"
 
-yargs-parser@^16.0.0, yargs-parser@^16.1.0:
+yargs-parser@^16.1.0:
   version "16.1.0"
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-16.1.0.tgz#73747d53ae187e7b8dbe333f95714c76ea00ecf1"
   integrity sha512-H/V41UNZQPkUMIT5h5hiwg4QKIY1RPvoBV4XcjUbRM8Bk2oKqqyZ0DIEbTFZB0XjbtSPG8SAa/0DxCQmiRgzKg==
+  dependencies:
+    camelcase "^5.0.0"
+    decamelize "^1.2.0"
+
+yargs-parser@^18.0.0:
+  version "18.1.3"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-18.1.3.tgz#be68c4975c6b2abf469236b0c870362fab09a7b0"
+  integrity sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==
   dependencies:
     camelcase "^5.0.0"
     decamelize "^1.2.0"
