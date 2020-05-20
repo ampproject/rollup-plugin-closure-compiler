@@ -40,13 +40,13 @@
     "estree-walker": "2.0.1",
     "google-closure-compiler": "20200406.0.0",
     "magic-string": "0.25.7",
-    "uuid": "7.0.3"
+    "uuid": "8.1.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.44",
     "@types/node": "12.12.35",
-    "@types/uuid": "7.0.2",
+    "@types/uuid": "8.0.0",
     "ava": "2.4.0",
     "builtins": "3.0.1",
     "c8": "7.1.0",
