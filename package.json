@@ -36,32 +36,32 @@
   },
   "dependencies": {
     "@ampproject/remapping": "0.2.0",
-    "acorn": "7.1.1",
+    "acorn": "7.2.0",
     "acorn-walk": "7.1.1",
     "estree-walker": "2.0.1",
-    "google-closure-compiler": "20200406.0.0",
+    "google-closure-compiler": "20200517.0.0",
     "magic-string": "0.25.7",
-    "uuid": "7.0.3"
+    "uuid": "8.1.0"
   },
   "devDependencies": {
     "@types/acorn": "4.0.5",
     "@types/estree": "0.0.44",
-    "@types/node": "12.12.35",
-    "@types/uuid": "7.0.2",
+    "@types/node": "14.0.6",
+    "@types/uuid": "8.0.0",
     "ava": "2.4.0",
     "builtins": "3.0.1",
-    "c8": "7.1.0",
-    "codecov": "3.6.5",
+    "c8": "7.1.2",
+    "codecov": "3.7.0",
     "husky": "4.2.5",
-    "lint-staged": "10.1.3",
+    "lint-staged": "10.2.7",
     "np": "https://github.com/pixelastic/np/tarball/c3ab2e3b053c7da0ce40a572ca1616273ac080f8",
     "npm-run-all": "4.1.5",
-    "prettier": "2.0.4",
+    "prettier": "2.0.5",
     "rimraf": "3.0.2",
-    "rollup": "2.6.1",
+    "rollup": "2.12.0",
     "rollup-plugin-copy": "3.3.0",
-    "sirv-cli": "0.4.5",
-    "typescript": "3.8.3"
+    "sirv-cli": "0.4.6",
+    "typescript": "3.9.3"
   },
   "lint-staged": {
     "*.ts": [
