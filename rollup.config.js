@@ -16,6 +16,7 @@
 
 import pkg from './package.json';
 import builtins from 'builtins';
+import copy from 'rollup-plugin-copy';
 
 export default {
   input: './transpile/index.js',
@@ -33,5 +34,13 @@ export default {
       file: './dist/index.js',
       format: 'cjs',
     },
+  ],
+  plugins: [
+    copy({
+      targets: [
+        { src: 'transpile/**/*.d.ts', dest: 'dist' },
+      ],
+      flatten: false,
+    }),
   ],
 };
