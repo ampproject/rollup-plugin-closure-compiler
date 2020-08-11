@@ -35,7 +35,7 @@
     "rollup": ">=1.27"
   },
   "dependencies": {
-    "@ampproject/remapping": "0.2.0",
+    "@ampproject/remapping": "0.3.0",
     "acorn": "7.3.1",
     "acorn-walk": "7.1.1",
     "estree-walker": "2.0.1",
