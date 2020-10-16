@@ -1,4 +1,4 @@
-# rollup-plugin-closure-compiler
+# rollup-plugin-closure-compiler TEST
 
 Leverage [Closure Compiler](https://developers.google.com/closure/compiler/) to minify and optimize JavaScript with [Rollup](https://rollupjs.org/guide/en).
 
