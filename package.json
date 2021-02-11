@@ -61,7 +61,7 @@
     "rollup": "2.15.0",
     "rollup-plugin-copy": "3.3.0",
     "sirv-cli": "1.0.0",
-    "typescript": "3.9.5"
+    "typescript": "3.9.9"
   },
   "lint-staged": {
     "*.ts": [
