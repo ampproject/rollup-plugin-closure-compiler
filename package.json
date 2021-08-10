@@ -28,7 +28,7 @@
     "postcoverage": "sirv coverage/",
     "build": "rimraf dist transpile transpile-tests && tsc -p tsconfig.json & wait",
     "postbuild": "rollup -c",
-    "release": "np --no-2fa",
+    "release": "np --no-2fa --any-branch",
     "prepublishOnly": "npm-run-all build"
   },
   "peerDependencies": {
