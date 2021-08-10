@@ -51,7 +51,7 @@
     "ava": "2.4.0",
     "builtins": "3.0.1",
     "c8": "7.2.0",
-    "codecov": "3.7.0",
+    "codecov": "3.7.1",
     "husky": "4.2.5",
     "lint-staged": "10.2.9",
     "np": "https://github.com/pixelastic/np/tarball/c3ab2e3b053c7da0ce40a572ca1616273ac080f8",
