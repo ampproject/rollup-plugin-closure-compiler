@@ -43,11 +43,11 @@ export default class LiteralComputedKeys extends ChunkTransform implements Trans
           if (isProperty(property) && property.computed && property.key.type === 'Literal') {
             const [propertyStart]: Range = property.range as Range;
             const [valueStart]: Range = property.value.range as Range;
-
+            const keyValue = property.key.raw ?? property.key.value;
             source.overwrite(
               propertyStart,
               valueStart,
-              `${property.key.value}${property.value.type !== 'FunctionExpression' ? ':' : ''}`,
+              `${keyValue}${property.value.type !== 'FunctionExpression' ? ':' : ''}`,
             );
           }
         }

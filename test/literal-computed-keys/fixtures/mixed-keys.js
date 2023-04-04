@@ -12,5 +12,6 @@ console.log({
   },
   5(value) {
     console.log(bar(value));
-  }
+  },
+  ['6#']: 'value6'
 });
