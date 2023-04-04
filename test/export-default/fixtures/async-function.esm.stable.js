@@ -1,0 +1,1 @@
+async function asyncTest(){await Promise.resolve("async-test");console.log("async-test")};async function asyncTestWithArgument(a){await Promise.resolve("async-test-with-argument");console.log(a)};export{asyncTest,asyncTestWithArgument}
