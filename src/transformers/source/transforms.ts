@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { SourceTransform, sourceLifecycle } from '../../transform';
-import { Mangle } from '../mangle';
+import { SourceTransform, sourceLifecycle } from '../../transform.js';
+import { Mangle } from '../mangle.js';
 import { PluginContext, InputOptions, OutputOptions, SourceDescription } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
-import HashbangTransform from './hashbang';
-import { Ebbinghaus } from '../ebbinghaus';
+import HashbangTransform from './hashbang.js';
+import { Ebbinghaus } from '../ebbinghaus.js';
 
 const TRANSFORMS: Array<typeof SourceTransform> = [HashbangTransform];
 // Temporarily disabling many SourceTransforms, aligning for future release.
@@ -43,7 +43,7 @@ export const create = (
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
 ): Array<SourceTransform> =>
-  TRANSFORMS.map(transform => new transform(context, {}, mangler, memory, inputOptions, outputOptions));
+  TRANSFORMS.map((transform) => new transform(context, {}, mangler, memory, inputOptions, outputOptions));
 
 /**
  * Run each transform's `transform` lifecycle.

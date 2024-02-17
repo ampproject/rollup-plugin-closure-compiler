@@ -21,7 +21,9 @@
     "incremental": true,
   },
   "include": [
-    "./**/*.ts",
-    "./**/*.d.ts",
+    "./src/**/*.ts",
+    "./src/**/*.d.ts",
+    "./test/**/*.ts",
+    "./test/**/*.d.ts",
   ]
 }

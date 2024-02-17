@@ -15,21 +15,21 @@
  */
 
 import { OutputOptions, PluginContext, InputOptions, RenderedChunk, SourceDescription } from 'rollup';
-import HashbangRemoveTransform from './hashbang-remove';
-import HashbangApplyTransform from './hashbang-apply';
-import IifeTransform from './iife';
-import CJSTransform from './cjs';
-import LiteralComputedKeys from './literal-computed-keys';
-import ExportTransform from './exports';
-import ImportTransform from './imports';
-import StrictTransform from './strict';
-import ConstTransform from './const';
-import ASITransform from './asi';
-import { ChunkTransform, chunkLifecycle } from '../../transform';
-import { Mangle } from '../mangle';
-import { Ebbinghaus } from '../ebbinghaus';
+import HashbangRemoveTransform from './hashbang-remove.js';
+import HashbangApplyTransform from './hashbang-apply.js';
+import IifeTransform from './iife.js';
+import CJSTransform from './cjs.js';
+import LiteralComputedKeys from './literal-computed-keys.js';
+import ExportTransform from './exports.js';
+import ImportTransform from './imports.js';
+import StrictTransform from './strict.js';
+import ConstTransform from './const.js';
+import ASITransform from './asi.js';
+import { ChunkTransform, chunkLifecycle } from '../../transform.js';
+import { Mangle } from '../mangle.js';
+import { Ebbinghaus } from '../ebbinghaus.js';
 import { CompileOptions } from 'google-closure-compiler';
-import { pluckPluginOptions } from '../../options';
+import { pluckPluginOptions } from '../../options.js';
 
 const TRANSFORMS: Array<typeof ChunkTransform> = [
   HashbangRemoveTransform,
@@ -66,7 +66,7 @@ export function create(
 ): Array<ChunkTransform> {
   const pluginOptions = pluckPluginOptions(requestedCompileOptions);
   return TRANSFORMS.map(
-    transform => new transform(context, pluginOptions, mangler, memory, inputOptions, outputOptions),
+    (transform) => new transform(context, pluginOptions, mangler, memory, inputOptions, outputOptions),
   );
 }
 

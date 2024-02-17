@@ -21,7 +21,7 @@ import {
   PRETTY_PRINT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
   ES5_STRICT_CLOSURE_OPTIONS,
-} from '../generator';
+} from '../generator.js';
 
 generator('import', 'utf8', true, undefined, {
   ...DEFAULT_CLOSURE_OPTIONS,

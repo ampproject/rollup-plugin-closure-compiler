@@ -20,17 +20,11 @@ import {
   Node,
   ExpressionStatement,
   MemberExpression,
-  Expression,
   Identifier,
 } from 'estree';
-import { ExportDetails, Range, ExportClosureMapping } from '../types';
-import {
-  isFunctionDeclaration,
-  isVariableDeclaration,
-  isIdentifier,
-  isClassDeclaration,
-} from '../acorn';
-import { Mangle } from '../transformers/mangle';
+import { ExportDetails, Range, ExportClosureMapping } from '../types.js';
+import { isFunctionDeclaration, isVariableDeclaration, isIdentifier, isClassDeclaration } from '../acorn.js';
+import { Mangle } from '../transformers/mangle.js';
 
 /**
  * Locally within exporting we always need a name
@@ -45,10 +39,7 @@ function getName(input: string, unmangle?: Mangle['getName']): string {
   return input;
 }
 
-export function NamedDeclaration(
-  node: ExportNamedDeclaration,
-  unmangle?: Mangle['getName'],
-): Array<ExportDetails> {
+export function NamedDeclaration(node: ExportNamedDeclaration, unmangle?: Mangle['getName']): Array<ExportDetails> {
   const exportDetails: Array<ExportDetails> = [];
   const range = node.range as Range;
   const source: string | null = typeof node.source?.value === 'string' ? node.source.value : null;
@@ -141,7 +132,7 @@ export function NodeIsPreservedExport(node: Node): node is ExpressionStatement {
 }
 
 export function PreservedExportName(node: MemberExpression): string | null {
-  const { property }: { property: Expression } = node;
+  const { property } = node;
 
   if (property.type === 'Identifier') {
     return property.name;

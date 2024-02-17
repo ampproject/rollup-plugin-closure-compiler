@@ -20,7 +20,7 @@ import {
   PRETTY_PRINT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
   ES5_STRICT_CLOSURE_OPTIONS,
-} from '../generator';
+} from '../generator.js';
 
 const closureOptions = {
   default: Object.assign({}, DEFAULT_CLOSURE_OPTIONS.default, {

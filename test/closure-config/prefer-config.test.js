@@ -15,16 +15,16 @@
  */
 
 import test from 'ava';
-import options from '../../transpile-tests/options';
-import { generator } from '../generator';
+import options from '../../transpile-tests/options.js';
+import { generator } from '../generator.js';
 
-test('platform unspecified is respected', async t => {
+test('platform unspecified is respected', async (t) => {
   const typical = await options({}, {}, 'let x = 1;', []);
 
   t.is(typical[0].platform, undefined);
 });
 
-test('platform javascript is respected', async t => {
+test('platform javascript is respected', async (t) => {
   const javascriptPlatform = await options(
     {
       platform: 'javascript',

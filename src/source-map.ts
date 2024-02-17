@@ -20,26 +20,21 @@ import SourceMap from '@ampproject/remapping/dist/types/source-map';
 import { DecodedSourceMap as RemappingDecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { ExistingRawSourceMap } from 'rollup';
 
-export function createDecodedSourceMap(
-  magicstring: MagicString,
-  source: string,
-): RemappingDecodedSourceMap {
+export function createDecodedSourceMap(magicstring: MagicString, source: string): RemappingDecodedSourceMap {
   return {
     ...magicstring.generateDecodedMap({ hires: true, source }),
     version: 3,
   };
 }
 
-export function createExistingRawSourceMap(
-  maps: Array<RemappingDecodedSourceMap>,
-  file: string,
-): ExistingRawSourceMap {
+export function createExistingRawSourceMap(maps: Array<RemappingDecodedSourceMap>, file: string): ExistingRawSourceMap {
   const remappedSourceMap: SourceMap = remapping(maps, () => null);
 
   return {
     ...remappedSourceMap,
-    sources: remappedSourceMap.sources.map(source => source || ''),
-    sourcesContent: remappedSourceMap.sourcesContent?.map(content => content || '') || undefined,
+    mappings: remappedSourceMap.mappings as string,
+    sources: remappedSourceMap.sources.map((source) => source || ''),
+    sourcesContent: remappedSourceMap.sourcesContent?.map((content) => content || '') || undefined,
     file,
   };
 }

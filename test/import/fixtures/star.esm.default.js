@@ -1,1 +1,1 @@
-var a=Object.freeze({__proto__:null,yay:1,baaaa:2,foo:()=>console.log("foo")});console.log(...a)
+var a=Object.freeze({__proto__:null,baaaa:2,foo:()=>console.log("foo"),yay:1});console.log(...a)

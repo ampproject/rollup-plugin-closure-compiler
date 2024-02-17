@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../../transform';
-import { Range, TransformInterface } from '../../types';
-import { literalName } from '../../parsing/literal-name';
-import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers';
+import { ChunkTransform } from '../../transform.js';
+import { Range, TransformInterface } from '../../types.js';
+import { literalName } from '../../parsing/literal-name.js';
+import { FormatSpecifiers, Specifiers } from '../../parsing/import-specifiers.js';
 import MagicString from 'magic-string';
 import { Identifier } from 'estree';
-import { parse, walk, isIdentifier, isImportDeclaration, isImportExpression } from '../../acorn';
+import { parse, walk, isIdentifier, isImportDeclaration, isImportExpression } from '../../acorn.js';
 import { asyncWalk as estreeWalk } from 'estree-walker';
-import { Mangle } from '../mangle';
+import { Mangle } from '../mangle.js';
 
 const DYNAMIC_IMPORT_KEYWORD = 'import';
 const DYNAMIC_IMPORT_REPLACEMENT = `import_${new Date().getMilliseconds()}`;
@@ -93,7 +93,7 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
     let { mangler, importedExternalsSyntax, importedExternalsLocalNames } = this;
 
     await estreeWalk(program, {
-      enter: async function(node) {
+      enter: async function (node) {
         if (isImportDeclaration(node)) {
           const [importDeclarationStart, importDeclarationEnd]: Range = node.range as Range;
           const originalName = literalName(node.source);
@@ -102,14 +102,14 @@ window['${DYNAMIC_IMPORT_REPLACEMENT}'] = ${DYNAMIC_IMPORT_REPLACEMENT};`;
           specifiers = {
             ...specifiers,
             default: mangler.getName(specifiers.default || '') || specifiers.default,
-            specific: specifiers.specific.map(specific => {
+            specific: specifiers.specific.map((specific) => {
               if (specific.includes(' as ')) {
                 const split = specific.split(' as ');
                 return `${getName(split[0])} as ${getName(split[1])}`;
               }
               return getName(specific);
             }),
-            local: specifiers.local.map(local => getName(local)),
+            local: specifiers.local.map((local) => getName(local)),
           };
 
           const unmangledName = getName(originalName);

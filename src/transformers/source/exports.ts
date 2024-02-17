@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { SourceTransform } from '../../transform';
+import { SourceTransform } from '../../transform.js';
 import MagicString from 'magic-string';
-import { parse, isExportNamedDeclaration, isExportDefaultDeclaration, isExportAllDeclaration } from '../../acorn';
+import { parse, isExportNamedDeclaration, isExportDefaultDeclaration, isExportAllDeclaration } from '../../acorn.js';
 import { asyncWalk as estreeWalk } from 'estree-walker';
-import { ExportDetails } from '../../types';
+import { ExportDetails } from '../../types.js';
 import { BaseNode } from 'estree';
-import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-details';
+import { NamedDeclaration, DefaultDeclaration } from '../../parsing/export-details.js';
 
 /**
  * Notes for Kris
@@ -42,7 +42,7 @@ export class ExportTransform extends SourceTransform {
     // 2. Mangle all internal references
     let exportDetails: Array<ExportDetails> = [];
     await estreeWalk(program, {
-      enter: async function(node: BaseNode) {
+      enter: async function (node: BaseNode) {
         if (isExportNamedDeclaration(node)) {
           exportDetails.push(...NamedDeclaration(node));
         } else if (isExportDefaultDeclaration(node)) {

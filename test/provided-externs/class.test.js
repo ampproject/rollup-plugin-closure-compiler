@@ -20,8 +20,8 @@ import {
   PRETTY_PRINT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,
   ES5_STRICT_CLOSURE_OPTIONS,
-} from '../generator';
-const path = require('path');
+} from '../generator.js';
+import * as path from 'path';
 
 const EXTERNS = path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js');
 

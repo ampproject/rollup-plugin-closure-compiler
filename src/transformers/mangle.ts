@@ -18,14 +18,9 @@ import * as crypto from 'crypto';
 import { asyncWalk as walk } from 'estree-walker';
 import { Program, BaseNode } from 'estree';
 import MagicString from 'magic-string';
-import { log } from '../debug';
-import {
-  isBlockStatement,
-  isVariableDeclarator,
-  isIdentifier,
-  isExportNamedDeclaration,
-} from '../acorn';
-import { Range } from '../types';
+import { log } from '../debug.js';
+import { isBlockStatement, isVariableDeclarator, isIdentifier, isExportNamedDeclaration } from '../acorn.js';
+import { Range } from '../types.js';
 
 type OriginalSourcePath = string;
 type SourcePathId = string;
@@ -99,7 +94,7 @@ export class Mangle {
     let insideNamedExport: boolean = false;
 
     await walk(program, {
-      enter: async function(node: BaseNode) {
+      enter: async function (node: BaseNode) {
         const currentlyRewriteable = mangleable[mangleable.length - 1];
         if (isBlockStatement(node)) {
           mangleable.push(new Set(currentlyRewriteable));
@@ -118,7 +113,7 @@ export class Mangle {
           source.overwrite(start, end, getMangledName(node.name) || node.name);
         }
       },
-      leave: async function(node: BaseNode) {
+      leave: async function (node: BaseNode) {
         if (isBlockStatement(node)) {
           mangleable.pop();
         }

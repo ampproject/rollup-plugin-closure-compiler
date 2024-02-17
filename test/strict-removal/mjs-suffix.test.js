@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-const test = require('ava');
-const { default: compiler } = require('../../transpile-tests/index');
-const rollup = require('rollup');
-const fs = require('fs');
-const path = require('path');
+import test from 'ava';
+import * as transpiled from '../../transpile-tests/index.js';
+import * as rollup from 'rollup';
+import * as fs from 'fs';
+import * as path from 'path';
 
-test('remove strict declaration from .mjs input', async t => {
+const { default: compiler } = transpiled;
+
+test('remove strict declaration from .mjs input', async (t) => {
   const bundle = await rollup.rollup({
     input: 'test/strict-removal/fixtures/mjs-suffix.mjs',
     plugins: [compiler()],
-    onwarn: _ => null,
+    onwarn: (_) => null,
   });
 
   const bundles = await bundle.generate({
     format: 'iife',
     name: 'modular',
-    sourcemap: true,
-    file: 'mjs-suffix.iife.default.mjs'
+    sourcemap: false,
+    file: 'mjs-suffix.iife.default.mjs',
   });
 
   const output = [];

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../../transform';
-import { TransformInterface } from '../../types';
+import { ChunkTransform } from '../../transform.js';
+import { TransformInterface } from '../../types.js';
 import MagicString from 'magic-string';
 
 /**

@@ -15,16 +15,13 @@
  */
 
 import test from 'ava';
-import { create } from '../../transpile-tests/transformers/chunk/transforms';
-import { defaults } from '../../transpile-tests/options';
+import { create } from '../../transpile-tests/transformers/chunk/transforms.js';
+import { defaults } from '../../transpile-tests/options.js';
 import { promises as fsPromises } from 'fs';
-import { generator } from '../generator';
+import { generator } from '../generator.js';
 
-test('generate extern for iife name', async t => {
-  const externFixtureContent = await fsPromises.readFile(
-    'test/iife/fixtures/iife.extern.js',
-    'utf8',
-  );
+test('generate extern for iife name', async (t) => {
+  const externFixtureContent = await fsPromises.readFile('test/iife/fixtures/iife.extern.js', 'utf8');
   const outputOptions = {
     format: 'iife',
     name: 'wrapper',

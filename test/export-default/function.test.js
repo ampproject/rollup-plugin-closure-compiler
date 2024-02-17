@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-import {generator} from '../generator';
+import { generator } from '../generator.js';
 
 generator('export-default', 'function');

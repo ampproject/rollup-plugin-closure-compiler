@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { logTransformChain } from './debug';
-import { TransformInterface, PluginOptions } from './types';
+import { logTransformChain } from './debug.js';
+import { TransformInterface, PluginOptions } from './types.js';
 import { PluginContext, InputOptions, OutputOptions, SourceDescription } from 'rollup';
-import { Mangle } from './transformers/mangle';
-import { Ebbinghaus } from './transformers/ebbinghaus';
+import { Mangle } from './transformers/mangle.js';
+import { Ebbinghaus } from './transformers/ebbinghaus.js';
 import * as path from 'path';
 import MagicString from 'magic-string';
 import { DecodedSourceMap as RemappingDecodedSourceMap } from '@ampproject/remapping/dist/types/types';
-import { createDecodedSourceMap, createExistingRawSourceMap } from './source-map';
+import { createDecodedSourceMap, createExistingRawSourceMap } from './source-map.js';
 
 class Transform implements TransformInterface {
   protected context: PluginContext;
