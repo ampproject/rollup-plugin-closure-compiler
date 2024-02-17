@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../../transform';
-import { Range, TransformInterface, PluginOptions } from '../../types';
-import { isESMFormat } from '../../options';
+import { ChunkTransform } from '../../transform.js';
+import { Range, TransformInterface, PluginOptions } from '../../types.js';
+import { isESMFormat } from '../../options.js';
 import MagicString from 'magic-string';
-import { walk, parse } from '../../acorn';
+import { walk, parse } from '../../acorn.js';
 import { ExpressionStatement, SimpleLiteral } from 'estree';
 import { extname } from 'path';
 import { OutputOptions } from 'rollup';

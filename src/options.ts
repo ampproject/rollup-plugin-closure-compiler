@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from './transform';
+import { ChunkTransform } from './transform.js';
 import { OutputOptions } from 'rollup';
 import { CompileOptions } from 'google-closure-compiler';
-import { writeTempFile } from './temp-file';
-import { log } from './debug';
-import { PluginOptions } from './types';
+import { writeTempFile } from './temp-file.js';
+import { log } from './debug.js';
+import { PluginOptions } from './types.js';
 
 export const ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED =
   'Providing the warning_level=VERBOSE compile option also requires a valid language_out compile option.';
@@ -32,8 +32,7 @@ const OPTIONS_TO_REMOVE_FOR_CLOSURE = ['remove_strict_directive'];
  * @param outputOptions
  * @return boolean
  */
-export const isESMFormat = ({ format }: OutputOptions): boolean =>
-  format === 'esm' || format === 'es';
+export const isESMFormat = ({ format }: OutputOptions): boolean => format === 'esm' || format === 'es';
 
 /**
  * Throw Errors if compile options will result in unexpected behaviour.
@@ -150,7 +149,7 @@ export const defaults = async (
  * @param code
  * @param transforms
  */
-export default async function(
+export default async function (
   incomingCompileOptions: CompileOptions,
   outputOptions: OutputOptions,
   code: string,

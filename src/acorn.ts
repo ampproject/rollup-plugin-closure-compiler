@@ -31,25 +31,25 @@ import {
   Property,
 } from 'estree';
 import * as acorn from 'acorn';
-import { log } from './debug';
-import { writeTempFile } from './temp-file';
-const acornWalk = require('acorn-walk');
+import { log } from './debug.js';
+import { writeTempFile } from './temp-file.js';
+import * as acornWalk from 'acorn-walk';
 
 export const walk = {
   simple: acornWalk.simple,
   ancestor: acornWalk.ancestor,
 };
 
-const DEFAULT_ACORN_OPTIONS = {
-  ecmaVersion: 2020 as any,
-  sourceType: 'module' as any,
+const DEFAULT_ACORN_OPTIONS: acorn.Options = {
+  ecmaVersion: 'latest',
+  sourceType: 'module',
   preserveParens: false,
   ranges: true,
 };
 
 export async function parse(fileName: string, source: string): Promise<Program> {
   try {
-    return (acorn.parse(source, DEFAULT_ACORN_OPTIONS) as unknown) as Program;
+    return acorn.parse(source, DEFAULT_ACORN_OPTIONS) as unknown as Program;
   } catch (e) {
     log(`parse exception in ${fileName}`, `file://${await writeTempFile(source, '.js')}`);
     throw e;

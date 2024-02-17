@@ -15,7 +15,7 @@
  */
 
 import test from 'ava';
-import compiler from '../../transpile-tests';
+import compiler from '../../transpile-tests/index.js';
 import * as rollup from 'rollup';
 import { promises as fsPromises } from 'fs';
 import { join } from 'path';
@@ -39,10 +39,7 @@ async function compile(name, option) {
   });
 
   return {
-    minified: await fsPromises.readFile(
-      join(`test/${name}/fixtures/warnings.esm.${option}.js`),
-      'utf8',
-    ),
+    minified: await fsPromises.readFile(join(`test/${name}/fixtures/warnings.esm.${option}.js`), 'utf8'),
     code: (
       await bundle.generate({
         format: 'es',
@@ -52,8 +49,8 @@ async function compile(name, option) {
   };
 }
 
-Object.keys(closureFlags).forEach(option => {
-  test(`provides warnings – es, ${option}`, async t => {
+Object.keys(closureFlags).forEach((option) => {
+  test(`provides warnings – es, ${option}`, async (t) => {
     try {
       await compile('error-reporting', option);
       t.fail('successfully built files without warning about input');

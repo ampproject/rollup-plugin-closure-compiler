@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import pkg from './package.json';
+import pkg from './package.json' assert { type: 'json' };
 import builtins from 'builtins';
 import copy from 'rollup-plugin-copy';
 
@@ -31,7 +31,7 @@ export default {
       format: 'es',
     },
     {
-      file: './dist/index.js',
+      file: './dist/index.cjs',
       format: 'cjs',
     },
   ],

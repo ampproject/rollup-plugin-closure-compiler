@@ -27,14 +27,14 @@ import {
   DefaultDeclaration,
   NodeIsPreservedExport,
   PreservedExportName,
-} from '../../parsing/export-details';
-import { PreserveNamedConstant } from '../../parsing/preserve-named-constant-export';
-import { PreserveDefault } from '../../parsing/preserve-default-export';
-import { isESMFormat } from '../../options';
+} from '../../parsing/export-details.js';
+import { PreserveNamedConstant } from '../../parsing/preserve-named-constant-export.js';
+import { PreserveDefault } from '../../parsing/preserve-default-export.js';
+import { isESMFormat } from '../../options.js';
 import MagicString from 'magic-string';
-import { parse, walk } from '../../acorn';
-import { ChunkTransform } from '../../transform';
-import { ExportClosureMapping, ExportDetails, Range, TransformInterface } from '../../types';
+import { parse, walk } from '../../acorn.js';
+import { ChunkTransform } from '../../transform.js';
+import { ExportClosureMapping, ExportDetails, Range, TransformInterface } from '../../types.js';
 
 const EXTERN_OVERVIEW = `/**
 * @fileoverview Externs built via derived configuration from Rollup or input code.
@@ -59,7 +59,7 @@ export default class ExportTransform extends ChunkTransform implements Transform
    * @param mapping mapping of details from this declaration.
    */
   private storeExport = (mapping: Array<ExportDetails>): void =>
-    mapping.forEach(map => {
+    mapping.forEach((map) => {
       if (map.source === null) {
         this.currentSourceExportCount++;
         this.originalExports.set(map.local, map);

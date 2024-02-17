@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-import {
-  ExpressionStatement,
-  AssignmentExpression,
-  FunctionExpression,
-  MemberExpression,
-} from 'estree';
-import { ExportDetails, Range } from '../types';
+import { ExpressionStatement, AssignmentExpression, FunctionExpression, MemberExpression } from 'estree';
+import { ExportDetails, Range } from '../types.js';
 import MagicString from 'magic-string';
 
 function PreserveFunction(
@@ -37,22 +32,22 @@ function PreserveFunction(
   const functionExpression = assignmentExpression.right as FunctionExpression;
   const [memberExpressionObjectStart] = memberExpression.object.range as Range;
   const functionName = exportInline ? exportDetails.exported : exportDetails.local;
+  const isDefault = exportDetails.exported === 'default';
+
+  const tokens = new Array<string>();
+  if (exportInline) tokens.push('export');
+  if (isDefault) tokens.push('default');
+  if (functionExpression.async) tokens.push('async');
+  tokens.push('function');
+  if (!isDefault) tokens.push(functionName);
 
   if (functionExpression.params.length > 0) {
     const [paramsStart] = functionExpression.params[0].range as Range;
     // FunctionExpression has parameters.
-    source.overwrite(
-      memberExpressionObjectStart,
-      paramsStart,
-      `${exportInline ? 'export ' : ''}function ${functionName}(`,
-    );
+    source.overwrite(memberExpressionObjectStart, paramsStart, `${tokens.join(' ')}(`);
   } else {
     const [bodyStart] = functionExpression.body.range as Range;
-    source.overwrite(
-      memberExpressionObjectStart,
-      bodyStart,
-      `${exportInline ? 'export ' : ''}function ${functionName}()`,
-    );
+    source.overwrite(memberExpressionObjectStart, bodyStart, `${tokens.join(' ')}()`);
   }
 
   return !exportInline;
@@ -74,9 +69,8 @@ function PreserveIdentifier(
 
   if (exportInline) {
     const output =
-      (exportDetails.exported === 'default'
-        ? `export default `
-        : `export var ${exportDetails.exported}=`) + `${code.substring(rightStart, rightEnd)};`;
+      (exportDetails.exported === 'default' ? `export default ` : `export var ${exportDetails.exported}=`) +
+      `${code.substring(rightStart, rightEnd)};`;
     source.overwrite(ancestorStart, ancestorEnd, output);
   } else if (exportDetails.source === null && 'name' in right) {
     // This is a locally defined identifier with a name we can use.
@@ -84,11 +78,7 @@ function PreserveIdentifier(
     source.remove(leftStart, ancestorEnd);
     return true;
   } else {
-    source.overwrite(
-      ancestorStart,
-      ancestorEnd,
-      `var ${exportDetails.local}=${code.substring(rightStart, rightEnd)};`,
-    );
+    source.overwrite(ancestorStart, ancestorEnd, `var ${exportDetails.local}=${code.substring(rightStart, rightEnd)};`);
   }
 
   return !exportInline;

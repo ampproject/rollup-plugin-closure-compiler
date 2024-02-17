@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-const test = require('ava');
-const path = require('path');
-const rollup = require('rollup');
-const { default: compiler } = require('../../transpile-tests/index');
+import test from 'ava';
+import * as transpiled from '../../transpile-tests/index.js';
+import * as rollup from 'rollup';
+import * as path from 'path';
+
+const { default: compiler } = transpiled;
 
 const options = {
   externs: [path.resolve('test', 'provided-externs', 'fixtures', 'class.externs.js')],
@@ -37,7 +39,7 @@ async function compile() {
   });
 }
 
-test(`building does not modify passed configuration`, async t => {
+test(`building does not modify passed configuration`, async (t) => {
   await compile();
 
   t.deepEqual(options, optionsCopy);

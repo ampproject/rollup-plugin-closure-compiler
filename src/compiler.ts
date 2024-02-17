@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import { compiler, CompileOptions } from 'google-closure-compiler';
-const {
-  getNativeImagePath,
-  getFirstSupportedPlatform,
-} = require('google-closure-compiler/lib/utils.js');
-import { postCompilation } from './transformers/chunk/transforms';
+import gcc from 'google-closure-compiler';
+import { CompileOptions } from 'google-closure-compiler';
+const { compiler } = gcc;
+//@ts-ignore
+import * as gccUtils from 'google-closure-compiler/lib/utils.js';
+const { getNativeImagePath, getFirstSupportedPlatform } = gccUtils;
+import { postCompilation } from './transformers/chunk/transforms.js';
 import { RenderedChunk } from 'rollup';
-import { ChunkTransform } from './transform';
+import { ChunkTransform } from './transform.js';
 
 enum Platform {
   NATIVE = 'native',
@@ -70,7 +71,7 @@ function orderPlatforms(platformPreference: Platform | string): Array<Platform> 
  * @param transforms Transforms to run rollowing compilation
  * @return Promise<string> source following compilation and Transforms.
  */
-export default function(
+export default function (
   compileOptions: CompileOptions,
   chunk: RenderedChunk,
   transforms: Array<ChunkTransform>,
@@ -83,16 +84,13 @@ export default function(
     if (firstSupportedPlatform !== Platform.JAVA) {
       // TODO(KB): Provide feedback on this API. It's a little strange to nullify the JAR_PATH
       // and provide a fake java path.
+      //@ts-ignore
       instance.JAR_PATH = null;
       instance.javaPath = getNativeImagePath();
     }
 
     instance.run(async (exitCode: number, code: string, stdErr: string) => {
-      if (
-        'warning_level' in compileOptions &&
-        compileOptions.warning_level === 'VERBOSE' &&
-        stdErr !== ''
-      ) {
+      if ('warning_level' in compileOptions && compileOptions.warning_level === 'VERBOSE' && stdErr !== '') {
         reject(new Error(`Google Closure Compiler ${stdErr}`));
       } else if (exitCode !== 0) {
         reject(new Error(`Google Closure Compiler exit ${exitCode}: ${stdErr}`));

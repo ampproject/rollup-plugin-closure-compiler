@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-const test = require('ava');
-const { default: compiler } = require('../transpile-tests/index');
-const rollup = require('rollup');
-const fs = require('fs');
-const path = require('path');
+import test from 'ava'
+import * as transpiled from '../transpile-tests/index.js'
+import * as rollup from 'rollup'
+import * as fs from 'fs'
+import * as path from 'path'
+
+const { default: compiler } = transpiled
 
 const DEFAULT_CLOSURE_OPTIONS = { default: {} };
 const PRETTY_PRINT_CLOSURE_OPTIONS = {
@@ -68,13 +70,13 @@ async function compile(category, name, codeSplit, closureFlags, optionKey, forma
   const bundles = await bundle.generate({
     format,
     name: wrapper,
-    sourcemap: true,
+    sourcemap: false,
     banner,
   });
 
   const output = [];
   if (bundles.output) {
-    for (file in bundles.output) {
+    for (const file in bundles.output) {
       const minified = await fs.promises.readFile(
         path.join(
           fixtureLocation(
@@ -130,7 +132,7 @@ function generate(shouldFail, category, name, codeSplit, formats, closureFlags, 
           );
 
           t.plan(output.length);
-          for (result of output) {
+          for (const result of output) {
             t.is(result.code, result.minified);
           }
         },
@@ -163,7 +165,7 @@ function generator(
   generate(false, category, name, codeSplit, formats, closureFlags, wrapper, banner);
 }
 
-module.exports = {
+export {
   DEFAULT_CLOSURE_OPTIONS,
   PRETTY_PRINT_CLOSURE_OPTIONS,
   ADVANCED_CLOSURE_OPTIONS,

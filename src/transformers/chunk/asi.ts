@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../../transform';
-import { Range } from '../../types';
-import { parse } from '../../acorn';
+import { ChunkTransform } from '../../transform.js';
+import { Range } from '../../types.js';
+import { parse } from '../../acorn.js';
 import MagicString from 'magic-string';
 
 export default class ASITransform extends ChunkTransform {

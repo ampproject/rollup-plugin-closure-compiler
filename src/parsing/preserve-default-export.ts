@@ -15,7 +15,7 @@
  */
 
 import { ExpressionStatement, AssignmentExpression } from 'estree';
-import { ExportDetails, Range } from '../types';
+import { ExportDetails, Range } from '../types.js';
 import MagicString from 'magic-string';
 
 export function PreserveDefault(

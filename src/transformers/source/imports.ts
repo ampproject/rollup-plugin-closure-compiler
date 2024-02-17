@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { SourceTransform } from '../../transform';
+import { SourceTransform } from '../../transform.js';
 import MagicString from 'magic-string';
-import { parse, isImportDeclaration } from '../../acorn';
+import { parse, isImportDeclaration } from '../../acorn.js';
 import { asyncWalk as walk } from 'estree-walker';
-import { literalName } from '../../parsing/literal-name';
-import { Specifiers } from '../../parsing/import-specifiers';
+import { literalName } from '../../parsing/literal-name.js';
+import { Specifiers } from '../../parsing/import-specifiers.js';
 import { ImportDeclaration } from 'estree';
 
 export class ImportTransform extends SourceTransform {
@@ -55,7 +55,7 @@ export class ImportTransform extends SourceTransform {
     // 1. Identify all imports and rename them to indicate where they come from.
     // 2. Find usages of those imports and rename them.
     await walk(program, {
-      enter: async function(node) {
+      enter: async function (node) {
         if (isImportDeclaration(node)) {
           await mangle(node, id);
         }

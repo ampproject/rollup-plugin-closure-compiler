@@ -15,9 +15,9 @@
  */
 
 import test from 'ava';
-import compile from '../../transpile-tests/options';
+import compile from '../../transpile-tests/options.js';
 import path from 'path';
-import {promises as fsPromises} from 'fs';
+import { promises as fsPromises } from 'fs';
 
 const PROVIDED_EXTERN = path.resolve('test', 'closure-config', 'fixtures', 'externs.js');
 const IIFE_TRANSFORM_EXTERN_CONTENT = '/** @externs */ function wrapper(){}';
@@ -25,7 +25,7 @@ const IIFE_TRANSFORM_EXTERN_CONTENT = '/** @externs */ function wrapper(){}';
 const IifeTransform = class {
   // Transforms have a public method `extern` that generates an extern
   // if one is needed for the transform.
-  
+
   // This test ensures the externs created by transforms are passed to
   // closure compiler when the caller also passes externs.
   extern() {
@@ -33,23 +33,28 @@ const IifeTransform = class {
   }
 };
 
-test('when rollup configuration specifies externs, extern is leveraged', async t => {
+test('when rollup configuration specifies externs, extern is leveraged', async (t) => {
   t.plan(3);
 
-  const compiled = await compile({
-    externs: PROVIDED_EXTERN,
-  }, {
-    format: 'iife',
-    name: 'wrapper',
-  }, 'var x = 1;', [new IifeTransform()]);
+  const compiled = await compile(
+    {
+      externs: PROVIDED_EXTERN,
+    },
+    {
+      format: 'iife',
+      name: 'wrapper',
+    },
+    'var x = 1;',
+    [new IifeTransform()],
+  );
   const externs = compiled[0].externs;
 
   t.is(externs.length, 2);
   t.true(externs.includes(PROVIDED_EXTERN));
 
-  // While we can use the path for the provided extern, we need to inspect the content of 
+  // While we can use the path for the provided extern, we need to inspect the content of
   // the other extern to ensure it is the generated extern.
   // Externs are passed as filepaths to Closure Compiler.
-  const fileContent = await fsPromises.readFile(externs.filter(path => path !== PROVIDED_EXTERN)[0], 'utf8');
+  const fileContent = await fsPromises.readFile(externs.filter((path) => path !== PROVIDED_EXTERN)[0], 'utf8');
   t.true(fileContent === IIFE_TRANSFORM_EXTERN_CONTENT);
 });

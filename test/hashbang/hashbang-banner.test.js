@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-import { generator } from '../generator';
+import { generator } from '../generator.js';
 
-generator(
-  'hashbang',
-  'hashbang-banner',
-  undefined,
-  undefined,
-  undefined,
-  undefined,
-  '#!/usr/bin/env node',
-);
+generator('hashbang', 'hashbang-banner', undefined, undefined, undefined, undefined, '#!/usr/bin/env node');

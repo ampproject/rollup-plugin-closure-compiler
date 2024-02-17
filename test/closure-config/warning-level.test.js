@@ -15,15 +15,23 @@
  */
 
 import test from 'ava';
-import compile, {ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED, ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID} from '../../transpile-tests/options';
+import compile, {
+  ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_UNSPECIFIED,
+  ERROR_WARNINGS_ENABLED_LANGUAGE_OUT_INVALID,
+} from '../../transpile-tests/options.js';
 
-test('with no language out set, and warnings set to verbose... an error is returned', async t => {
+test('with no language out set, and warnings set to verbose... an error is returned', async (t) => {
   try {
-    await compile({
-      warning_level: 'VERBOSE',
-    }, {
-      format: 'es',
-    }, 'var x = 1;', []);
+    await compile(
+      {
+        warning_level: 'VERBOSE',
+      },
+      {
+        format: 'es',
+      },
+      'var x = 1;',
+      [],
+    );
 
     t.fail('compile completed without throwing an error.');
   } catch (e) {
@@ -31,14 +39,19 @@ test('with no language out set, and warnings set to verbose... an error is retur
   }
 });
 
-test('with language out set to no_transpile, and warnings set to verbose... an error is returned', async t => {
+test('with language out set to no_transpile, and warnings set to verbose... an error is returned', async (t) => {
   try {
-    await compile({
-      warning_level: 'VERBOSE',
-      language_out: 'NO_TRANSPILE',
-    }, {
-      format: 'es',
-    }, 'var x = 1;', []);
+    await compile(
+      {
+        warning_level: 'VERBOSE',
+        language_out: 'NO_TRANSPILE',
+      },
+      {
+        format: 'es',
+      },
+      'var x = 1;',
+      [],
+    );
 
     t.fail('compile completed without throwing an error.');
   } catch (e) {

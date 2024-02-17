@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ChunkTransform } from '../../transform';
-import { Range } from '../../types';
-import { parse, walk } from '../../acorn';
+import { ChunkTransform } from '../../transform.js';
+import { Range } from '../../types.js';
+import { parse, walk } from '../../acorn.js';
 import { VariableDeclaration } from 'estree';
 import MagicString from 'magic-string';
 
