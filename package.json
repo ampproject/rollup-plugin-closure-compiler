@@ -90,7 +90,7 @@
     "singleQuote": true
   },
   "volta": {
-    "node": "16.6.1",
+    "node": "16.20.2",
     "yarn": "1.22.4"
   },
   "publishConfig": {
