@@ -60,8 +60,9 @@ function orderPlatforms(platformPreference: Platform | string): Array<Platform> 
   }
 
   const index = DEFAULT_PLATFORM_PRECEDENCE.indexOf(platformPreference as Platform);
-  const newPlatformPreferences = DEFAULT_PLATFORM_PRECEDENCE.splice(index, 1);
-  return newPlatformPreferences.concat(DEFAULT_PLATFORM_PRECEDENCE);
+  const newPlatformPreferences = DEFAULT_PLATFORM_PRECEDENCE.slice();
+  const preferredPlatform = newPlatformPreferences.splice(index, 1);
+  return preferredPlatform.concat(newPlatformPreferences);
 }
 
 /**
